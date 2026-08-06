@@ -1,0 +1,44 @@
+{
+  "nav": {
+    "services": "服务",
+    "portfolio": "作品集",
+    "pricing": "价格",
+    "blog": "博客",
+    "about": "关于我们",
+    "contact": "联系我们",
+    "signin": "登录",
+    "dashboard": "仪表板",
+    "getStarted": "开始使用",
+    "openMenu": "打开菜单",
+    "closeMenu": "关闭菜单",
+    "language": "语言"
+  },
+  "hero": {
+    "fallbackHeading": "今日方案,明日成功",
+    "tagline": "定制软件开发公司",
+    "subheading": "在您付款之前,我们就为您构建网站和软件。"
+  },
+  "footer": {
+    "tagline": "一家提供网页、移动、云和企业解决方案的高端软件开发公司。在您付款之前,我们就构建您的产品。",
+    "company": "公司",
+    "account": "账户",
+    "about": "关于我们",
+    "services": "服务",
+    "portfolio": "作品集",
+    "pricing": "价格",
+    "signin": "登录",
+    "clientPortal": "客户门户",
+    "rights": "版权所有。",
+    "builtWith": "精心打造。"
+  },
+  "common": {
+    "loading": "加载中…",
+    "save": "保存",
+    "cancel": "取消",
+    "close": "关闭",
+    "submit": "提交",
+    "search": "搜索",
+    "signOut": "退出登录",
+    "signedInAs": "登录身份"
+  }
+}

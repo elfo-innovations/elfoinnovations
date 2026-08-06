@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Code Runner — ELFO Innovations Offline</title>
+<style>
+  :root{color-scheme:dark;--bg:#050a24;--panel:rgba(255,255,255,.065);--line:rgba(124,196,255,.22);--text:#e6ecff;--muted:rgba(230,236,255,.68);--brand:#16a8ff;--brand2:#2563eb;--ok:#34d399;--warn:#f59e0b}
+  *{box-sizing:border-box}html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;overflow:hidden}button{font:inherit}
+  body:before{content:"";position:fixed;inset:0;background:radial-gradient(circle at 18% 10%,rgba(22,168,255,.22),transparent 30%),radial-gradient(circle at 86% 84%,rgba(37,99,235,.22),transparent 34%),linear-gradient(rgba(124,196,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(124,196,255,.06) 1px,transparent 1px);background-size:auto,auto,42px 42px,42px 42px;pointer-events:none}
+  .wrap{position:relative;z-index:1;min-height:100%;display:flex;flex-direction:column;padding:16px;max-width:1180px;margin:0 auto}.top{display:flex;align-items:center;justify-content:space-between;gap:14px}.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.08em}.mark{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);display:grid;place-items:center;background:rgba(22,168,255,.1);box-shadow:0 0 28px rgba(22,168,255,.22)}.status{display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);border-radius:999px;padding:8px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.16em;color:var(--muted)}.dot{width:8px;height:8px;border-radius:50%;background:var(--warn);box-shadow:0 0 18px var(--warn)}.online .dot{background:var(--ok);box-shadow:0 0 18px var(--ok)}
+  .intro{flex:1;display:grid;place-items:center;text-align:center;padding:30px 0}.eyebrow{display:inline-flex;margin-bottom:14px;border:1px solid var(--line);background:rgba(22,168,255,.08);color:#7cc4ff;border-radius:999px;padding:6px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.18em}h1{margin:0;font-size:clamp(42px,8vw,82px);line-height:.95;letter-spacing:0;font-weight:900}p{margin:16px auto 0;max-width:580px;color:var(--muted);font-size:clamp(14px,2.5vw,17px);line-height:1.65}.actions{margin-top:28px;display:flex;justify-content:center;gap:12px;flex-wrap:wrap}.btn{border:0;border-radius:999px;padding:13px 20px;cursor:pointer;font-weight:800}.primary{color:white;background:linear-gradient(90deg,var(--brand),var(--brand2));box-shadow:0 18px 50px -18px rgba(22,168,255,.9)}.ghost{color:var(--text);border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06)}.fine{margin-top:34px;color:rgba(230,236,255,.42);font-size:11px;text-transform:uppercase;letter-spacing:.28em}
+  .game{display:none;flex:1;min-height:0;flex-direction:column;padding-top:14px}.restored{display:none;align-items:center;justify-content:space-between;gap:10px;border:1px solid rgba(52,211,153,.35);background:rgba(52,211,153,.1);border-radius:16px;color:#d1fae5;padding:10px 12px;margin-bottom:10px;font-size:14px}.online .restored{display:flex}.canvasBox{position:relative;flex:1;min-height:340px;border:1px solid rgba(255,255,255,.12);border-radius:24px;overflow:hidden;background:#030817;box-shadow:0 30px 100px -50px rgba(22,168,255,.55)}canvas{display:block;width:100%;height:100%;touch-action:manipulation}.hint{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px;color:rgba(230,236,255,.62);font-size:12px;flex-wrap:wrap}code{color:#7cc4ff}.playing .intro{display:none}.playing .game{display:flex}@media(max-width:640px){.wrap{padding:12px}.brand span{font-size:12px}.status{padding:7px 10px;letter-spacing:.1em}.actions{gap:9px}.btn{width:100%;max-width:290px}.canvasBox{min-height:420px;border-radius:18px}.restored{align-items:flex-start;flex-direction:column}.hint{font-size:11px}}
+</style>
+</head>
+<body>
+<main class="wrap" id="app">
+  <header class="top">
+    <div class="brand"><div class="mark">⚡</div><span>ELFO INNOVATIONS</span></div>
+    <div class="status" id="status"><span class="dot"></span><span id="statusText">Offline</span></div>
+  </header>
+  <section class="intro" aria-live="polite">
+    <div>
+      <div class="eyebrow">Code Runner</div>
+      <h1 id="title">You're Offline</h1>
+      <p id="copy">Your internet connection has been lost. While you wait, deliver code to the server, collect code icons, and dodge bugs.</p>
+      <div class="actions">
+        <button class="btn primary" id="play">▶ Play Game</button>
+        <button class="btn ghost" id="stay">Stay on Current Page</button>
+      </div>
+      <div class="fine">Deliver code to the server</div>
+    </div>
+  </section>
+  <section class="game" aria-label="Code Runner game">
+    <div class="restored">
+      <strong>Connection Restored ✅</strong>
+      <div class="actions" style="margin:0">
+        <button class="btn primary" id="continue" style="padding:8px 12px;font-size:12px">Continue to requested page</button>
+        <button class="btn ghost" id="keep" style="padding:8px 12px;font-size:12px">Keep Playing</button>
+      </div>
+    </div>
+    <div class="canvasBox"><canvas id="runner" aria-label="Code Runner game canvas"></canvas></div>
+    <div class="hint"><span>Tap / Click / Space to jump. Collect <code>&lt;/&gt;</code>, <code>{}</code>, AI chips, clouds. Avoid bugs.</span><button class="btn ghost" id="back" style="padding:7px 12px;font-size:12px">← Back</button></div>
+  </section>
+</main>
+<script>
+(function(){
+  const app=document.getElementById('app'), status=document.getElementById('status'), statusText=document.getElementById('statusText'), title=document.getElementById('title'), copy=document.getElementById('copy');
+  const play=document.getElementById('play'), stay=document.getElementById('stay'), back=document.getElementById('back'), cont=document.getElementById('continue'), keep=document.getElementById('keep');
+  let playing=false, restored=false, alive=true, dead=false, score=0, best=Number(localStorage.getItem('elfo-runner-best')||0), raf=0, last=0;
+  const canvas=document.getElementById('runner'), ctx=canvas.getContext('2d'); let W=0,H=0,dpr=Math.min(devicePixelRatio||1,2);
+  const player={x:80,y:0,vy:0,w:34,h:42,onGround:true}; let speed=320,dist=0,spawn=.7,coin=.8,ob=[],coins=[],stars=[];
+  const ground=()=>H-60, glyphs=['</>','{ }','AI','☁','◆'], bad=['🐛','⚠','✕','☠'];
+  function resize(){const box=canvas.parentElement;W=Math.max(320,box.clientWidth);H=Math.max(300,box.clientHeight);canvas.width=W*dpr;canvas.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
+  function reset(){alive=true;dead=false;speed=320;dist=0;score=0;spawn=.4;coin=.7;ob=[];coins=[];player.y=ground()-player.h;player.vy=0;player.onGround=true;last=performance.now()}
+  function jump(){if(!playing)return;if(!alive){reset();return}if(restored)return;if(player.onGround){player.vy=-640;player.onGround=false}}
+  function setOnline(){restored=navigator.onLine;document.body.classList.toggle('online',restored);status.classList.toggle('online',restored);statusText.textContent=restored?'Online':'Offline';title.textContent=restored?'Connection Restored ✅':"You're Offline";copy.textContent=restored?"You're back online. Continue to the page you requested, or keep playing.":"Your internet connection has been lost. While you wait, deliver code to the server, collect code icons, and dodge bugs."}
+  function start(){playing=true;app.classList.add('playing');resize();if(!stars.length)stars=Array.from({length:60},()=>({x:Math.random()*1600,y:Math.random()*500,s:Math.random()*1.5+.3,z:Math.random()*.5+.3}));reset();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop)}
+  function update(dt){dist+=speed*dt;speed=Math.min(720,speed+5*dt);score=Math.floor(dist/10);player.vy+=1800*dt;player.y+=player.vy*dt;const gy=ground()-player.h;if(player.y>=gy){player.y=gy;player.vy=0;player.onGround=true}spawn-=dt;if(spawn<=0){const s=26+Math.random()*18;ob.push({x:W+20,y:ground()-s,w:s,h:s,g:bad[Math.floor(Math.random()*bad.length)]});spawn=.9+Math.random()*1.1-Math.min(.5,(speed-320)/800)}coin-=dt;if(coin<=0){coins.push({x:W+20,y:ground()-60-Math.random()*120,r:14,g:glyphs[Math.floor(Math.random()*glyphs.length)]});coin=.7+Math.random()*.9}ob.forEach(o=>o.x-=speed*dt);coins.forEach(c=>c.x-=speed*dt);ob=ob.filter(o=>o.x+o.w>-20);coins=coins.filter(c=>c.x+c.r>-20&&!c.taken);for(const o of ob){if(player.x<o.x+o.w&&player.x+player.w>o.x&&player.y<o.y+o.h&&player.y+player.h>o.y){alive=false;dead=true;best=Math.max(best,score);localStorage.setItem('elfo-runner-best',best);break}}for(const c of coins){const dx=player.x+player.w/2-c.x,dy=player.y+player.h/2-c.y;if(Math.hypot(dx,dy)<c.r+18){c.taken=true;score+=25}}stars.forEach(s=>{s.x-=speed*dt*s.z*.3;if(s.x<0){s.x=W;s.y=Math.random()*H*.7}})}
+  function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
+  function render(){let g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#050a24');g.addColorStop(1,'#0a1330');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);ctx.fillStyle='rgba(124,196,255,.7)';stars.forEach(s=>{ctx.globalAlpha=s.z;ctx.fillRect(s.x,s.y,s.s,s.s)});ctx.globalAlpha=1;const gy=ground();ctx.strokeStyle='rgba(96,165,250,.35)';ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(W,gy);ctx.stroke();ctx.strokeStyle='rgba(96,165,250,.15)';const off=dist%40;for(let i=0;i<10;i++){ctx.beginPath();ctx.moveTo(0,gy+i*8);ctx.lineTo(W,gy+i*8);ctx.stroke()}for(let x=-off;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,gy);ctx.lineTo(x+100,H);ctx.stroke()}ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 16px ui-monospace,monospace';coins.forEach(c=>{ctx.shadowColor='#60a5fa';ctx.shadowBlur=14;ctx.fillStyle='#7cc4ff';ctx.beginPath();ctx.arc(c.x,c.y,c.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#03122b';ctx.fillText(c.g,c.x,c.y+1)});ob.forEach(o=>{ctx.shadowColor='#ef4444';ctx.shadowBlur=12;ctx.fillStyle='rgba(239,68,68,.85)';ctx.fillRect(o.x,o.y,o.w,o.h);ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.font='bold 18px system-ui';ctx.fillText(o.g,o.x+o.w/2,o.y+o.h/2+1)});ctx.shadowColor='#3b82f6';ctx.shadowBlur=18;g=ctx.createLinearGradient(player.x,player.y,player.x,player.y+player.h);g.addColorStop(0,'#7cc4ff');g.addColorStop(1,'#2563eb');ctx.fillStyle=g;rr(player.x,player.y,player.w,player.h,8);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#0a1330';ctx.font='bold 14px ui-monospace,monospace';ctx.fillText('</>',player.x+player.w/2,player.y+player.h/2+1);ctx.textAlign='left';ctx.textBaseline='top';ctx.font='600 13px ui-monospace,monospace';ctx.fillStyle='rgba(230,236,255,.9)';ctx.fillText('SCORE  '+score,14,12);ctx.fillText('BEST   '+Math.max(best,score),14,30);ctx.textAlign='right';ctx.fillStyle='rgba(124,196,255,.85)';ctx.fillText('ELFO • CODE RUNNER',W-14,12);if(dead||restored){ctx.fillStyle='rgba(5,10,36,.68)';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=restored?'#d1fae5':'#fff';ctx.font='700 26px system-ui';ctx.fillText(restored?'Connection Restored ✅':'Build failed 💥',W/2,H/2-12);ctx.font='500 14px system-ui';ctx.fillStyle='rgba(230,236,255,.82)';ctx.fillText(restored?'Continue to requested page or keep playing.':'Tap / Space to redeploy',W/2,H/2+22)}}
+  function loop(t){const dt=Math.min(.033,(t-last)/1000);last=t;if(playing&&!restored&&alive)update(dt);render();raf=requestAnimationFrame(loop)}
+  play.onclick=start;back.onclick=()=>app.classList.remove('playing');keep.onclick=()=>{restored=false;document.body.classList.remove('online');status.classList.remove('online');statusText.textContent='Offline';last=performance.now()};cont.onclick=()=>location.reload();stay.onclick=()=>{if(history.length>1)history.back();else location.href='/'};addEventListener('resize',resize);addEventListener('keydown',e=>{if(e.code==='Space'||e.code==='ArrowUp'){e.preventDefault();jump()}});canvas.addEventListener('pointerdown',jump);addEventListener('online',setOnline);addEventListener('offline',setOnline);setOnline();
+})();
+</script>
+</body>
+</html>

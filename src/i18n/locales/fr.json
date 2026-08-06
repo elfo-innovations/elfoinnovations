@@ -1,0 +1,44 @@
+{
+  "nav": {
+    "services": "Services",
+    "portfolio": "Portfolio",
+    "pricing": "Tarifs",
+    "blog": "Blog",
+    "about": "À propos",
+    "contact": "Contact",
+    "signin": "Connexion",
+    "dashboard": "Tableau de bord",
+    "getStarted": "Commencer",
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu",
+    "language": "Langue"
+  },
+  "hero": {
+    "fallbackHeading": "SOLUTIONS AUJOURD'HUI, SUCCÈS DEMAIN",
+    "tagline": "Société de développement de logiciels sur mesure",
+    "subheading": "Nous construisons votre site et votre logiciel avant même que vous payiez un centime."
+  },
+  "footer": {
+    "tagline": "Une société premium de développement de logiciels offrant des solutions web, mobiles, cloud et d'entreprise. Nous construisons votre produit avant que vous payiez.",
+    "company": "Entreprise",
+    "account": "Compte",
+    "about": "À propos",
+    "services": "Services",
+    "portfolio": "Portfolio",
+    "pricing": "Tarifs",
+    "signin": "Connexion",
+    "clientPortal": "Portail client",
+    "rights": "Tous droits réservés.",
+    "builtWith": "Conçu avec précision."
+  },
+  "common": {
+    "loading": "Chargement…",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "close": "Fermer",
+    "submit": "Envoyer",
+    "search": "Rechercher",
+    "signOut": "Déconnexion",
+    "signedInAs": "Connecté en tant que"
+  }
+}

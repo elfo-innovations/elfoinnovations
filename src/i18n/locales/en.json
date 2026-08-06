@@ -1,0 +1,44 @@
+{
+  "nav": {
+    "services": "Services",
+    "portfolio": "Portfolio",
+    "pricing": "Pricing",
+    "blog": "Blog",
+    "about": "About",
+    "contact": "Contact",
+    "signin": "Sign in",
+    "dashboard": "Dashboard",
+    "getStarted": "Get Started",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "language": "Language"
+  },
+  "hero": {
+    "fallbackHeading": "SOLUTIONS TODAY, SUCCESS TOMORROW",
+    "tagline": "Custom software development company",
+    "subheading": "Get your website & software built before you even pay a dime."
+  },
+  "footer": {
+    "tagline": "A premium software development company delivering web, mobile, cloud and enterprise solutions. Get your product built before you pay a dime.",
+    "company": "Company",
+    "account": "Account",
+    "about": "About",
+    "services": "Services",
+    "portfolio": "Portfolio",
+    "pricing": "Pricing",
+    "signin": "Sign in",
+    "clientPortal": "Client portal",
+    "rights": "All rights reserved.",
+    "builtWith": "Built with precision."
+  },
+  "common": {
+    "loading": "Loading…",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "submit": "Submit",
+    "search": "Search",
+    "signOut": "Sign out",
+    "signedInAs": "Signed in as"
+  }
+}

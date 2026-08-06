@@ -1,0 +1,1 @@
+UPDATE public.hero_content SET heading = 'SOLUTIONS TODAY, SUCCESS TOMORROW', highlight = 'TODAY, TOMORROW';

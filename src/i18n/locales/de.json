@@ -1,0 +1,44 @@
+{
+  "nav": {
+    "services": "Leistungen",
+    "portfolio": "Portfolio",
+    "pricing": "Preise",
+    "blog": "Blog",
+    "about": "Über uns",
+    "contact": "Kontakt",
+    "signin": "Anmelden",
+    "dashboard": "Dashboard",
+    "getStarted": "Loslegen",
+    "openMenu": "Menü öffnen",
+    "closeMenu": "Menü schließen",
+    "language": "Sprache"
+  },
+  "hero": {
+    "fallbackHeading": "LÖSUNGEN HEUTE, ERFOLG MORGEN",
+    "tagline": "Individuelle Softwareentwicklung",
+    "subheading": "Wir entwickeln Ihre Website und Software, bevor Sie einen Cent zahlen."
+  },
+  "footer": {
+    "tagline": "Ein Premium-Softwareentwicklungsunternehmen für Web-, Mobil-, Cloud- und Unternehmenslösungen. Wir bauen Ihr Produkt, bevor Sie zahlen.",
+    "company": "Unternehmen",
+    "account": "Konto",
+    "about": "Über uns",
+    "services": "Leistungen",
+    "portfolio": "Portfolio",
+    "pricing": "Preise",
+    "signin": "Anmelden",
+    "clientPortal": "Kundenportal",
+    "rights": "Alle Rechte vorbehalten.",
+    "builtWith": "Mit Präzision gebaut."
+  },
+  "common": {
+    "loading": "Laden…",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "close": "Schließen",
+    "submit": "Absenden",
+    "search": "Suchen",
+    "signOut": "Abmelden",
+    "signedInAs": "Angemeldet als"
+  }
+}

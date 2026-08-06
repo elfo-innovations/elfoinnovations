@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /auth
+Disallow: /admin
+Disallow: /client
+Disallow: /developer
+Disallow: /profile
+Disallow: /api/
+
+Sitemap: https://elfoinnovation.lovable.app/sitemap.xml

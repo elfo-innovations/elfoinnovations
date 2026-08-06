@@ -1,0 +1,44 @@
+{
+  "nav": {
+    "services": "サービス",
+    "portfolio": "ポートフォリオ",
+    "pricing": "料金",
+    "blog": "ブログ",
+    "about": "会社概要",
+    "contact": "お問い合わせ",
+    "signin": "ログイン",
+    "dashboard": "ダッシュボード",
+    "getStarted": "はじめる",
+    "openMenu": "メニューを開く",
+    "closeMenu": "メニューを閉じる",
+    "language": "言語"
+  },
+  "hero": {
+    "fallbackHeading": "今日のソリューション、明日の成功",
+    "tagline": "カスタムソフトウェア開発会社",
+    "subheading": "料金をお支払いいただく前に、Webサイトとソフトウェアを構築します。"
+  },
+  "footer": {
+    "tagline": "Web、モバイル、クラウド、エンタープライズソリューションを提供するプレミアムソフトウェア開発会社。お支払い前に製品を構築します。",
+    "company": "会社",
+    "account": "アカウント",
+    "about": "会社概要",
+    "services": "サービス",
+    "portfolio": "ポートフォリオ",
+    "pricing": "料金",
+    "signin": "ログイン",
+    "clientPortal": "クライアントポータル",
+    "rights": "全著作権所有。",
+    "builtWith": "精密に構築。"
+  },
+  "common": {
+    "loading": "読み込み中…",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "close": "閉じる",
+    "submit": "送信",
+    "search": "検索",
+    "signOut": "ログアウト",
+    "signedInAs": "ログイン中"
+  }
+}

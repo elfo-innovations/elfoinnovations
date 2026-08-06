@@ -1,0 +1,44 @@
+{
+  "nav": {
+    "services": "Servicios",
+    "portfolio": "Portafolio",
+    "pricing": "Precios",
+    "blog": "Blog",
+    "about": "Nosotros",
+    "contact": "Contacto",
+    "signin": "Iniciar sesión",
+    "dashboard": "Panel",
+    "getStarted": "Comenzar",
+    "openMenu": "Abrir menú",
+    "closeMenu": "Cerrar menú",
+    "language": "Idioma"
+  },
+  "hero": {
+    "fallbackHeading": "SOLUCIONES HOY, ÉXITO MAÑANA",
+    "tagline": "Empresa de desarrollo de software a medida",
+    "subheading": "Construimos tu sitio web y software antes de que pagues un centavo."
+  },
+  "footer": {
+    "tagline": "Una empresa premium de desarrollo de software que ofrece soluciones web, móviles, en la nube y empresariales. Construimos tu producto antes de que pagues un centavo.",
+    "company": "Compañía",
+    "account": "Cuenta",
+    "about": "Nosotros",
+    "services": "Servicios",
+    "portfolio": "Portafolio",
+    "pricing": "Precios",
+    "signin": "Iniciar sesión",
+    "clientPortal": "Portal del cliente",
+    "rights": "Todos los derechos reservados.",
+    "builtWith": "Construido con precisión."
+  },
+  "common": {
+    "loading": "Cargando…",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "submit": "Enviar",
+    "search": "Buscar",
+    "signOut": "Cerrar sesión",
+    "signedInAs": "Sesión iniciada como"
+  }
+}

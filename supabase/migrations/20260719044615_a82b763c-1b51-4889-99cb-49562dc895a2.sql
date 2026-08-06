@@ -1,0 +1,1 @@
+ALTER TABLE public.hero_content ADD COLUMN IF NOT EXISTS heading_font text;
