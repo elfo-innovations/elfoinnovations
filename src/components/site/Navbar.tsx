@@ -48,18 +48,18 @@ export function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link to="/" className="flex items-center"><ElfoLogo /></Link>
-        <nav className="hidden items-center gap-8 md:flex">
+    <header className="sticky top-4 z-40 px-4">
+      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between rounded-full border border-border/60 bg-background/80 px-3 shadow-lg shadow-black/5 backdrop-blur-xl sm:px-4">
+        <Link to="/" className="flex shrink-0 items-center pl-1"><ElfoLogo /></Link>
+        <nav className="hidden items-center gap-6 md:flex">
           {links.map((l) => (
             <Link key={l.id} to={l.href} className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{labelFor(l)}</Link>
           ))}
         </nav>
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="hidden items-center gap-1.5 md:flex">
           <ThemeToggle />
           <LanguageSwitcher />
-          
+
           {user ? (
             <Link to={dashHref}><Button variant="ghost" className="rounded-full">{t("nav.dashboard")}</Button></Link>
           ) : (
@@ -70,16 +70,16 @@ export function Navbar() {
         <div className="flex items-center gap-1 md:hidden">
           <LanguageSwitcher compact />
           <ThemeToggle />
-          <Button variant="ghost" size="icon" aria-label={open ? t("nav.closeMenu") : t("nav.openMenu")} aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</Button>
+          <Button variant="ghost" size="icon" className="rounded-full" aria-label={open ? t("nav.closeMenu") : t("nav.openMenu")} aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</Button>
         </div>
       </div>
       {open && (
-        <div className="border-t bg-background md:hidden">
-          <div className="mx-auto max-w-7xl space-y-1 px-4 py-4">
+        <div className="mx-auto mt-2 max-w-5xl rounded-3xl border border-border/60 bg-background/95 shadow-lg shadow-black/5 backdrop-blur-xl md:hidden">
+          <div className="space-y-1 px-4 py-4">
             {links.map((l) => (
               <Link key={l.id} to={l.href} onClick={() => setOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent">{labelFor(l)}</Link>
             ))}
-            
+
             {user ? (
               <Link to={dashHref} onClick={() => setOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent">{t("nav.dashboard")}</Link>
             ) : (

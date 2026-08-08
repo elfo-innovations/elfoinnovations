@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "@tanstack/react-router";
-import { LayoutDashboard, Users, Briefcase, Code2, MessagesSquare, LogOut, FileText, UserCircle2, FolderKanban, Menu, Receipt, Settings, Info, Globe, Newspaper, Lock, Star, Heart, UserPlus } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, Code2, MessagesSquare, LogOut, FileText, UserCircle2, FolderKanban, Menu, Receipt, Settings, Info, Globe, Newspaper, Lock, Star, Heart, UserPlus, Home } from "lucide-react";
 import { ElfoLogo } from "@/components/brand/Logo";
 import { ThemeToggle } from "@/components/brand/ThemeToggle";
 import { LanguageSwitcher } from "@/components/brand/LanguageSwitcher";
@@ -27,6 +27,7 @@ type Nav = { to: string; label: string; icon: any };
 
 const NAVS: Record<"admin" | "developer" | "client", Nav[]> = {
   admin: [
+    { to: "/", label: "Home", icon: Home },
     { to: "/admin", label: "Overview", icon: LayoutDashboard },
     { to: "/admin/leads", label: "Leads", icon: FileText },
     { to: "/admin/clients", label: "Clients", icon: Users },
@@ -41,12 +42,14 @@ const NAVS: Record<"admin" | "developer" | "client", Nav[]> = {
     { to: "/profile", label: "My Profile", icon: Settings },
   ],
   developer: [
+    { to: "/", label: "Home", icon: Home },
     { to: "/developer", label: "Overview", icon: LayoutDashboard },
     { to: "/developer/projects", label: "My Projects", icon: Briefcase },
     { to: "/developer/messages", label: "Messages", icon: MessagesSquare },
     { to: "/profile", label: "My Profile", icon: Settings },
   ],
   client: [
+    { to: "/", label: "Home", icon: Home },
     { to: "/client", label: "Overview", icon: LayoutDashboard },
     { to: "/client/projects", label: "My Projects", icon: Briefcase },
     { to: "/client/important-info", label: "Important Info", icon: Info },
@@ -65,7 +68,7 @@ function NavList({ role, nav, pathname, onNavigate, onSignOut, email }: { role: 
       <nav className="flex-1 space-y-0.5 px-3 py-4">
         <div className="mb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{role} portal</div>
         {nav.map((n) => {
-          const active = pathname === n.to || (n.to !== `/${role}` && pathname.startsWith(n.to));
+          const active = n.to === "/" ? pathname === "/" : pathname === n.to || (n.to !== `/${role}` && pathname.startsWith(n.to));
           return (
             <Link key={n.to} to={n.to} onClick={onNavigate}
               className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors ${active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`}>

@@ -2,20 +2,20 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import beforeAsset from "@/assets/showcase-before-2.png.asset.json";
-import afterAsset from "@/assets/showcase-after-2.png.asset.json";
-import beforeAsset3 from "@/assets/showcase-before-3.png.asset.json";
-import afterAsset3 from "@/assets/showcase-after-3.png.asset.json";
-import beforeAsset4 from "@/assets/showcase-before-4.png.asset.json";
-import afterAsset4 from "@/assets/showcase-after-4.png.asset.json";
-import beforeAsset5 from "@/assets/showcase-before-5.png.asset.json";
-import afterAsset5 from "@/assets/showcase-after-5.png.asset.json";
-import beforeAsset6 from "@/assets/showcase-before-6.png.asset.json";
-import afterAsset6 from "@/assets/showcase-after-6.png.asset.json";
-import beforeAsset7 from "@/assets/showcase-before-7.png.asset.json";
-import afterAsset7 from "@/assets/showcase-after-7.png.asset.json";
-import beforeAsset8 from "@/assets/showcase-before-8.png.asset.json";
-import afterAsset8 from "@/assets/showcase-after-8.png.asset.json";
+import beforeAsset from "@/assets/showcase-before-2.png";
+import afterAsset from "@/assets/showcase-after-2.png";
+import beforeAsset3 from "@/assets/showcase-before-3.png";
+import afterAsset3 from "@/assets/showcase-after-3.png";
+import beforeAsset4 from "@/assets/showcase-before-4.png";
+import afterAsset4 from "@/assets/showcase-after-4.png";
+import beforeAsset5 from "@/assets/showcase-before-5.png";
+import afterAsset5 from "@/assets/showcase-after-5.png";
+import beforeAsset6 from "@/assets/showcase-before-6.png";
+import afterAsset6 from "@/assets/showcase-after-6.png";
+import beforeAsset7 from "@/assets/showcase-before-7.png";
+import afterAsset7 from "@/assets/showcase-after-7.png";
+import beforeAsset8 from "@/assets/ace-before.png";
+import afterAsset8 from "@/assets/ace-after.png";
 
 type Item = { id: string; title: string; category: string | null; before_image_url: string | null; after_image_url: string | null };
 
@@ -24,50 +24,50 @@ const FEATURED: Item[] = [
     id: "featured-redesign",
     title: "Marketing Site Redesign",
     category: "Web Platform",
-    before_image_url: beforeAsset.url,
-    after_image_url: afterAsset.url,
+    before_image_url: beforeAsset,
+    after_image_url: afterAsset,
   },
   {
     id: "featured-redesign-2",
     title: "Agency Landing Refresh",
     category: "Web Platform",
-    before_image_url: beforeAsset3.url,
-    after_image_url: afterAsset3.url,
+    before_image_url: beforeAsset3,
+    after_image_url: afterAsset3,
   },
   {
     id: "featured-redesign-3",
     title: "SEO Platform Revamp",
     category: "Web Platform",
-    before_image_url: beforeAsset4.url,
-    after_image_url: afterAsset4.url,
+    before_image_url: beforeAsset4,
+    after_image_url: afterAsset4,
   },
   {
     id: "featured-redesign-4",
     title: "Landscaping Brand Redesign",
     category: "Web Platform",
-    before_image_url: beforeAsset5.url,
-    after_image_url: afterAsset5.url,
+    before_image_url: beforeAsset5,
+    after_image_url: afterAsset5,
   },
   {
     id: "featured-redesign-5",
     title: "Automotive Brand Redesign",
     category: "Web Platform",
-    before_image_url: beforeAsset6.url,
-    after_image_url: afterAsset6.url,
+    before_image_url: beforeAsset6,
+    after_image_url: afterAsset6,
   },
   {
     id: "featured-redesign-6",
     title: "Gourmet E-Commerce Redesign",
     category: "E-Commerce",
-    before_image_url: beforeAsset7.url,
-    after_image_url: afterAsset7.url,
+    before_image_url: beforeAsset7,
+    after_image_url: afterAsset7,
   },
   {
     id: "featured-redesign-7",
     title: "Hardware Retail Redesign",
     category: "Retail",
-    before_image_url: beforeAsset8.url,
-    after_image_url: afterAsset8.url,
+    before_image_url: beforeAsset8,
+    after_image_url: afterAsset8,
   },
 ];
 
@@ -148,7 +148,7 @@ export function BeforeAfterShowcase() {
       >
         <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-background to-transparent z-10" />
         <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-background to-transparent z-10" />
-        <div ref={scrollerRef} className="overflow-x-auto no-scrollbar px-4 sm:px-8 lg:px-12" style={{ scrollbarWidth: "none" }}>
+        <div ref={scrollerRef} dir="ltr" className="overflow-x-auto no-scrollbar px-4 sm:px-8 lg:px-12" style={{ scrollbarWidth: "none", direction: "ltr" }}>
           <div className="flex gap-6 pb-4 min-w-max">
             {loop.map((p, i) => (
               <div key={`${p.id}-${i}`} className="w-[85vw] sm:w-[520px] lg:w-[600px] shrink-0">

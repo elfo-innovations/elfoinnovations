@@ -1,20 +1,20 @@
 import { ExternalLink, Github } from "lucide-react";
-import img1 from "@/assets/work-image-30.png.asset.json";
-import img2 from "@/assets/work-image-31.png.asset.json";
-import img3 from "@/assets/work-image-32.png.asset.json";
-import img4 from "@/assets/work-image-33.png.asset.json";
-import img5 from "@/assets/work-image-34.png.asset.json";
-import img6 from "@/assets/work-hero-1.png.asset.json";
+import img1 from "@/assets/work-image-30.png";
+import img2 from "@/assets/work-image-31.png";
+import img3 from "@/assets/work-image-32.png";
+import img4 from "@/assets/work-image-33.png";
+import img5 from "@/assets/work-image-34.png";
+import img6 from "@/assets/work-hero-1.png";
 
 type Work = { title: string; tag: string; image: string; repo: string | null };
 
 const WORKS: Work[] = [
-  { title: "Health Care Management System", tag: "Healthcare Platform", image: img1.url, repo: "https://github.com/elfo-innovations/Health-Care-Management-System" },
-  { title: "WakeOye — Instant Tea & Coffee", tag: "Brand Website", image: img2.url, repo: "https://github.com/elfo-innovations/wakeoye" },
-  { title: "Online Auction", tag: "Marketplace", image: img3.url, repo: "https://github.com/elfo-innovations/online-auction" },
-  { title: "Hot Coffee", tag: "Restaurant & Café", image: img4.url, repo: null },
-  { title: "Orebi Shopping", tag: "E-Commerce", image: img5.url, repo: null },
-  { title: "MaruDry Fruit E-Commerce", tag: "E-Commerce", image: img6.url, repo: "https://github.com/elfo-innovations/MaruDry-Fruit-Ecommerce" },
+  { title: "Health Care Management System", tag: "Healthcare Platform", image: img1, repo: "https://github.com/elfo-innovations/Health-Care-Management-System" },
+  { title: "WakeOye — Instant Tea & Coffee", tag: "Brand Website", image: img2, repo: "https://github.com/elfo-innovations/wakeoye" },
+  { title: "Online Auction", tag: "Marketplace", image: img3, repo: "https://github.com/elfo-innovations/online-auction" },
+  { title: "Hot Coffee", tag: "Restaurant & Café", image: img4, repo: null },
+  { title: "Orebi Shopping", tag: "E-Commerce", image: img5, repo: null },
+  { title: "MaruDry Fruit E-Commerce", tag: "E-Commerce", image: img6, repo: "https://github.com/elfo-innovations/MaruDry-Fruit-Ecommerce" },
 ];
 
 export function WorkShowcase() {

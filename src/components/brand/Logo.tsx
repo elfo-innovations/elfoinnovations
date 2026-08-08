@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
-import logoLight from "@/assets/elfo-logo-light.png.asset.json";
-import logoDark from "@/assets/elfo-logo-dark.png.asset.json";
+import logoLight from "@/assets/elfo-logo-light.png";
+import logoDark from "@/assets/elfo-logo-dark.png";
 
 export function ElfoLogo({ className, size = "md" }: { className?: string; showTag?: boolean; size?: "sm" | "md" | "lg" }) {
   const h =
@@ -11,8 +11,8 @@ export function ElfoLogo({ className, size = "md" }: { className?: string; showT
       : "h-10 sm:h-11 md:h-12 lg:h-14";
   return (
     <div className={cn("flex items-center", className)}>
-      <img src={logoLight.url} alt="ELFO Innovations" className={cn(h, "w-auto object-contain block dark:hidden")} />
-      <img src={logoDark.url} alt="ELFO Innovations" className={cn(h, "w-auto object-contain hidden dark:block")} />
+      <img src={logoLight} alt="ELFO Innovations" className={cn(h, "w-auto object-contain block dark:hidden")} />
+      <img src={logoDark} alt="ELFO Innovations" className={cn(h, "w-auto object-contain hidden dark:block")} />
     </div>
   );
 }
@@ -20,8 +20,8 @@ export function ElfoLogo({ className, size = "md" }: { className?: string; showT
 export function ElfoLogoMark({ className }: { className?: string }) {
   return (
     <>
-      <img src={logoLight.url} alt="ELFO Innovations" className={cn("object-contain block dark:hidden", className)} />
-      <img src={logoDark.url} alt="ELFO Innovations" className={cn("object-contain hidden dark:block", className)} />
+      <img src={logoLight} alt="ELFO Innovations" className={cn("object-contain block dark:hidden", className)} />
+      <img src={logoDark} alt="ELFO Innovations" className={cn("object-contain hidden dark:block", className)} />
     </>
   );
 }

@@ -10,7 +10,6 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { AuthProvider } from "@/hooks/use-auth";
 import { InquiryProvider } from "@/hooks/use-inquiry";
@@ -41,7 +40,6 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
-  useEffect(() => { reportLovableError(error, { boundary: "tanstack_root_error_component" }); }, [error]);
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
@@ -56,7 +54,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
-const SITE_URL = "https://elfoinnovation.lovable.app";
+const SITE_URL = "https://elfoinnovations.com";
 const SITE_TITLE = "Custom Software Development Company | Web, Mobile & SaaS — ELFO Innovations";
 const SITE_DESC = "ELFO Innovations is a custom software development company building web, mobile, SaaS, and enterprise software. See your product built before you pay a dime.";
 const SITE_OG_IMAGE = `${SITE_URL}/favicon.png`;

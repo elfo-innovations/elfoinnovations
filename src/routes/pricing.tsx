@@ -3,7 +3,7 @@ import { PublicLayout } from "@/components/site/PublicLayout";
 import { PricingSection } from "@/components/site/PricingSection";
 import { FaqSection } from "@/components/site/FaqSection";
 
-const URL = "https://elfoinnovation.lovable.app/pricing";
+const URL = "https://elfoinnovations.com/pricing";
 const TITLE = "Software Development Pricing & Packages | ELFO Innovations";
 const DESC = "Transparent pricing for custom software development at ELFO Innovations. Starter to Enterprise packages for web, mobile, and SaaS projects.";
 
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/pricing")({
       children: JSON.stringify({
         "@context": "https://schema.org", "@type": "BreadcrumbList",
         itemListElement: [
-          { "@type": "ListItem", position: 1, name: "Home", item: "https://elfoinnovation.lovable.app/" },
+          { "@type": "ListItem", position: 1, name: "Home", item: "https://elfoinnovations.com/" },
           { "@type": "ListItem", position: 2, name: "Pricing", item: URL },
         ],
       }),

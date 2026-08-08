@@ -4,7 +4,7 @@ import { syncOfflineInquiries } from "@/lib/sync-inquiries";
 
 /**
  * Registers /sw.js on real, deployed origins only. Skipped in dev, iframe
- * previews, Lovable preview hostnames, and when ?sw=off is present (kill switch).
+ * previews, and when ?sw=off is present (kill switch).
  * Also wires online/offline UI + auto-sync of queued inquiries.
  */
 export function PWABoot() {
@@ -17,13 +17,7 @@ export function PWABoot() {
     const inIframe = (() => { try { return window.self !== window.top; } catch { return true; } })();
     const isPreview =
       host.startsWith("id-preview--") ||
-      host.startsWith("preview--") ||
-      host.endsWith(".lovableproject.com") ||
-      host === "lovableproject.com" ||
-      host.endsWith(".lovableproject-dev.com") ||
-      host === "lovableproject-dev.com" ||
-      host.endsWith(".beta.lovable.dev") ||
-      host === "beta.lovable.dev";
+      host.startsWith("preview--");
     const killSwitch = url.searchParams.get("sw") === "off";
     const canRegister =
       "serviceWorker" in navigator &&

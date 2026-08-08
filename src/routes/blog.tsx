@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PublicLayout } from "@/components/site/PublicLayout";
 import { ArrowRight, Calendar, Newspaper } from "lucide-react";
 
-const URL = "https://elfoinnovation.lovable.app/blog";
+const URL = "https://elfoinnovations.com/blog";
 const TITLE = "Software Development Insights, Guides & Technology Blog | ELFO Innovations";
 const DESC = "Deep-dive articles on custom software development, web and mobile engineering, SaaS architecture, and product strategy from the ELFO Innovations team.";
 
@@ -24,7 +24,7 @@ export const Route = createFileRoute("/blog")({
       children: JSON.stringify({
         "@context": "https://schema.org", "@type": "BreadcrumbList",
         itemListElement: [
-          { "@type": "ListItem", position: 1, name: "Home", item: "https://elfoinnovation.lovable.app/" },
+          { "@type": "ListItem", position: 1, name: "Home", item: "https://elfoinnovations.com/" },
           { "@type": "ListItem", position: 2, name: "Blog", item: URL },
         ],
       }),

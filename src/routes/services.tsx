@@ -5,7 +5,7 @@ import { ServicesScrollStory } from "@/components/site/ServicesScrollStory";
 import { WorkShowcase } from "@/components/site/WorkShowcase";
 import { CtaBanner } from "@/components/site/CtaBanner";
 
-const URL = "https://elfoinnovation.lovable.app/services";
+const URL = "https://elfoinnovations.com/services";
 const TITLE = "Software Development Services | Web, Mobile, SaaS & Enterprise — ELFO Innovations";
 const DESC = "Full-stack software development services from ELFO Innovations: web apps, mobile apps, SaaS platforms, cloud, and enterprise software built to ship.";
 
@@ -25,7 +25,7 @@ export const Route = createFileRoute("/services")({
       children: JSON.stringify({
         "@context": "https://schema.org", "@type": "BreadcrumbList",
         itemListElement: [
-          { "@type": "ListItem", position: 1, name: "Home", item: "https://elfoinnovation.lovable.app/" },
+          { "@type": "ListItem", position: 1, name: "Home", item: "https://elfoinnovations.com/" },
           { "@type": "ListItem", position: 2, name: "Services", item: URL },
         ],
       }),

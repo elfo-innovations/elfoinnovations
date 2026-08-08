@@ -18,7 +18,7 @@ import { AnnouncementBar } from "@/components/site/AnnouncementBar";
 import { ReviewsScroller } from "@/components/site/ReviewsScroller";
 import { WorkShowcase } from "@/components/site/WorkShowcase";
 
-const URL = "https://elfoinnovation.lovable.app";
+const URL = "https://elfoinnovations.com";
 const TITLE = "Custom Software Development Company | Web, Mobile & SaaS — ELFO Innovations";
 const DESC = "ELFO Innovations builds custom web, mobile, SaaS, and enterprise software for modern businesses. See your product built before you pay a dime.";
 

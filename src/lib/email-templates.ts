@@ -8,7 +8,7 @@ const BRAND = {
   electric: "#2E9BFF",
   text: "#E6EDF7",
   muted: "#9AB0CB",
-  site: "https://elfoinnovation.lovable.app",
+  site: "https://elfoinnovations.com",
 };
 
 function esc(s: string) {

@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useFollowUs } from "@/hooks/use-follow-us";
 import { BecomeDeveloperButton } from "@/components/recruitment/DeveloperApplicationModal";
 
-import profilePdf from "@/assets/elfo-company-profile.pdf.asset.json";
+import profilePdf from "@/assets/Elfo-Innovations-Company-Profile.pdf";
 
 const PILLARS = [
   { icon: Layers, title: "Full-Service", desc: "End-to-end development across web, mobile, cloud and enterprise." },
@@ -96,7 +96,7 @@ export function CompanyProfileSection() {
                 <Button onClick={() => setOpen(true)} className="flex-1 rounded-full electric-glow">
                   <FileText className="mr-2 h-4 w-4" /> See Company Profile
                 </Button>
-                <a href={profilePdf.url} download="Elfo-Innovations-Company-Profile.pdf" className="flex-1">
+                <a href={profilePdf} download="Elfo-Innovations-Company-Profile.pdf" className="flex-1">
                   <Button variant="outline" className="w-full rounded-full">
                     <Download className="mr-2 h-4 w-4" /> Download PDF
                   </Button>
@@ -111,14 +111,14 @@ export function CompanyProfileSection() {
         <DialogContent className="max-w-5xl h-[90vh] p-0 gap-0 overflow-hidden">
           <DialogHeader className="flex flex-row items-center justify-between border-b px-4 py-3 space-y-0">
             <DialogTitle className="text-sm sm:text-base">ELFO Innovations — Company Profile</DialogTitle>
-            <a href={profilePdf.url} download="Elfo-Innovations-Company-Profile.pdf">
+            <a href={profilePdf} download="Elfo-Innovations-Company-Profile.pdf">
               <Button size="sm" variant="outline" className="rounded-full">
                 <Download className="mr-2 h-3.5 w-3.5" /> Download
               </Button>
             </a>
           </DialogHeader>
-          <object data={profilePdf.url} type="application/pdf" className="h-full w-full">
-            <iframe src={profilePdf.url} className="h-full w-full" title="Company Profile PDF" />
+          <object data={profilePdf} type="application/pdf" className="h-full w-full">
+            <iframe src={profilePdf} className="h-full w-full" title="Company Profile PDF" />
           </object>
         </DialogContent>
       </Dialog>

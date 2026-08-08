@@ -150,7 +150,7 @@ export const approveDeveloperApplication = createServerFn({ method: "POST" })
       .eq("id", data.id);
     if (uErr) throw new Error(uErr.message);
 
-    const loginUrl = data.loginUrl || "https://elfoinnovation.lovable.app/auth";
+    const loginUrl = data.loginUrl || "https://elfoinnovations.com/auth";
     const mail = await sendEmail({
       to: email,
       subject: data.subject || "Welcome to Elfo Innovations",

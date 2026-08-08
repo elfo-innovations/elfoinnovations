@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PublicLayout } from "@/components/site/PublicLayout";
 import { ArrowLeft, Calendar } from "lucide-react";
 
-const SITE = "https://elfoinnovation.lovable.app";
+const SITE = "https://elfoinnovations.com";
 
 export const Route = createFileRoute("/blog/$slug")({
   head: ({ loaderData, params }: any) => {
