@@ -1,0 +1,19 @@
+name = "elfo-innovations"
+main = ".output/server/index.mjs"
+compatibility_date = "2026-08-01"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = ".output/public"
+binding = "ASSETS"
+
+[observability]
+enabled = true
+
+# Custom domain — attach elfoinnovations.com via the Cloudflare dashboard
+# (Workers & Pages > elfo-innovations > Custom Domains) after first deploy,
+# or uncomment and adjust once the zone is confirmed:
+# routes = [
+#   { pattern = "elfoinnovations.com", custom_domain = true },
+#   { pattern = "www.elfoinnovations.com", custom_domain = true }
+# ]

@@ -22,9 +22,9 @@ function fromAddress() {
   return process.env["MAIL_FROM"] || "ELFO Innovations <no-reply@elfoinnovations.com>";
 }
 
-export async function sendEmail(opts: { to: string; subject: string; html: string }): Promise<SendResult> {
+export async function sendEmail(opts: { to: string; subject: string; html: string; replyTo?: string }): Promise<SendResult> {
   const from = fromAddress();
-  const replyTo = process.env["MAIL_REPLY_TO"] || undefined;
+  const replyTo = opts.replyTo || process.env["MAIL_REPLY_TO"] || undefined;
 
   try {
     const resend = process.env["RESEND_API_KEY"];

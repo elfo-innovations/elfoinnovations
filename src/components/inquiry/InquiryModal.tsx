@@ -11,6 +11,8 @@ import { PhoneInput, defaultPhone, type PhoneValue } from "./PhoneInput";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { enqueueInquiry } from "@/lib/offline-queue";
+import { useServerFn } from "@tanstack/react-start";
+import { notifyAdminOfLead } from "@/lib/leads-notify.functions";
 
 type BudgetReadiness = "yes_approved" | "maybe_depends" | "not_yet_exploring";
 
@@ -21,6 +23,7 @@ const budgetOptions: { value: BudgetReadiness; title: string; desc: string }[] =
 ];
 
 export function InquiryModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const notifyAdmin = useServerFn(notifyAdminOfLead);
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<null | { code: string }>(null);
@@ -116,6 +119,21 @@ export function InquiryModal({ open, onClose }: { open: boolean; onClose: () => 
     ).slice(0, 8).toUpperCase()}`;
     const { error } = await supabase.from("leads").insert({ lead_code: leadCode, ...payload });
     setSubmitting(false);
+    if (!error) {
+      // Fire-and-forget: don't block the success UI on email delivery.
+      notifyAdmin({
+        data: {
+          lead_code: leadCode,
+          full_name: payload.full_name,
+          email: payload.email,
+          phone: payload.phone,
+          project_description: payload.project_description,
+          budget_readiness: payload.budget_readiness,
+          estimated_budget: payload.estimated_budget ?? null,
+          timeline: payload.timeline ?? null,
+        },
+      }).catch(() => {});
+    }
     if (error) {
       // Network hiccup — queue as fallback so the user isn't blocked.
       if (/fetch|network|failed to fetch/i.test(error.message || "")) {
