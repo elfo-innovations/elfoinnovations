@@ -27,7 +27,7 @@ type Nav = { to: string; label: string; icon: any };
 
 const NAVS: Record<"admin" | "developer" | "client", Nav[]> = {
   admin: [
-    { to: "/", label: "Home", icon: Home },
+    { to: "/", label: "Back To Home", icon: Home },
     { to: "/admin", label: "Overview", icon: LayoutDashboard },
     { to: "/admin/leads", label: "Leads", icon: FileText },
     { to: "/admin/clients", label: "Clients", icon: Users },
@@ -42,14 +42,14 @@ const NAVS: Record<"admin" | "developer" | "client", Nav[]> = {
     { to: "/profile", label: "My Profile", icon: Settings },
   ],
   developer: [
-    { to: "/", label: "Home", icon: Home },
+    { to: "/", label: "Back To Home", icon: Home },
     { to: "/developer", label: "Overview", icon: LayoutDashboard },
     { to: "/developer/projects", label: "My Projects", icon: Briefcase },
     { to: "/developer/messages", label: "Messages", icon: MessagesSquare },
     { to: "/profile", label: "My Profile", icon: Settings },
   ],
   client: [
-    { to: "/", label: "Home", icon: Home },
+    { to: "/", label: "Back To Home", icon: Home },
     { to: "/client", label: "Overview", icon: LayoutDashboard },
     { to: "/client/projects", label: "My Projects", icon: Briefcase },
     { to: "/client/important-info", label: "Important Info", icon: Info },
@@ -57,6 +57,8 @@ const NAVS: Record<"admin" | "developer" | "client", Nav[]> = {
     { to: "/client/messages", label: "Messages", icon: MessagesSquare },
     { to: "/client/reviews", label: "Reviews", icon: Star },
     { to: "/profile", label: "My Profile", icon: Settings },
+
+
   ],
 
 };
