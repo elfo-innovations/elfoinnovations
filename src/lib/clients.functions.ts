@@ -36,7 +36,9 @@ export const createClientWithLogin = createServerFn({ method: "POST" })
 
     const uid = created.user.id;
 
-    const { error: rErr } = await supabaseAdmin.from("user_roles").insert({ user_id: uid, role: "client" });
+    const { error: rErr } = await supabaseAdmin
+      .from("user_roles")
+      .insert({ user_id: uid, role: "client" });
     if (rErr) throw new Error(rErr.message);
 
     const { data: client, error: clientErr } = await supabaseAdmin
@@ -62,23 +64,8 @@ export const createClientWithLogin = createServerFn({ method: "POST" })
         .eq("id", data.source_lead_id);
     }
 
-    // Send onboarding credentials via Resend (no-reply@elfoinnovations.com)
-    const { sendEmail } = await import("@/lib/email.server");
-    const portalUrl = process.env["PORTAL_URL"] || "https://elfoinnovations.com";
-    await sendEmail({
-      to: email,
-      subject: "Your ELFO Innovations client portal login",
-      html: `
-        <div style="font-family:sans-serif;max-width:520px;margin:0 auto">
-          <h2>Welcome to ELFO Innovations, ${data.full_name.trim()}</h2>
-          <p>Your client portal account has been created. Use these details to log in:</p>
-          <p><b>Portal:</b> <a href="${portalUrl}/auth">${portalUrl}/auth</a><br/>
-             <b>Email:</b> ${email}<br/>
-             <b>Password:</b> ${data.password}</p>
-          <p>We recommend changing your password after first login.</p>
-          <p>— ELFO Innovations</p>
-        </div>`,
-    }).catch((e) => console.error("[onboarding email] failed", e));
+    // Note: onboarding email is no longer sent automatically here.
+    // Admin explicitly triggers it via the "Share" button in the credentials modal.
 
     return { client, email };
   });

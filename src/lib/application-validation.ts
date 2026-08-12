@@ -11,7 +11,14 @@ export const PRIMARY_ROLES = [
   "Other",
 ] as const;
 
-export const EXPERIENCE_OPTIONS = ["0-1 years", "1-2 years", "2-4 years", "4-6 years", "6-10 years", "10+ years"] as const;
+export const EXPERIENCE_OPTIONS = [
+  "0-1 years",
+  "1-2 years",
+  "2-4 years",
+  "4-6 years",
+  "6-10 years",
+  "10+ years",
+] as const;
 
 export const CURRENT_STATUS_OPTIONS = [
   "Student",
@@ -71,13 +78,15 @@ export function validateApplication(v: ApplicationInput): Record<string, string>
   };
 
   req("full_name", "Full name");
-  if (v.full_name?.trim() && v.full_name.trim().length < 3) e.full_name = "Please enter your full name";
+  if (v.full_name?.trim() && v.full_name.trim().length < 3)
+    e.full_name = "Please enter your full name";
 
   if (!v.email?.trim()) e.email = "Email address is required";
   else if (!EMAIL_RE.test(v.email.trim())) e.email = "Enter a valid email address";
 
   if (!v.phone?.trim()) e.phone = "Phone number is required";
-  else if (!PHONE_RE.test(v.phone.trim())) e.phone = "Enter a valid phone number (digits, optional +)";
+  else if (!PHONE_RE.test(v.phone.trim()))
+    e.phone = "Enter a valid phone number (digits, optional +)";
 
   req("country", "Country");
   req("city", "City");
@@ -118,6 +127,9 @@ export function validateApplication(v: ApplicationInput): Record<string, string>
 }
 
 export function usernameFromEmail(email: string) {
-  const base = email.split("@")[0].toLowerCase().replace(/[^a-z0-9._-]/g, "");
+  const base = email
+    .split("@")[0]
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]/g, "");
   return base || "developer";
 }

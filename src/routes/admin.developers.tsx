@@ -6,7 +6,7 @@ import { Plus, Loader2, Copy, Check, Eye, EyeOff, KeyRound, Trash2, RefreshCw, S
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { supabase } from "@/integrations/supabase/client";
 import { createDeveloperWithLogin } from "@/lib/developers.functions";
-import { deleteDeveloperAccount, adminResetUserPassword } from "@/lib/account.functions";
+import { deleteDeveloperAccount, adminResetUserPassword, shareCredentialsEmail } from "@/lib/account.functions";
 import { generateBrandedPassword } from "@/lib/branded-password";
 
 import { Button } from "@/components/ui/button";
@@ -31,11 +31,14 @@ function AdminDevelopers() {
   const createDev = useServerFn(createDeveloperWithLogin);
   const deleteDev = useServerFn(deleteDeveloperAccount);
   const resetPw = useServerFn(adminResetUserPassword);
+  const shareCreds = useServerFn(shareCredentialsEmail);
 
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [showPw, setShowPw] = useState(false);
-  const [credentials, setCredentials] = useState<null | { email: string; password: string }>(null);
+  const [actionBusy, setActionBusy] = useState<null | "done" | "share">(null);
+  const [credentials, setCredentials] = useState<null | { name: string; email: string; password: string }>(null);
+  const [resetDraft, setResetDraft] = useState<null | { user_id: string; name: string; email: string; password: string }>(null);
   const [copied, setCopied] = useState(false);
   const [search, setSearch] = useState("");
   const [form, setForm] = useState({
@@ -74,8 +77,8 @@ function AdminDevelopers() {
           bio: form.bio.trim() || null,
         },
       });
-      toast.success("Developer created — share the login below");
-      setCredentials({ email: form.email.trim(), password: form.password });
+      toast.success("Developer created — Done to close, or Share to email the login now");
+      setCredentials({ name: form.full_name.trim(), email: form.email.trim(), password: form.password });
       setOpen(false);
       reset();
       qc.invalidateQueries({ queryKey: ["admin-developers"] });
@@ -93,6 +96,49 @@ function AdminDevelopers() {
     );
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const doneCreate = () => setCredentials(null);
+  const shareCreate = async () => {
+    if (!credentials) return;
+    setActionBusy("share");
+    try {
+      await shareCreds({ data: { to: credentials.email, name: credentials.name, password: credentials.password } });
+      toast.success("Credentials emailed to " + credentials.email);
+      setCredentials(null);
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to send email");
+    } finally {
+      setActionBusy(null);
+    }
+  };
+
+  const doneReset = async () => {
+    if (!resetDraft) return;
+    setActionBusy("done");
+    try {
+      await resetPw({ data: { target_user_id: resetDraft.user_id, new_password: resetDraft.password } });
+      toast.success("Password reset");
+      setResetDraft(null);
+    } catch (e: any) {
+      toast.error(e?.message || "Reset failed");
+    } finally {
+      setActionBusy(null);
+    }
+  };
+  const shareReset = async () => {
+    if (!resetDraft) return;
+    setActionBusy("share");
+    try {
+      await resetPw({ data: { target_user_id: resetDraft.user_id, new_password: resetDraft.password } });
+      await shareCreds({ data: { to: resetDraft.email, name: resetDraft.name, password: resetDraft.password } });
+      toast.success("Password reset & credentials emailed to " + resetDraft.email);
+      setResetDraft(null);
+    } catch (e: any) {
+      toast.error(e?.message || "Reset/email failed");
+    } finally {
+      setActionBusy(null);
+    }
   };
 
   return (
@@ -147,14 +193,7 @@ function AdminDevelopers() {
             <div className="mt-3 flex flex-wrap justify-end gap-1">
               {d.user_id && (
                 <Button size="sm" variant="ghost" className="text-primary hover:bg-primary/10"
-                  onClick={async () => {
-                    const pw = generateBrandedPassword();
-                    try {
-                      await resetPw({ data: { target_user_id: d.user_id, new_password: pw } });
-                      setCredentials({ email: d.email, password: pw });
-                      toast.success("Password reset — share the new login");
-                    } catch (e: any) { toast.error(e?.message || "Reset failed"); }
-                  }}>
+                  onClick={() => setResetDraft({ user_id: d.user_id, name: d.full_name, email: d.email, password: generateBrandedPassword() })}>
                   <RefreshCw className="mr-1 h-3.5 w-3.5" /> Reset Password
                 </Button>
               )}
@@ -267,7 +306,50 @@ function AdminDevelopers() {
             </Button>
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setCredentials(null)}>Done</Button>
+            <Button variant="ghost" onClick={doneCreate} disabled={!!actionBusy}>Done</Button>
+            <Button onClick={shareCreate} disabled={!!actionBusy} className="electric-glow">
+              {actionBusy === "share" ? <Loader2 className="h-4 w-4 animate-spin" /> : "Share"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!resetDraft} onOpenChange={(v) => !v && setResetDraft(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><RefreshCw className="h-5 w-5 text-primary" /> Reset Password — {resetDraft?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid gap-1.5">
+              <Label>Email</Label>
+              <Input value={resetDraft?.email ?? ""} disabled />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>New Password</Label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Input
+                    type={showPw ? "text" : "password"}
+                    value={resetDraft?.password ?? ""}
+                    onChange={(e) => setResetDraft((d) => (d ? { ...d, password: e.target.value } : d))}
+                    className="pr-9"
+                  />
+                  <button type="button" onClick={() => setShowPw((s) => !s)} className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground">
+                    {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                <Button type="button" variant="outline" onClick={() => setResetDraft((d) => (d ? { ...d, password: generateBrandedPassword() } : d))}>Generate</Button>
+              </div>
+              <p className="text-xs text-muted-foreground">Nothing changes until you click Done or Share below.</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={doneReset} disabled={!!actionBusy}>
+              {actionBusy === "done" ? <Loader2 className="h-4 w-4 animate-spin" /> : "Done"}
+            </Button>
+            <Button onClick={shareReset} disabled={!!actionBusy} className="electric-glow">
+              {actionBusy === "share" ? <Loader2 className="h-4 w-4 animate-spin" /> : "Share"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

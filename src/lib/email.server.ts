@@ -22,7 +22,12 @@ function fromAddress() {
   return process.env["MAIL_FROM"] || "ELFO Innovations <no-reply@elfoinnovations.com>";
 }
 
-export async function sendEmail(opts: { to: string; subject: string; html: string; replyTo?: string }): Promise<SendResult> {
+export async function sendEmail(opts: {
+  to: string;
+  subject: string;
+  html: string;
+  replyTo?: string;
+}): Promise<SendResult> {
   const from = fromAddress();
   const replyTo = opts.replyTo || process.env["MAIL_REPLY_TO"] || undefined;
 
@@ -32,7 +37,13 @@ export async function sendEmail(opts: { to: string; subject: string; html: strin
       const r = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: { Authorization: `Bearer ${resend}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ from, to: [opts.to], subject: opts.subject, html: opts.html, reply_to: replyTo }),
+        body: JSON.stringify({
+          from,
+          to: [opts.to],
+          subject: opts.subject,
+          html: opts.html,
+          reply_to: replyTo,
+        }),
       });
       if (!r.ok) return { sent: false, provider: "resend", error: await r.text() };
       return { sent: true, provider: "resend" };
@@ -45,7 +56,12 @@ export async function sendEmail(opts: { to: string; subject: string; html: strin
       const r = await fetch("https://api.brevo.com/v3/smtp/email", {
         method: "POST",
         headers: { "api-key": brevo, "Content-Type": "application/json" },
-        body: JSON.stringify({ sender, to: [{ email: opts.to }], subject: opts.subject, htmlContent: opts.html }),
+        body: JSON.stringify({
+          sender,
+          to: [{ email: opts.to }],
+          subject: opts.subject,
+          htmlContent: opts.html,
+        }),
       });
       if (!r.ok) return { sent: false, provider: "brevo", error: await r.text() };
       return { sent: true, provider: "brevo" };
@@ -56,7 +72,12 @@ export async function sendEmail(opts: { to: string; subject: string; html: strin
       const r = await fetch("https://api.smtp2go.com/v3/email/send", {
         method: "POST",
         headers: { "X-Smtp2go-Api-Key": smtp2go, "Content-Type": "application/json" },
-        body: JSON.stringify({ sender: from, to: [opts.to], subject: opts.subject, html_body: opts.html }),
+        body: JSON.stringify({
+          sender: from,
+          to: [opts.to],
+          subject: opts.subject,
+          html_body: opts.html,
+        }),
       });
       if (!r.ok) return { sent: false, provider: "smtp2go", error: await r.text() };
       return { sent: true, provider: "smtp2go" };
@@ -65,10 +86,18 @@ export async function sendEmail(opts: { to: string; subject: string; html: strin
     const mg = process.env["MAILGUN_API_KEY"];
     const mgDomain = process.env["MAILGUN_DOMAIN"];
     if (mg && mgDomain) {
-      const body = new URLSearchParams({ from, to: opts.to, subject: opts.subject, html: opts.html });
+      const body = new URLSearchParams({
+        from,
+        to: opts.to,
+        subject: opts.subject,
+        html: opts.html,
+      });
       const r = await fetch(`https://api.mailgun.net/v3/${mgDomain}/messages`, {
         method: "POST",
-        headers: { Authorization: `Basic ${btoa(`api:${mg}`)}`, "Content-Type": "application/x-www-form-urlencoded" },
+        headers: {
+          Authorization: `Basic ${btoa(`api:${mg}`)}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
         body,
       });
       if (!r.ok) return { sent: false, provider: "mailgun", error: await r.text() };
@@ -93,9 +122,11 @@ export async function sendEmail(opts: { to: string; subject: string; html: strin
     return {
       sent: false,
       provider: "none",
-      error: "No email provider configured. Add RESEND_API_KEY, BREVO_API_KEY, SMTP2GO_API_KEY, MAILGUN_API_KEY + MAILGUN_DOMAIN, or SMTP_RELAY_URL.",
+      error:
+        "No email provider configured. Add RESEND_API_KEY, BREVO_API_KEY, SMTP2GO_API_KEY, MAILGUN_API_KEY + MAILGUN_DOMAIN, or SMTP_RELAY_URL.",
     };
-  } catch (e: any) {
-    return { sent: false, provider: "unknown", error: e?.message || String(e) };
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e);
+    return { sent: false, provider: "unknown", error: message };
   }
 }

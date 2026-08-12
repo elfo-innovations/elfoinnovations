@@ -1,6 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { validateApplication, normalizeUrl, type ApplicationInput } from "@/lib/application-validation";
+import {
+  validateApplication,
+  normalizeUrl,
+  type ApplicationInput,
+} from "@/lib/application-validation";
 
 type DecisionInput = {
   id: string;
@@ -28,7 +32,8 @@ export const submitDeveloperApplication = createServerFn({ method: "POST" })
       .select("id")
       .ilike("email", email)
       .maybeSingle();
-    if (existing) throw new Error("An application with this email address has already been submitted.");
+    if (existing)
+      throw new Error("An application with this email address has already been submitted.");
 
     const { error } = await supabaseAdmin.from("developer_applications").insert({
       full_name: data.full_name.trim(),
@@ -49,7 +54,8 @@ export const submitDeveloperApplication = createServerFn({ method: "POST" })
       resume_name: data.resume_name || null,
     });
     if (error) {
-      if (error.code === "23505") throw new Error("An application with this email address has already been submitted.");
+      if (error.code === "23505")
+        throw new Error("An application with this email address has already been submitted.");
       throw new Error(error.message);
     }
 
@@ -72,7 +78,8 @@ export const approveDeveloperApplication = createServerFn({ method: "POST" })
     });
     if (roleErr) throw new Error(roleErr.message);
     if (!isAdmin) throw new Error("Forbidden: admin only");
-    if (!data.password || data.password.length < 8) throw new Error("Temporary password must be at least 8 characters");
+    if (!data.password || data.password.length < 8)
+      throw new Error("Temporary password must be at least 8 characters");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { acceptanceEmail } = await import("@/lib/email-templates");
@@ -103,7 +110,10 @@ export const approveDeveloperApplication = createServerFn({ method: "POST" })
       const found = list?.users.find((u) => u.email?.toLowerCase() === email);
       if (!found) throw new Error("User already exists but could not be located");
       uid = found.id;
-      await supabaseAdmin.auth.admin.updateUserById(uid, { password: data.password, email_confirm: true });
+      await supabaseAdmin.auth.admin.updateUserById(uid, {
+        password: data.password,
+        email_confirm: true,
+      });
     } else {
       throw new Error(cErr?.message || "Failed to create developer account");
     }
@@ -116,12 +126,18 @@ export const approveDeveloperApplication = createServerFn({ method: "POST" })
       .eq("role", "developer")
       .maybeSingle();
     if (!roleRow) {
-      const { error: rErr } = await supabaseAdmin.from("user_roles").insert({ user_id: uid, role: "developer" });
+      const { error: rErr } = await supabaseAdmin
+        .from("user_roles")
+        .insert({ user_id: uid, role: "developer" });
       if (rErr) throw new Error(rErr.message);
     }
 
     // Developer profile row
-    const { data: devRow } = await supabaseAdmin.from("developers").select("id").eq("email", email).maybeSingle();
+    const { data: devRow } = await supabaseAdmin
+      .from("developers")
+      .select("id")
+      .eq("email", email)
+      .maybeSingle();
     if (!devRow) {
       const { error: dErr } = await supabaseAdmin.from("developers").insert({
         user_id: uid,
@@ -164,7 +180,14 @@ export const approveDeveloperApplication = createServerFn({ method: "POST" })
       }),
     });
 
-    return { ok: true, emailSent: mail.sent, emailError: mail.error ?? null, email, username, password: data.password };
+    return {
+      ok: true,
+      emailSent: mail.sent,
+      emailError: mail.error ?? null,
+      email,
+      username,
+      password: data.password,
+    };
   });
 
 export const rejectDeveloperApplication = createServerFn({ method: "POST" })
@@ -214,7 +237,10 @@ export const getResumeDownloadUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { path: string }) => input)
   .handler(async ({ data, context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
     if (!isAdmin) throw new Error("Forbidden: admin only");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: signed, error } = await supabaseAdmin.storage

@@ -1,4 +1,11 @@
-export type Country = { name: string; code: string; dial: string; flag: string; minLen: number; maxLen: number };
+export type Country = {
+  name: string;
+  code: string;
+  dial: string;
+  flag: string;
+  minLen: number;
+  maxLen: number;
+};
 
 export const COUNTRIES: Country[] = [
   { name: "Pakistan", code: "PK", dial: "+92", flag: "🇵🇰", minLen: 10, maxLen: 10 },

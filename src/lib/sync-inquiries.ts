@@ -5,7 +5,8 @@ let syncing = false;
 
 export async function syncOfflineInquiries(): Promise<{ synced: number; failed: number }> {
   if (syncing) return { synced: 0, failed: 0 };
-  if (typeof navigator !== "undefined" && navigator.onLine === false) return { synced: 0, failed: 0 };
+  if (typeof navigator !== "undefined" && navigator.onLine === false)
+    return { synced: 0, failed: 0 };
   syncing = true;
   let synced = 0;
   let failed = 0;
@@ -15,7 +16,8 @@ export async function syncOfflineInquiries(): Promise<{ synced: number; failed: 
       try {
         const p = item.payload as any;
         // Idempotency: reuse the queued id as the lead_code suffix so retries don't duplicate.
-        const leadCode = p.lead_code || `ELFO-${item.id.replace(/-/g, "").slice(0, 8).toUpperCase()}`;
+        const leadCode =
+          p.lead_code || `ELFO-${item.id.replace(/-/g, "").slice(0, 8).toUpperCase()}`;
         const { error } = await supabase.from("leads").insert({ ...p, lead_code: leadCode });
         if (error) {
           // duplicate == already synced previously → treat as done
@@ -30,8 +32,9 @@ export async function syncOfflineInquiries(): Promise<{ synced: number; failed: 
           await markDone(item.id);
           synced++;
         }
-      } catch (e: any) {
-        await markFailed(item.id, e?.message || "unknown");
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : "unknown";
+        await markFailed(item.id, message);
         failed++;
       }
     }
