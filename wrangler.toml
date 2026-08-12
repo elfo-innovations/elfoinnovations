@@ -10,6 +10,22 @@ binding = "ASSETS"
 [observability]
 enabled = true
 
+[vars]
+SUPABASE_PROJECT_ID = "gwkwpbrlrmqrsdjnnckb"
+SUPABASE_URL = "https://gwkwpbrlrmqrsdjnnckb.supabase.co"
+SUPABASE_PUBLISHABLE_KEY = "sb_publishable_457hgbemElU2_JfDl8zMyQ_ct93W_44"
+VITE_SUPABASE_PROJECT_ID = "gwkwpbrlrmqrsdjnnckb"
+VITE_SUPABASE_URL = "https://gwkwpbrlrmqrsdjnnckb.supabase.co"
+VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_457hgbemElU2_JfDl8zMyQ_ct93W_44"
+MAIL_FROM = "ELFO Innovations <no-reply@elfoinnovations.com>"
+ADMIN_NOTIFY_EMAIL = "elfoinnovations@gmail.com"
+PORTAL_URL = "https://elfoinnovations.com"
+VAPID_PUBLIC_KEY = "BJ6cKfxzjpgT3wDJBBEtGnYolKkNN5-iunilBADeBWDwheTrgWSE5e54bDWbcexpl4YQWVcGnz_fAOhdDHcnHE8"
+VAPID_SUBJECT = "mailto:elfoinnovations@gmail.com"
+# RESEND_API_KEY, SUPABASE_SERVICE_ROLE_KEY, VAPID_PRIVATE_KEY are NOT here on purpose —
+# keep those as "Secret" type in the Cloudflare dashboard (Settings > Variables and secrets).
+# Secrets persist across deploys automatically and should never be committed to the repo.
+
 # Custom domain — attach elfoinnovations.com via the Cloudflare dashboard
 # (Workers & Pages > elfo-innovations > Custom Domains) after first deploy,
 # or uncomment and adjust once the zone is confirmed:
