@@ -74,9 +74,11 @@ export function AboutSection() {
                 </p>
               </div>
             </div>
-            <div className="grid gap-4 border-t p-6 sm:p-8 md:border-l md:border-t-0">
+            <div className="grid gap-4 border-t p-6 sm:p-8 sm:grid-cols-3 md:border-l md:border-t-0">
               {[
-                { name: "Aaban Syed", url: "https://aabansyed.netlify.app", role: "Full-Stack Engineer", host: "aabansyed.netlify.app" },
+                { name: "Aaban Syed", url: "https://aabansyed.netlify.app", role: "Founder & CEO", host: "aabansyed.netlify.app" },
+                { name: "Shehriyal Aziz", url: "https://shehriyalaziz.vercel.app", role: "Founder & CTO", host: "shehriyalaziz.vercel.app" },
+                { name: "Alishba Anwar", url: "https://buildwithalishba.vercel.app", role: "CMO (Chief Marketing Officer)", host: "buildwithalishba.vercel.app" },
               ].map((p) => (
 
                 <a key={p.url} href={p.url} target="_blank" rel="noreferrer"

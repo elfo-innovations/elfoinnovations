@@ -55,5 +55,30 @@ export const adminResetUserPassword = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.auth.admin.updateUserById(data.target_user_id, { password: data.new_password });
     if (error) throw new Error(error.message);
+
+    // Look up who this user is (client or developer) to get their name + email, then notify them.
+    const [{ data: clientRow }, { data: devRow }] = await Promise.all([
+      supabaseAdmin.from("clients").select("full_name,email").eq("user_id", data.target_user_id).maybeSingle(),
+      supabaseAdmin.from("developers").select("full_name,email").eq("user_id", data.target_user_id).maybeSingle(),
+    ]);
+    const person = clientRow || devRow;
+    if (person?.email) {
+      const { sendEmail } = await import("@/lib/email.server");
+      const portalUrl = process.env["PORTAL_URL"] || "https://elfoinnovations.com";
+      await sendEmail({
+        to: person.email,
+        subject: "Your ELFO Innovations portal password was reset",
+        html: `
+          <div style="font-family:sans-serif;max-width:520px;margin:0 auto">
+            <h2>Hi ${person.full_name || ""},</h2>
+            <p>Your portal password has been reset by an administrator. Use the new password below to log in:</p>
+            <p><b>Portal:</b> <a href="${portalUrl}/auth">${portalUrl}/auth</a><br/>
+               <b>New password:</b> ${data.new_password}</p>
+            <p>We recommend changing this password after logging in.</p>
+            <p>— ELFO Innovations</p>
+          </div>`,
+      }).catch((e) => console.error("[reset password email] failed", e));
+    }
+
     return { ok: true };
   });
