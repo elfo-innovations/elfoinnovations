@@ -26,9 +26,14 @@ function NotFoundComponent() {
       <div className="max-w-md text-center">
         <h1 className="font-display text-7xl font-bold electric-text">404</h1>
         <h2 className="mt-4 text-xl font-semibold">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">The page you're looking for doesn't exist.</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          The page you're looking for doesn't exist.
+        </p>
         <div className="mt-6">
-          <Link to="/" className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+          <Link
+            to="/"
+            className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
             Go home
           </Link>
         </div>
@@ -46,8 +51,21 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <h1 className="text-xl font-semibold tracking-tight">This page didn't load</h1>
         <p className="mt-2 text-sm text-muted-foreground">Something went wrong on our end.</p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
-          <button onClick={() => { router.invalidate(); reset(); }} className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">Try again</button>
-          <a href="/" className="rounded-md border border-input bg-background px-4 py-2 text-sm font-medium">Go home</a>
+          <button
+            onClick={() => {
+              router.invalidate();
+              reset();
+            }}
+            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+          >
+            Try again
+          </button>
+          <a
+            href="/"
+            className="rounded-md border border-input bg-background px-4 py-2 text-sm font-medium"
+          >
+            Go home
+          </a>
         </div>
       </div>
     </div>
@@ -56,8 +74,9 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
 const SITE_URL = "https://elfoinnovations.com";
 const SITE_TITLE = "Custom Software Development Company | Web, Mobile & SaaS — ELFO Innovations";
-const SITE_DESC = "ELFO Innovations is a custom software development company building web, mobile, SaaS, and enterprise software. See your product built before you pay a dime.";
-const SITE_OG_IMAGE = `${SITE_URL}/favicon.png`;
+const SITE_DESC =
+  "ELFO Innovations is a custom software development company building web, mobile, SaaS, and enterprise software. See your product built before you pay a dime.";
+const SITE_OG_IMAGE = `${SITE_URL}/elfo-og.png`;
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
@@ -77,19 +96,30 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:title", content: SITE_TITLE },
       { name: "twitter:description", content: SITE_DESC },
       { name: "theme-color", content: "#0a1330" },
+      { name: "theme-color", content: "#0a1330" },
+      { name: "apple-mobile-web-app-title", content: "Elfo Innovations" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.png", type: "image/png" },
-      { rel: "apple-touch-icon", href: "/favicon.png" },
-      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "icon", type: "image/png", href: "/favicon-96x96.png", sizes: "96x96" },
+      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+      { rel: "shortcut icon", href: "/favicon.ico" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
+      { rel: "manifest", href: "/site.webmanifest" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "preconnect", href: "https://translate.google.com" },
       { rel: "preconnect", href: "https://translate.googleapis.com", crossOrigin: "anonymous" },
       { rel: "dns-prefetch", href: "https://www.gstatic.com" },
-      { rel: "preload", as: "script", href: "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Poppins:wght@500;600;700;800&family=Manrope:wght@500;600;700;800&family=Sora:wght@500;600;700;800&family=Outfit:wght@500;600;700;800&family=DM+Sans:wght@500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Urbanist:wght@500;600;700;800&family=Syne:wght@500;600;700;800&family=Bricolage+Grotesque:wght@500;600;700;800&family=Instrument+Serif&family=Playfair+Display:wght@500;600;700;800&family=Fraunces:wght@500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&family=Bebas+Neue&family=Archivo+Black&family=Sen:wght@500;600;700;800&display=swap" },
+      {
+        rel: "preload",
+        as: "script",
+        href: "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit",
+      },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Poppins:wght@500;600;700;800&family=Manrope:wght@500;600;700;800&family=Sora:wght@500;600;700;800&family=Outfit:wght@500;600;700;800&family=DM+Sans:wght@500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Urbanist:wght@500;600;700;800&family=Syne:wght@500;600;700;800&family=Bricolage+Grotesque:wght@500;600;700;800&family=Instrument+Serif&family=Playfair+Display:wght@500;600;700;800&family=Fraunces:wght@500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&family=Bebas+Neue&family=Archivo+Black&family=Sen:wght@500;600;700;800&display=swap",
+      },
     ],
     scripts: [
       {
@@ -100,7 +130,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           name: "ELFO Innovations",
           url: SITE_URL,
           logo: SITE_OG_IMAGE,
-          description: "Custom software development company providing web, mobile, SaaS, and enterprise software solutions.",
+          description:
+            "Custom software development company providing web, mobile, SaaS, and enterprise software solutions.",
         }),
       },
       {
@@ -126,7 +157,11 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
-        <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem('elfo-theme')||'dark';if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}` }} />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem('elfo-theme')||'dark';if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}`,
+          }}
+        />
       </head>
       <body>
         {children}
