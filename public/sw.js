@@ -4,6 +4,7 @@
    - Web Push notifications (unchanged behavior)
    - Background sync for offline inquiry submissions (via IndexedDB queue)
    -EK OR FAZOOL COMMENT
+   -bakwas
 */
 
 const VERSION = "elfo-pwa-v5";
