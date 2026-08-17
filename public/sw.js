@@ -3,6 +3,7 @@
    - Aggressive cache for the 3D desktop PC assets (/desktop_pc/*)
    - Web Push notifications (unchanged behavior)
    - Background sync for offline inquiry submissions (via IndexedDB queue)
+   -EK OR FAZOOL COMMENT
 */
 
 const VERSION = "elfo-pwa-v5";
