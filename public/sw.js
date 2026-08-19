@@ -7,7 +7,7 @@
    -bakwas
 */
 
-const VERSION = "elfo-pwa-v5";
+const VERSION = "elfo-pwa-v6";
 const SHELL_CACHE = `${VERSION}-shell`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 const MODEL_CACHE = `${VERSION}-model`;
@@ -135,7 +135,31 @@ self.addEventListener("fetch", (event) => {
   // Same-origin static assets (built JS/CSS, images, favicon, etc.)
   if (url.origin === self.location.origin) {
     const dest = req.destination;
-    if (["style", "script", "worker", "font"].includes(dest)) {
+    // Built JS chunks are content-hashed, so a fresh deploy replaces the file at a
+    // new URL entirely — cache-first here can strand a client on a chunk hash that
+    // no longer exists after a deploy, breaking client-side navigation until a hard
+    // reload. Network-first (falling back to cache only if offline) avoids that.
+    if (dest === "script") {
+      event.respondWith(
+        (async () => {
+          try {
+            const res = await fetch(req);
+            if (res && res.ok) {
+              const cache = await caches.open(RUNTIME_CACHE);
+              cache.put(req, res.clone()).catch(() => {});
+            }
+            return res;
+          } catch {
+            const cache = await caches.open(RUNTIME_CACHE);
+            const hit = await cache.match(req);
+            if (hit) return hit;
+            throw new Error("offline and not cached");
+          }
+        })(),
+      );
+      return;
+    }
+    if (["style", "worker", "font"].includes(dest)) {
       event.respondWith(cacheFirst(req, RUNTIME_CACHE));
       return;
     }
