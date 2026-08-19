@@ -73,6 +73,11 @@ function ClientProjectDetail() {
           </div>
           <Badge>{project.status}</Badge>
         </div>
+        {project.discount_percent > 0 && (
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-500">
+            🎉 {project.discount_percent}% referral discount applied
+          </div>
+        )}
       </div>
 
       <h2 className="mt-8 font-display text-lg font-bold">Project pipeline</h2>

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, Copy, Eye, EyeOff, KeyRound, Loader2, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
+import { Check, Copy, Eye, EyeOff, KeyRound, Link2, Loader2, Plus, RefreshCw, Search, Trash2, Users } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { supabase } from "@/integrations/supabase/client";
 import { createClientWithLogin } from "@/lib/clients.functions";
@@ -41,11 +41,23 @@ function AdminClients() {
   const [resetDraft, setResetDraft] = useState<null | { user_id: string; name: string; email: string; password: string }>(null);
   const [form, setForm] = useState({ full_name: "", email: "", password: "", phone: "", company: "", country: "", notes: "" });
   const [search, setSearch] = useState("");
+  const [view, setView] = useState<"all" | "connected">("all");
 
   const { data } = useQuery({
     queryKey: ["admin-clients"],
     queryFn: async () => (await supabase.from("clients").select("*").order("created_at", { ascending: false })).data,
   });
+
+  // Build lookup maps for the referral network: who referred whom.
+  const clientsById = new Map((data ?? []).map((c: any) => [c.id, c]));
+  const referrerIds = new Set((data ?? []).filter((c: any) => c.referred_by_client_id).map((c: any) => c.referred_by_client_id));
+  const referredCountByReferrer = new Map<string, number>();
+  (data ?? []).forEach((c: any) => {
+    if (c.referred_by_client_id) {
+      referredCountByReferrer.set(c.referred_by_client_id, (referredCountByReferrer.get(c.referred_by_client_id) ?? 0) + 1);
+    }
+  });
+  const isConnected = (c: any) => !!c.referred_by_client_id || referrerIds.has(c.id);
 
   const reset = () => {
     setForm({ full_name: "", email: "", password: "", phone: "", company: "", country: "", notes: "" });
@@ -144,19 +156,39 @@ function AdminClients() {
         </Button>
       </div>
 
-      <div className="mt-6 relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search by name, email, phone, company…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+      <div className="mt-6 flex flex-wrap items-center gap-3">
+        <div className="relative max-w-md flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Search by name, email, phone, company…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+        </div>
+        <div className="flex shrink-0 rounded-full border border-border bg-muted/30 p-1">
+          <button
+            onClick={() => setView("all")}
+            className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${view === "all" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            All Clients
+          </button>
+          <button
+            onClick={() => setView("connected")}
+            className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${view === "connected" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            <Users className="h-3.5 w-3.5" /> Connected Clients
+          </button>
+        </div>
       </div>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {(data ?? [])
           .filter((c: any) => {
             const q = search.trim().toLowerCase();
-            if (!q) return true;
-            return [c.full_name, c.email, c.phone, c.company, c.country].some((v) => v?.toLowerCase().includes(q));
+            if (q && ![c.full_name, c.email, c.phone, c.company, c.country].some((v) => v?.toLowerCase().includes(q))) return false;
+            if (view === "connected" && !isConnected(c)) return false;
+            return true;
           })
-          .map((c: any) => (
+          .map((c: any) => {
+          const referrer = c.referred_by_client_id ? clientsById.get(c.referred_by_client_id) : null;
+          const referredCount = referredCountByReferrer.get(c.id) ?? 0;
+          return (
           <div key={c.id} className="glass-card rounded-2xl p-5">
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0 truncate font-semibold">{c.full_name}</div>
@@ -172,6 +204,16 @@ function AdminClients() {
             {c.user_id && (
               <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
                 <KeyRound className="h-3 w-3" /> Client login active
+              </div>
+            )}
+            {referrer && (
+              <div className="mt-2 flex items-center gap-1.5 text-[11px] font-medium text-amber-500">
+                <Link2 className="h-3 w-3 shrink-0" /> {c.full_name} used {referrer.full_name}'s referral
+              </div>
+            )}
+            {referredCount > 0 && (
+              <div className="mt-2 flex items-center gap-1.5 text-[11px] font-medium text-primary">
+                <Users className="h-3 w-3 shrink-0" /> Referred {referredCount} client{referredCount > 1 ? "s" : ""}
               </div>
             )}
             <div className="mt-3 flex flex-wrap justify-end gap-1">
@@ -192,10 +234,15 @@ function AdminClients() {
             </div>
           </div>
 
-        ))}
+        );})}
         {(!data || data.length === 0) && (
           <div className="col-span-full rounded-2xl border border-dashed p-10 text-center text-sm text-muted-foreground">
             No clients yet. Click "Add Client" to create portal access.
+          </div>
+        )}
+        {data && data.length > 0 && view === "connected" && !data.some((c: any) => isConnected(c)) && (
+          <div className="col-span-full rounded-2xl border border-dashed p-10 text-center text-sm text-muted-foreground">
+            No connected clients yet — no one has used a referral code so far.
           </div>
         )}
       </div>

@@ -33,7 +33,14 @@ export const Route = createFileRoute("/admin/projects")({
                     <div className="mt-1 text-xs text-muted-foreground">{p.clients?.full_name ?? "Unassigned client"}</div>
                     {p.requirements && <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{p.requirements}</p>}
                   </div>
-                  <div className="flex items-center gap-2"><Badge>{p.status}</Badge><ChevronRight className="h-4 w-4 text-muted-foreground" /></div>
+                  <div className="flex items-center gap-2">
+                    {p.discount_percent > 0 && (
+                      <span className="shrink-0 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-bold text-emerald-500">
+                        🎉 {p.discount_percent}% Referral Discount
+                      </span>
+                    )}
+                    <Badge>{p.status}</Badge><ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </div>
                 </div>
                 <div className="mt-5">
                   <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">

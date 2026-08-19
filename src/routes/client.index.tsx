@@ -4,6 +4,7 @@ import { DashboardShell, StatCard } from "@/components/dashboard/DashboardShell"
 import { Briefcase, CheckCircle2, Receipt } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { ReferralModal } from "@/components/client/ReferralModal";
 
 const COMPLETED = new Set(["admin_approved", "sent_to_client", "client_approved"]);
 
@@ -51,6 +52,7 @@ function ClientOverview() {
         <StatCard label="Completed stages" value={stats?.completedStages ?? "…"} hint="Approved milestones" icon={CheckCircle2} />
         <StatCard label="Invoices" value={stats?.invoices ?? "…"} hint="Submitted so far" icon={Receipt} />
       </div>
+      <ReferralModal />
       <div className="glass-card mt-8 rounded-2xl p-6">
         <h2 className="font-display text-lg font-bold">You're in good hands</h2>
         <p className="mt-2 text-sm text-muted-foreground">Every project goes through Frontend → Backend → Database → Hosting. Admin reviews each stage before it reaches you.</p>

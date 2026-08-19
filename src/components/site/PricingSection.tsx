@@ -1,8 +1,11 @@
 import { Check, Sparkles } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useInquiry } from "@/hooks/use-inquiry";
+import { formatPriceForLang } from "@/lib/pricing-currency";
+import type { LangCode } from "@/i18n";
 
 const DEFAULTS = [
   { name: "STARTER", price: "$500", description: "Launch a simple but polished web presence.", features: ["1–3 page website", "Responsive design", "Basic SEO", "1 revision round"], is_popular: false },
@@ -14,6 +17,7 @@ const DEFAULTS = [
 
 export function PricingSection() {
   const { open } = useInquiry();
+  const { i18n } = useTranslation();
   const { data } = useQuery({
     queryKey: ["pricing_plans"],
     queryFn: async () => (await supabase.from("pricing_plans").select("*").eq("is_active", true).order("sort_order")).data,
@@ -38,7 +42,7 @@ export function PricingSection() {
                 </div>
               )}
               <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{p.name}</div>
-              <div className="mt-3 font-display text-3xl font-bold">{p.price}</div>
+              <div className="mt-3 font-display text-3xl font-bold">{formatPriceForLang(p.price, i18n.language as LangCode)}</div>
               <p className="mt-2 text-xs text-muted-foreground">{p.description}</p>
               <ul className="mt-5 flex-1 space-y-2 text-sm">
                 {(p.features as string[]).map((f) => (

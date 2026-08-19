@@ -27,7 +27,6 @@ type Nav = { to: string; label: string; icon: any };
 
 const NAVS: Record<"admin" | "developer" | "client", Nav[]> = {
   admin: [
-    { to: "/", label: "Back To Home", icon: Home },
     { to: "/admin", label: "Overview", icon: LayoutDashboard },
     { to: "/admin/leads", label: "Leads", icon: FileText },
     { to: "/admin/clients", label: "Clients", icon: Users },
@@ -40,16 +39,16 @@ const NAVS: Record<"admin" | "developer" | "client", Nav[]> = {
     { to: "/admin/web-portal", label: "Web Portal", icon: Globe },
     { to: "/admin/blogs", label: "Blogs", icon: Newspaper },
     { to: "/profile", label: "My Profile", icon: Settings },
+    { to: "/", label: "Back To Home", icon: Home },
   ],
   developer: [
-    { to: "/", label: "Back To Home", icon: Home },
     { to: "/developer", label: "Overview", icon: LayoutDashboard },
     { to: "/developer/projects", label: "My Projects", icon: Briefcase },
     { to: "/developer/messages", label: "Messages", icon: MessagesSquare },
     { to: "/profile", label: "My Profile", icon: Settings },
+    { to: "/", label: "Back To Home", icon: Home },
   ],
   client: [
-    { to: "/", label: "Back To Home", icon: Home },
     { to: "/client", label: "Overview", icon: LayoutDashboard },
     { to: "/client/projects", label: "My Projects", icon: Briefcase },
     { to: "/client/important-info", label: "Important Info", icon: Info },
@@ -57,8 +56,7 @@ const NAVS: Record<"admin" | "developer" | "client", Nav[]> = {
     { to: "/client/messages", label: "Messages", icon: MessagesSquare },
     { to: "/client/reviews", label: "Reviews", icon: Star },
     { to: "/profile", label: "My Profile", icon: Settings },
-
-
+    { to: "/", label: "Back To Home", icon: Home },
   ],
 
 };
@@ -67,7 +65,7 @@ function NavList({ role, nav, pathname, onNavigate, onSignOut, email }: { role: 
   const roleLabel = role.charAt(0).toUpperCase() + role.slice(1);
   return (
     <>
-      <nav className="flex-1 space-y-0.5 px-3 py-4">
+      <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
         <div className="mb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{role} portal</div>
         {nav.map((n) => {
           const active = n.to === "/" ? pathname === "/" : pathname === n.to || (n.to !== `/${role}` && pathname.startsWith(n.to));
@@ -147,7 +145,7 @@ function ShellInner({ role, nav, user, location, navigate, signOut, roles, mobil
 
   return (
     <div className="flex min-h-screen bg-background">
-      <aside className="hidden w-64 shrink-0 flex-col border-r bg-card/40 backdrop-blur lg:flex">
+      <aside className="hidden w-64 shrink-0 flex-col border-r bg-card/40 backdrop-blur lg:sticky lg:top-0 lg:flex lg:h-screen">
         <div className="border-b px-6 py-5"><Link to="/"><ElfoLogo /></Link></div>
         <NavList role={role} nav={nav} pathname={location.pathname} onSignOut={handleSignOut} email={user.email} />
       </aside>

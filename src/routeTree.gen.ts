@@ -28,7 +28,7 @@ import { Route as AdminLeadsRouteImport } from './routes/admin.leads'
 import { Route as AdminProjectsRouteImport } from './routes/admin.projects'
 import { Route as AdminReviewsRouteImport } from './routes/admin.reviews'
 import { Route as AdminWebPortalRouteImport } from './routes/admin.web-portal'
-import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
+import { Route as BlogSlugRouteImport } from './routes/blog_.$slug'
 import { Route as ClientIndexRouteImport } from './routes/client.index'
 import { Route as ClientImportantInfoRouteImport } from './routes/client.important-info'
 import { Route as ClientInvoicesRouteImport } from './routes/client.invoices'
@@ -139,9 +139,9 @@ const AdminWebPortalRoute = AdminWebPortalRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const BlogSlugRoute = BlogSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => BlogRoute,
+  id: '/blog_/$slug',
+  path: '/blog/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ClientIndexRoute = ClientIndexRouteImport.update({
   id: '/client/',
@@ -214,7 +214,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
-  '/blog': typeof BlogRouteWithChildren
+  '/blog': typeof BlogRoute
   '/portfolio': typeof PortfolioRoute
   '/pricing': typeof PricingRoute
   '/profile': typeof ProfileRoute
@@ -249,7 +249,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
-  '/blog': typeof BlogRouteWithChildren
+  '/blog': typeof BlogRoute
   '/portfolio': typeof PortfolioRoute
   '/pricing': typeof PricingRoute
   '/profile': typeof ProfileRoute
@@ -285,7 +285,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
-  '/blog': typeof BlogRouteWithChildren
+  '/blog': typeof BlogRoute
   '/portfolio': typeof PortfolioRoute
   '/pricing': typeof PricingRoute
   '/profile': typeof ProfileRoute
@@ -300,7 +300,7 @@ export interface FileRoutesById {
   '/admin/projects': typeof AdminProjectsRoute
   '/admin/reviews': typeof AdminReviewsRoute
   '/admin/web-portal': typeof AdminWebPortalRoute
-  '/blog/$slug': typeof BlogSlugRoute
+  '/blog_/$slug': typeof BlogSlugRoute
   '/client/important-info': typeof ClientImportantInfoRoute
   '/client/invoices': typeof ClientInvoicesRoute
   '/client/messages': typeof ClientMessagesRoute
@@ -407,7 +407,7 @@ export interface FileRouteTypes {
     | '/admin/projects'
     | '/admin/reviews'
     | '/admin/web-portal'
-    | '/blog/$slug'
+    | '/blog_/$slug'
     | '/client/important-info'
     | '/client/invoices'
     | '/client/messages'
@@ -428,7 +428,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
-  BlogRoute: typeof BlogRouteWithChildren
+  BlogRoute: typeof BlogRoute
   PortfolioRoute: typeof PortfolioRoute
   PricingRoute: typeof PricingRoute
   ProfileRoute: typeof ProfileRoute
@@ -443,6 +443,7 @@ export interface RootRouteChildren {
   AdminProjectsRoute: typeof AdminProjectsRoute
   AdminReviewsRoute: typeof AdminReviewsRoute
   AdminWebPortalRoute: typeof AdminWebPortalRoute
+  BlogSlugRoute: typeof BlogSlugRoute
   ClientImportantInfoRoute: typeof ClientImportantInfoRoute
   ClientInvoicesRoute: typeof ClientInvoicesRoute
   ClientMessagesRoute: typeof ClientMessagesRoute
@@ -594,12 +595,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminWebPortalRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/blog/$slug': {
-      id: '/blog/$slug'
-      path: '/$slug'
+    '/blog_/$slug': {
+      id: '/blog_/$slug'
+      path: '/blog/$slug'
       fullPath: '/blog/$slug'
       preLoaderRoute: typeof BlogSlugRouteImport
-      parentRoute: typeof BlogRoute
+      parentRoute: typeof rootRouteImport
     }
     '/client/': {
       id: '/client/'
@@ -695,21 +696,11 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface BlogRouteChildren {
-  BlogSlugRoute: typeof BlogSlugRoute
-}
-
-const BlogRouteChildren: BlogRouteChildren = {
-  BlogSlugRoute: BlogSlugRoute,
-}
-
-const BlogRouteWithChildren = BlogRoute._addFileChildren(BlogRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
-  BlogRoute: BlogRouteWithChildren,
+  BlogRoute: BlogRoute,
   PortfolioRoute: PortfolioRoute,
   PricingRoute: PricingRoute,
   ProfileRoute: ProfileRoute,
@@ -724,6 +715,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminProjectsRoute: AdminProjectsRoute,
   AdminReviewsRoute: AdminReviewsRoute,
   AdminWebPortalRoute: AdminWebPortalRoute,
+  BlogSlugRoute: BlogSlugRoute,
   ClientImportantInfoRoute: ClientImportantInfoRoute,
   ClientInvoicesRoute: ClientInvoicesRoute,
   ClientMessagesRoute: ClientMessagesRoute,
