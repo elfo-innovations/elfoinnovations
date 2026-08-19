@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,6 +27,7 @@ function ClientProjects() {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({ name: "", requirements: "", budget: "", deadline: "" });
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
 
   const { data: client } = useQuery({
     queryKey: ["me-client", user?.id],
@@ -40,12 +42,27 @@ function ClientProjects() {
       (await supabase.from("projects").select("*, project_stages(*)").eq("client_id", client!.id).order("created_at", { ascending: false })).data ?? [],
   });
 
+  const { data: services } = useQuery({
+    queryKey: ["active-services-for-project-form"],
+    enabled: open,
+    queryFn: async () =>
+      (await supabase.from("services").select("id, title, price").eq("is_active", true).order("sort_order")).data ?? [],
+  });
+
+  const toggleService = (id: string) => {
+    setSelectedServiceIds((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));
+  };
+
   const submit = async () => {
     if (!client) return toast.error("Client profile missing");
     if (!form.name.trim() || !form.requirements.trim()) return toast.error("Project name and requirements are required");
     setBusy(true);
     try {
       const project_code = `PRJ-${Date.now().toString(36).toUpperCase()}`;
+      const selected_services = (services ?? [])
+        .filter((s: any) => selectedServiceIds.includes(s.id))
+        .map((s: any) => ({ service_id: s.id, title: s.title, price: s.price }));
+
       const { error } = await supabase.from("projects").insert({
         project_code,
         name: form.name.trim(),
@@ -54,11 +71,17 @@ function ClientProjects() {
         budget: form.budget ? Number(form.budget) : null,
         deadline: form.deadline || null,
         status: "planning" as any,
+        selected_services,
       });
       if (error) throw error;
-      toast.success("Requirement submitted to admin");
+      toast.success(
+        selected_services.length > 0
+          ? "Requirement submitted — an invoice has been generated for the admin"
+          : "Requirement submitted to admin"
+      );
       setOpen(false);
       setForm({ name: "", requirements: "", budget: "", deadline: "" });
+      setSelectedServiceIds([]);
       qc.invalidateQueries({ queryKey: ["client-projects"] });
     } catch (e: any) {
       toast.error(e?.message || "Failed to submit");
@@ -127,6 +150,27 @@ function ClientProjects() {
               <div className="grid gap-1.5">
                 <Label>Target deadline</Label>
                 <Input type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} />
+              </div>
+            </div>
+
+            <div className="grid gap-1.5">
+              <Label>Services needed</Label>
+              <p className="text-xs text-muted-foreground">Select the services you'd like — an invoice will be generated automatically for these.</p>
+              <div className="mt-1 space-y-2 rounded-xl border p-3">
+                {(services ?? []).length === 0 && (
+                  <div className="text-xs text-muted-foreground">No services configured yet.</div>
+                )}
+                {(services ?? []).map((s: any) => (
+                  <label key={s.id} className="flex cursor-pointer items-center justify-between gap-3 rounded-lg px-2 py-1.5 hover:bg-accent">
+                    <div className="flex items-center gap-2">
+                      <Checkbox checked={selectedServiceIds.includes(s.id)} onCheckedChange={() => toggleService(s.id)} />
+                      <span className="text-sm">{s.title}</span>
+                    </div>
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {s.price ? `PKR ${Number(s.price).toLocaleString()}` : "—"}
+                    </span>
+                  </label>
+                ))}
               </div>
             </div>
           </div>

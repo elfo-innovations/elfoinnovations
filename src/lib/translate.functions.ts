@@ -7,56 +7,72 @@ const inputSchema = z.object({
 });
 
 /**
- * Translate a chat message to the receiver's UI language using the Lovable AI Gateway.
- * Returns { translated, detectedLang } — detectedLang is a best-effort ISO code
- * ("en", "es", "fr", "de", "ar", "ur", "ja", "zh", ...).
- * If the source already matches target, returns the original text and same code.
+ * Translate a chat message to the receiver's UI language — 100% FREE,
+ * no API key or signup required.
+ *
+ * Primary:  Google Translate's public endpoint (same one Google's own
+ *           "Translate this page" widget uses). No key needed.
+ * Fallback: MyMemory's free translation API, used only if Google's
+ *           endpoint is unreachable or rate-limited, so translation
+ *           keeps working either way.
+ *
+ * Returns { translated, detectedLang } — detectedLang is a best-effort
+ * ISO code ("en", "es", "fr", "de", "ar", "ur", "ja", "zh", ...).
  */
 export const translateMessage = createServerFn({ method: "POST" })
   .inputValidator((data) => inputSchema.parse(data))
   .handler(async ({ data }) => {
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) {
-      return { translated: data.text, detectedLang: data.target, skipped: true as const };
-    }
+    const target = data.target.slice(0, 2).toLowerCase();
 
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          {
-            role: "system",
-            content:
-              'You are a translation engine for a chat app. Detect the source language of the user text and translate it to the target ISO code the user provides. Reply with ONLY strict JSON in the exact shape {"detected":"<iso>","translated":"<text>"} — no prose, no code fences. Preserve emojis, links, numbers, and line breaks. If the source is already the target language, return the original text unchanged with the correct detected code.',
-          },
-          {
-            role: "user",
-            content: `Target: ${data.target}\nText:\n${data.text}`,
-          },
-        ],
-      }),
-    });
-
-    if (!res.ok) {
-      return { translated: data.text, detectedLang: data.target, skipped: true as const };
-    }
-
-    const json: any = await res.json();
-    const content: string = json?.choices?.[0]?.message?.content ?? "";
+    // ---------- Primary: Google Translate public endpoint (free, no key) ----------
     try {
-      const cleaned = content.trim().replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
-      const parsed = JSON.parse(cleaned);
-      return {
-        translated: String(parsed.translated ?? data.text),
-        detectedLang: String(parsed.detected ?? data.target).toLowerCase().slice(0, 5),
-        skipped: false as const,
-      };
+      const url =
+        `https://translate.googleapis.com/translate_a/single` +
+        `?client=gtx&sl=auto&tl=${encodeURIComponent(target)}&dt=t&q=${encodeURIComponent(data.text)}`;
+
+      const res = await fetch(url, {
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; ElfoInnovationsChat/1.0)" },
+      });
+
+      if (res.ok) {
+        const json: any = await res.json();
+        // Shape: [ [ [translatedChunk, originalChunk, ...], ... ], null, "detectedSourceLang", ... ]
+        const chunks = Array.isArray(json?.[0]) ? json[0] : [];
+        const translated = chunks.map((c: any) => c?.[0] ?? "").join("").trim();
+        const detected = typeof json?.[2] === "string" ? json[2] : target;
+
+        if (translated) {
+          return { translated, detectedLang: detected.toLowerCase().slice(0, 5), skipped: false as const };
+        }
+      }
     } catch {
-      return { translated: data.text, detectedLang: data.target, skipped: true as const };
+      // fall through to the backup provider below
     }
+
+    // ---------- Fallback: MyMemory (also free, no key) ----------
+    try {
+      const url =
+        `https://api.mymemory.translated.net/get` +
+        `?q=${encodeURIComponent(data.text)}&langpair=${encodeURIComponent(`autodetect|${target}`)}`;
+
+      const res = await fetch(url);
+      if (res.ok) {
+        const json: any = await res.json();
+        const translated: string | undefined = json?.responseData?.translatedText;
+        const detected: string | undefined = json?.responseData?.detectedLanguage || json?.matches?.[0]?.source;
+
+        if (translated && translated.trim()) {
+          return {
+            translated: translated.trim(),
+            detectedLang: (detected || target).toLowerCase().slice(0, 5),
+            skipped: false as const,
+          };
+        }
+      }
+    } catch {
+      // both providers failed — fall through to returning the original text
+    }
+
+    // ---------- Both providers unavailable: don't break the chat, just skip ----------
+    return { translated: data.text, detectedLang: target, skipped: true as const };
   });

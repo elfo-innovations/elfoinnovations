@@ -1,11 +1,25 @@
 import { useState } from "react";
-import { Download, FileText, Sparkles, Shield, Zap, Layers, Rocket, Heart } from "lucide-react";
+import {
+  Download,
+  FileText,
+  Sparkles,
+  Shield,
+  Zap,
+  Layers,
+  Rocket,
+  Heart,
+  BadgeCheck,
+  ShieldCheck,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useFollowUs } from "@/hooks/use-follow-us";
 import { BecomeDeveloperButton } from "@/components/recruitment/DeveloperApplicationModal";
 
 import profilePdf from "@/assets/Elfo-Innovations-Company-Profile.pdf";
+// 1) Drop your FBR registration PDF into src/assets/ with this exact name
+//    (or rename this import to match whatever you name the file).
+import fbrCertificatePdf from "@/assets/Elfo-Innovations-FBR-Registration.pdf";
 
 const PILLARS = [
   { icon: Layers, title: "Full-Service", desc: "End-to-end development across web, mobile, cloud and enterprise." },
@@ -16,7 +30,9 @@ const PILLARS = [
 
 export function CompanyProfileSection() {
   const [open, setOpen] = useState(false);
+  const [fbrOpen, setFbrOpen] = useState(false);
   const { open: openFollow } = useFollowUs();
+
   return (
     <section id="company" className="border-t bg-background py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -54,13 +70,50 @@ export function CompanyProfileSection() {
                 </div>
               ))}
             </div>
+
+            {/* FBR Registered trust badge card */}
+            <div className="glass-card mt-4 flex flex-col gap-4 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <ShieldCheck className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5 text-sm font-semibold">
+                    FBR Registered
+                    <BadgeCheck className="h-4 w-4 text-primary" />
+                  </div>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Registered with the Federal Board of Revenue, Government of Pakistan.
+                  </p>
+                </div>
+              </div>
+              <div className="flex shrink-0 gap-2">
+                <Button
+                  onClick={() => setFbrOpen(true)}
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 rounded-full sm:flex-none"
+                >
+                  <FileText className="mr-2 h-3.5 w-3.5" /> View Certificate
+                </Button>
+                <a
+                  href={fbrCertificatePdf}
+                  download="Elfo-Innovations-FBR-Registration.pdf"
+                  className="flex-1 sm:flex-none"
+                >
+                  <Button size="sm" className="w-full rounded-full electric-glow">
+                    <Download className="mr-2 h-3.5 w-3.5" /> Download
+                  </Button>
+                </a>
+              </div>
+            </div>
+
             <div className="mt-6 flex flex-wrap gap-3">
               <Button onClick={openFollow} variant="outline" className="rounded-full">
                 <Heart className="mr-2 h-4 w-4 text-primary" /> Follow Us
               </Button>
               <BecomeDeveloperButton />
             </div>
-
           </div>
 
           {/* Right: Company Profile PDF card */}
@@ -107,6 +160,7 @@ export function CompanyProfileSection() {
         </div>
       </div>
 
+      {/* Company Profile dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-5xl h-[90vh] p-0 gap-0 overflow-hidden">
           <DialogHeader className="flex flex-row items-center justify-between border-b px-4 py-3 space-y-0">
@@ -119,6 +173,23 @@ export function CompanyProfileSection() {
           </DialogHeader>
           <object data={profilePdf} type="application/pdf" className="h-full w-full">
             <iframe src={profilePdf} className="h-full w-full" title="Company Profile PDF" />
+          </object>
+        </DialogContent>
+      </Dialog>
+
+      {/* FBR Registration Certificate dialog */}
+      <Dialog open={fbrOpen} onOpenChange={setFbrOpen}>
+        <DialogContent className="max-w-5xl h-[90vh] p-0 gap-0 overflow-hidden">
+          <DialogHeader className="flex flex-row items-center justify-between border-b px-4 py-3 space-y-0">
+            <DialogTitle className="text-sm sm:text-base">ELFO Innovations — FBR Registration Certificate</DialogTitle>
+            <a href={fbrCertificatePdf} download="Elfo-Innovations-FBR-Registration.pdf">
+              <Button size="sm" variant="outline" className="rounded-full">
+                <Download className="mr-2 h-3.5 w-3.5" /> Download
+              </Button>
+            </a>
+          </DialogHeader>
+          <object data={fbrCertificatePdf} type="application/pdf" className="h-full w-full">
+            <iframe src={fbrCertificatePdf} className="h-full w-full" title="FBR Registration Certificate PDF" />
           </object>
         </DialogContent>
       </Dialog>

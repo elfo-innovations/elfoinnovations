@@ -463,10 +463,11 @@ function ServicesEditor() {
   return (
     <CrudList
       title="Services" table="services" visibilityCol="is_active"
-      empty={{ title: "", description: "", icon: "Code2", sort_order: 100, is_active: true }}
+      empty={{ title: "", description: "", icon: "Code2", sort_order: 100, is_active: true, price: 0 }}
       columns={[
         { label: "title", render: (r) => r.title },
         { label: "desc", render: (r) => r.description },
+        { label: "price", render: (r) => (r.price ? `PKR ${Number(r.price).toLocaleString()}` : "—") },
       ]}
       renderForm={(f, set) => (<>
         <Field label="Title" value={f.title} onChange={(v) => set({ ...f, title: v })} />
@@ -476,6 +477,7 @@ function ServicesEditor() {
           <Field label="Sort order" value={f.sort_order} onChange={(v) => set({ ...f, sort_order: Number(v) || 0 })} />
           <Field label="CTA label" value={f.cta_label} onChange={(v) => set({ ...f, cta_label: v })} />
           <Field label="CTA href" value={f.cta_href} onChange={(v) => set({ ...f, cta_href: v })} />
+          <Field label="Price (PKR)" value={f.price} onChange={(v) => set({ ...f, price: Number(v) || 0 })} />
         </div>
         <MediaPicker label="Image" value={f.image_url} onChange={(v) => set({ ...f, image_url: v })} />
       </>)}

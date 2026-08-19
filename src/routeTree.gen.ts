@@ -25,6 +25,7 @@ import { Route as AdminDeveloperRequestsRouteImport } from './routes/admin.devel
 import { Route as AdminDevelopersRouteImport } from './routes/admin.developers'
 import { Route as AdminInvoicesRouteImport } from './routes/admin.invoices'
 import { Route as AdminLeadsRouteImport } from './routes/admin.leads'
+import { Route as AdminProjectInvoicesRouteImport } from './routes/admin.project-invoices'
 import { Route as AdminProjectsRouteImport } from './routes/admin.projects'
 import { Route as AdminReviewsRouteImport } from './routes/admin.reviews'
 import { Route as AdminWebPortalRouteImport } from './routes/admin.web-portal'
@@ -121,6 +122,11 @@ const AdminInvoicesRoute = AdminInvoicesRouteImport.update({
 const AdminLeadsRoute = AdminLeadsRouteImport.update({
   id: '/admin/leads',
   path: '/admin/leads',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminProjectInvoicesRoute = AdminProjectInvoicesRouteImport.update({
+  id: '/admin/project-invoices',
+  path: '/admin/project-invoices',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminProjectsRoute = AdminProjectsRouteImport.update({
@@ -226,6 +232,7 @@ export interface FileRoutesByFullPath {
   '/admin/developers': typeof AdminDevelopersRoute
   '/admin/invoices': typeof AdminInvoicesRoute
   '/admin/leads': typeof AdminLeadsRoute
+  '/admin/project-invoices': typeof AdminProjectInvoicesRoute
   '/admin/projects': typeof AdminProjectsRoute
   '/admin/reviews': typeof AdminReviewsRoute
   '/admin/web-portal': typeof AdminWebPortalRoute
@@ -261,6 +268,7 @@ export interface FileRoutesByTo {
   '/admin/developers': typeof AdminDevelopersRoute
   '/admin/invoices': typeof AdminInvoicesRoute
   '/admin/leads': typeof AdminLeadsRoute
+  '/admin/project-invoices': typeof AdminProjectInvoicesRoute
   '/admin/projects': typeof AdminProjectsRoute
   '/admin/reviews': typeof AdminReviewsRoute
   '/admin/web-portal': typeof AdminWebPortalRoute
@@ -297,6 +305,7 @@ export interface FileRoutesById {
   '/admin/developers': typeof AdminDevelopersRoute
   '/admin/invoices': typeof AdminInvoicesRoute
   '/admin/leads': typeof AdminLeadsRoute
+  '/admin/project-invoices': typeof AdminProjectInvoicesRoute
   '/admin/projects': typeof AdminProjectsRoute
   '/admin/reviews': typeof AdminReviewsRoute
   '/admin/web-portal': typeof AdminWebPortalRoute
@@ -334,6 +343,7 @@ export interface FileRouteTypes {
     | '/admin/developers'
     | '/admin/invoices'
     | '/admin/leads'
+    | '/admin/project-invoices'
     | '/admin/projects'
     | '/admin/reviews'
     | '/admin/web-portal'
@@ -369,6 +379,7 @@ export interface FileRouteTypes {
     | '/admin/developers'
     | '/admin/invoices'
     | '/admin/leads'
+    | '/admin/project-invoices'
     | '/admin/projects'
     | '/admin/reviews'
     | '/admin/web-portal'
@@ -404,6 +415,7 @@ export interface FileRouteTypes {
     | '/admin/developers'
     | '/admin/invoices'
     | '/admin/leads'
+    | '/admin/project-invoices'
     | '/admin/projects'
     | '/admin/reviews'
     | '/admin/web-portal'
@@ -440,6 +452,7 @@ export interface RootRouteChildren {
   AdminDevelopersRoute: typeof AdminDevelopersRoute
   AdminInvoicesRoute: typeof AdminInvoicesRoute
   AdminLeadsRoute: typeof AdminLeadsRoute
+  AdminProjectInvoicesRoute: typeof AdminProjectInvoicesRoute
   AdminProjectsRoute: typeof AdminProjectsRoute
   AdminReviewsRoute: typeof AdminReviewsRoute
   AdminWebPortalRoute: typeof AdminWebPortalRoute
@@ -572,6 +585,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/leads'
       fullPath: '/admin/leads'
       preLoaderRoute: typeof AdminLeadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/project-invoices': {
+      id: '/admin/project-invoices'
+      path: '/admin/project-invoices'
+      fullPath: '/admin/project-invoices'
+      preLoaderRoute: typeof AdminProjectInvoicesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/projects': {
@@ -712,6 +732,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminDevelopersRoute: AdminDevelopersRoute,
   AdminInvoicesRoute: AdminInvoicesRoute,
   AdminLeadsRoute: AdminLeadsRoute,
+  AdminProjectInvoicesRoute: AdminProjectInvoicesRoute,
   AdminProjectsRoute: AdminProjectsRoute,
   AdminReviewsRoute: AdminReviewsRoute,
   AdminWebPortalRoute: AdminWebPortalRoute,
