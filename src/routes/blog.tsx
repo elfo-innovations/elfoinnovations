@@ -10,11 +10,15 @@ const DESC = "Deep-dive articles on custom software development, web and mobile 
 
 export const Route = createFileRoute("/blog")({
   loader: async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("blogs")
       .select("*")
       .eq("is_published", true)
       .order("published_at", { ascending: false });
+    if (error) {
+      console.error("[blog loader] supabase error:", JSON.stringify(error));
+    }
+    console.log("[blog loader] rows returned:", data?.length ?? "null/undefined");
     return data ?? [];
   },
   head: () => ({
