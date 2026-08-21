@@ -9,6 +9,14 @@ const TITLE = "Software Development Insights, Guides & Technology Blog | ELFO In
 const DESC = "Deep-dive articles on custom software development, web and mobile engineering, SaaS architecture, and product strategy from the ELFO Innovations team.";
 
 export const Route = createFileRoute("/blog")({
+  loader: async () => {
+    const { data } = await supabase
+      .from("blogs")
+      .select("*")
+      .eq("is_published", true)
+      .order("published_at", { ascending: false });
+    return data ?? [];
+  },
   head: () => ({
     meta: [
       { title: TITLE },
@@ -35,10 +43,12 @@ export const Route = createFileRoute("/blog")({
 
 
 function BlogIndex() {
+  const loaderData = Route.useLoaderData() as any[];
   const { data, isLoading } = useQuery({
     queryKey: ["public-blogs"],
     queryFn: async () =>
       (await supabase.from("blogs").select("*").eq("is_published", true).order("published_at", { ascending: false })).data ?? [],
+    initialData: loaderData,
   });
 
   return (
