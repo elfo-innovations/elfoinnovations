@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Loader2, FileText, Download } from "lucide-react";
+import { Plus, Loader2, FileText, Download, Receipt } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { InvoicePrintView, type ProjectInvoiceRow } from "@/components/invoices/InvoicePrintView";
 
 export const Route = createFileRoute("/client/invoices")({
   component: ClientInvoices,
@@ -42,6 +43,20 @@ function ClientInvoices() {
     enabled: !!client,
     queryFn: async () => (await supabase.from("client_invoices").select("*").eq("client_id", client!.id).order("created_at", { ascending: false })).data ?? [],
   });
+
+  const { data: projectInvoices } = useQuery({
+    queryKey: ["client-project-invoices", client?.id],
+    enabled: !!client,
+    queryFn: async () =>
+      (
+        await supabase
+          .from("project_invoices")
+          .select("*, clients(full_name, email, company, phone), projects(name, project_code)")
+          .eq("client_id", client!.id)
+          .order("created_at", { ascending: false })
+      ).data as ProjectInvoiceRow[] | null,
+  });
+  const [activeInvoice, setActiveInvoice] = useState<ProjectInvoiceRow | null>(null);
 
   const submit = async () => {
     if (!client) return toast.error("Client profile missing");
@@ -82,10 +97,54 @@ function ClientInvoices() {
 
   return (
     <DashboardShell role="client">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">Invoices &amp; receipts</h1>
+        <p className="mt-1 text-sm text-muted-foreground">View your invoices and send payment proof to the admin.</p>
+      </div>
+
+      <div className="mt-8">
+        <h2 className="font-display text-xl font-bold tracking-tight">Your invoices</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Generated automatically for the services you requested.</p>
+        <div className="mt-4 space-y-3">
+          {(projectInvoices ?? []).length === 0 && (
+            <div className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+              No invoices yet.
+            </div>
+          )}
+          {(projectInvoices ?? []).map((inv) => (
+            <button
+              key={inv.id}
+              onClick={() => setActiveInvoice(inv)}
+              className="glass-card flex w-full flex-wrap items-center justify-between gap-3 rounded-2xl p-4 text-left transition hover:border-primary"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <Receipt className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold">{inv.invoice_number}</div>
+                  <div className="text-xs text-muted-foreground">{inv.projects?.name}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="font-display text-lg font-bold">{inv.currency} {Number(inv.total).toLocaleString()}</div>
+                <Badge variant={inv.status === "paid" ? "default" : "secondary"} className="capitalize">{inv.status}</Badge>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <Dialog open={!!activeInvoice} onOpenChange={(v) => !v && setActiveInvoice(null)}>
+        <DialogContent className="max-h-[92vh] max-w-3xl overflow-y-auto p-0">
+          {activeInvoice && <InvoicePrintView invoice={activeInvoice} onClose={() => setActiveInvoice(null)} />}
+        </DialogContent>
+      </Dialog>
+
+      <div className="mt-10 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">Invoices &amp; receipts</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Send payment proof or invoices to the admin.</p>
+          <h2 className="font-display text-xl font-bold tracking-tight">Submit a payment receipt</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Send payment proof or your own invoice to the admin.</p>
         </div>
         <Button onClick={() => setOpen(true)} className="rounded-full electric-glow"><Plus className="mr-1.5 h-4 w-4" />Submit invoice</Button>
       </div>

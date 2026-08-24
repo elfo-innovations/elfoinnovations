@@ -148,7 +148,7 @@ function ShellInner({ role, nav, user, location, navigate, signOut, roles, mobil
 
   return (
     <div className="flex min-h-screen bg-background">
-      <aside className="hidden w-64 shrink-0 flex-col border-r bg-card/40 backdrop-blur lg:flex">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col overflow-y-auto border-r bg-card/40 backdrop-blur lg:flex">
         <div className="border-b px-6 py-5"><Link to="/"><ElfoLogo /></Link></div>
         <NavList role={role} nav={nav} pathname={location.pathname} onSignOut={handleSignOut} email={user.email} />
       </aside>

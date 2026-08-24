@@ -6,6 +6,13 @@ function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith('sb_publishable_') || value.startsWith('sb_secret_');
 }
 
+// A real Supabase session token is a JWT: three base64url segments separated by dots.
+// The opaque sb_publishable_/sb_secret_ keys are NOT JWTs and must never be sent as a
+// Bearer token (Supabase's gateway rejects that with 401) — only via the apikey header.
+function looksLikeJwt(token: string): boolean {
+  return /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(token);
+}
+
 function createSupabaseFetch(supabaseKey: string): typeof fetch {
   return (input, init) => {
     const headers = new Headers(
@@ -16,16 +23,24 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
       new Headers(init.headers).forEach((value, key) => headers.set(key, value));
     }
 
-    // New Supabase API keys are opaque strings, not bearer JWTs.
-    if (isNewSupabaseApiKey(supabaseKey) && headers.get('Authorization') === `Bearer ${supabaseKey}`) {
-      headers.delete('Authorization');
+    // New Supabase API keys are opaque strings, not bearer JWTs. Strip the Authorization
+    // header whenever it isn't shaped like a real JWT, instead of relying on an exact
+    // string match against supabaseKey (which silently breaks on any mismatch, e.g. env
+    // var whitespace or the SDK sending a slightly different value for anon requests).
+    if (isNewSupabaseApiKey(supabaseKey)) {
+      const authHeader = headers.get('Authorization');
+      if (authHeader) {
+        const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+        if (!looksLikeJwt(token)) {
+          headers.delete('Authorization');
+        }
+      }
     }
 
     headers.set('apikey', supabaseKey);
     return fetch(input, { ...init, headers });
   };
 }
-
 
 function createSupabaseClient() {
   // Use import.meta.env for client-side (Vite build-time replacement)

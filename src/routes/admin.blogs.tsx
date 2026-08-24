@@ -12,6 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { MediaPicker } from "@/components/web-portal/MediaPicker";
+import { RichTextEditor } from "@/components/web-portal/RichTextEditor";
+import { CoverImageSuggestions } from "@/components/web-portal/CoverImageSuggestions";
 
 export const Route = createFileRoute("/admin/blogs")({
   head: () => ({ meta: [{ title: "Blogs — Admin" }] }),
@@ -22,19 +24,35 @@ function slugify(s: string) {
   return s.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").slice(0, 80);
 }
 
+const CATEGORIES = [
+  "Web Development",
+  "Software Development",
+  "SaaS",
+  "AI & Automation",
+  "Cloud & DevOps",
+  "Cybersecurity",
+  "Business & Technology",
+  "Case Studies",
+];
+
 const EMPTY = {
   id: "" as string,
   slug: "",
   title: "",
   excerpt: "",
   content_md: "",
+  content_html: "",
   cover_image: "",
   tags: "",
+  category: "",
+  tldr: "",
   author_name: "ELFO INNOVATIONS",
   meta_title: "",
   meta_description: "",
   is_published: false,
   reading_minutes: null as number | null,
+  original_is_published: false,
+  original_published_at: null as string | null,
 };
 
 function AdminBlogs() {
@@ -52,10 +70,12 @@ function AdminBlogs() {
   const edit = (b: any) => {
     setForm({
       id: b.id, slug: b.slug, title: b.title, excerpt: b.excerpt ?? "",
-      content_md: b.content_md ?? "", cover_image: b.cover_image ?? "",
-      tags: (b.tags ?? []).join(", "), author_name: b.author_name ?? "ELFO INNOVATIONS",
+      content_md: b.content_md ?? "", content_html: b.content_html ?? "", cover_image: b.cover_image ?? "",
+      tags: (b.tags ?? []).join(", "), category: b.category ?? "", tldr: b.tldr ?? "",
+      author_name: b.author_name ?? "ELFO INNOVATIONS",
       meta_title: b.meta_title ?? "", meta_description: b.meta_description ?? "",
       is_published: !!b.is_published, reading_minutes: b.reading_minutes ?? null,
+      original_is_published: !!b.is_published, original_published_at: b.published_at ?? null,
     });
     setOpen(true);
   };
@@ -68,19 +88,33 @@ function AdminBlogs() {
     if (!form.title.trim()) return toast.error("Title is required");
     if (!form.slug.trim()) return toast.error("Slug is required");
     setBusy(true);
+    // Only stamp a fresh published_at when the article is newly becoming published.
+    // Editing an already-published article (or re-saving while still published)
+    // must NOT reset its original publish date.
+    let published_at: string | null;
+    if (form.is_published) {
+      published_at = form.original_is_published && form.original_published_at
+        ? form.original_published_at
+        : new Date().toISOString();
+    } else {
+      published_at = null;
+    }
     const payload: any = {
       slug: slugify(form.slug),
       title: form.title.trim(),
       excerpt: form.excerpt.trim() || null,
       content_md: form.content_md,
+      content_html: form.content_html || null,
       cover_image: form.cover_image || null,
       tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
+      category: form.category || null,
+      tldr: form.tldr.trim() || null,
       author_name: form.author_name.trim() || "ELFO INNOVATIONS",
       meta_title: form.meta_title.trim() || null,
       meta_description: form.meta_description.trim() || null,
       is_published: form.is_published,
       reading_minutes: form.reading_minutes,
-      published_at: form.is_published ? new Date().toISOString() : null,
+      published_at,
     };
     const { error } = form.id
       ? await supabase.from("blogs").update(payload).eq("id", form.id)
@@ -132,9 +166,18 @@ function AdminBlogs() {
                   {b.is_published ? "Published" : "Draft"}
                 </span>
                 <span className="text-muted-foreground">/{b.slug}</span>
+                {b.category && <span className="ml-auto rounded-full bg-primary/10 px-2 py-0.5 normal-case tracking-normal text-primary">{b.category}</span>}
               </div>
               <h3 className="mt-2 font-display text-lg font-bold">{b.title}</h3>
               {b.excerpt && <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{b.excerpt}</p>}
+              <div className="mt-2 text-[11px] text-muted-foreground">
+                {b.published_at && (
+                  <>Published {new Date(b.published_at).toLocaleString(undefined, { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</>
+                )}
+                {b.updated_at && b.published_at && new Date(b.updated_at).getTime() - new Date(b.published_at).getTime() > 60000 && (
+                  <> · Updated {new Date(b.updated_at).toLocaleString(undefined, { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</>
+                )}
+              </div>
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button size="sm" variant="outline" onClick={() => edit(b)}>Edit</Button>
                 <Button size="sm" variant="ghost" onClick={() => togglePublish(b)}>
@@ -169,14 +212,52 @@ function AdminBlogs() {
               <Input value={form.slug} onChange={(e) => setForm({ ...form, slug: slugify(e.target.value) })} placeholder="how-we-ship-enterprise-software" />
               <p className="text-xs text-muted-foreground">Will appear at /blog/{form.slug || "your-slug"}</p>
             </div>
+            <div className="grid gap-1.5">
+              <Label>Category</Label>
+              <select
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="">— No category —</option>
+                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <p className="text-xs text-muted-foreground">One category per article. Use Tags below for finer-grained topics.</p>
+            </div>
             <MediaPicker label="Cover image" value={form.cover_image} onChange={(v) => setForm({ ...form, cover_image: v })} />
+            <CoverImageSuggestions
+              coverImage={form.cover_image}
+              onApply={(s) =>
+                setForm((f) => ({
+                  ...f,
+                  title: s.title,
+                  slug: f.id ? f.slug : slugify(s.title),
+                  excerpt: s.excerpt,
+                  tldr: s.tldr,
+                  category: s.category,
+                  tags: s.tags.join(", "),
+                  meta_title: s.meta_title || "",
+                  meta_description: s.meta_description || "",
+                  reading_minutes: s.reading_minutes || f.reading_minutes,
+                  content_html: s.content_html || f.content_html,
+                }))
+              }
+            />
             <div className="grid gap-1.5">
               <Label>Excerpt (1–2 sentence summary)</Label>
               <Textarea rows={2} value={form.excerpt} onChange={(e) => setForm({ ...form, excerpt: e.target.value })} />
             </div>
             <div className="grid gap-1.5">
-              <Label>Content (Markdown-lite: use `# heading`, blank lines for paragraphs, `- ` for lists)</Label>
-              <Textarea rows={14} value={form.content_md} onChange={(e) => setForm({ ...form, content_md: e.target.value })} className="font-mono text-sm" />
+              <Label>Quick Answer / TL;DR (shown in a highlighted box at the top of the article)</Label>
+              <Textarea rows={2} value={form.tldr} onChange={(e) => setForm({ ...form, tldr: e.target.value })} placeholder="Quick Answer: Enterprise software can be delivered through four major stages: frontend, backend, database, and deployment." />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Content</Label>
+              <RichTextEditor value={form.content_html} onChange={(html) => setForm({ ...form, content_html: html })} />
+              <p className="text-xs text-muted-foreground">
+                Use the "Paragraph" dropdown to pick H1–H5 for a heading, then type — no markdown needed. Articles
+                with 3+ H2/H3 headings automatically get a Table of Contents on the live page.
+              </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-1.5">
