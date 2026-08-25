@@ -20,9 +20,9 @@ const POOL_SIZE = 20;
 const COLLIDE_RADIUS = 0.85;
 const JUMP_DURATION = 0.62;
 const JUMP_HEIGHT = 1.9;
-const BASE_SPEED = 10;
-const MAX_SPEED = 30;
-const LEVEL_SCORE_STEP = 120;
+const BASE_SPEED = 11;
+const MAX_SPEED = 36;
+const LEVEL_SCORE_STEP = 100;
 const LEVEL_COLORS = ["#2a63ff", "#22d3ee", "#a855f7", "#f472b6", "#f59e0b", "#22c55e"];
 const TRAIL_LEN = 10;
 const STAR_COUNT = 220;
@@ -51,6 +51,8 @@ type PoolItem = {
   spin: number;
   lang: number;
   errIdx: number;
+  /** For "bug" type only: 0 = ground-level (jump OR lane-switch avoids it), 1 = floating high (only lane-switch avoids it — jumping does NOT help). */
+  heightVariant: 0 | 1;
 };
 
 type Controls = { changeLane: (dir: -1 | 1) => void; jump: () => void };
@@ -286,6 +288,7 @@ function Scene({
       spin: Math.random() * Math.PI,
       lang: 0,
       errIdx: 0,
+      heightVariant: 0 as 0 | 1,
     }));
     ringZ.current = Array.from({ length: RING_COUNT }, (_, i) => -i * RING_GAP);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -301,6 +304,7 @@ function Scene({
       item.handled = false;
       item.spin = Math.random() * Math.PI * 2;
       item.errIdx = Math.floor(Math.random() * SMALL_ERRORS.length);
+      item.heightVariant = Math.random() < Math.min(0.4, 0.1 + level * 0.02) ? 1 : 0;
       pendingClusterZRef.current = null;
       pendingClusterLaneRef.current = null;
       return;
@@ -320,7 +324,14 @@ function Scene({
     item.handled = false;
     item.spin = Math.random() * Math.PI * 2;
     if (type === "token") item.lang = Math.floor(Math.random() * LANGS.length);
-    if (type === "bug") item.errIdx = Math.floor(Math.random() * SMALL_ERRORS.length);
+    if (type === "bug") {
+      item.errIdx = Math.floor(Math.random() * SMALL_ERRORS.length);
+      // Floating "high" errors become more common at higher levels — they can only
+      // be dodged by switching lanes (jumping does NOT save you), unlike ground
+      // errors which jumping over works fine for. Keeps the game from feeling
+      // like you can just spam-jump through everything as it gets faster.
+      item.heightVariant = Math.random() < Math.min(0.4, 0.1 + level * 0.02) ? 1 : 0;
+    }
     if (type === "barrier") item.errIdx = Math.floor(Math.random() * BIG_ERRORS.length);
 
     if (type === "bug" && level >= 4 && Math.random() < Math.min(0.35, (level - 3) * 0.08)) {
@@ -391,8 +402,8 @@ function Scene({
         });
       }
 
-      const targetSpeed = Math.min(MAX_SPEED, BASE_SPEED + (levelRef.current - 1) * 1.7);
-      speedRef.current = THREE.MathUtils.lerp(speedRef.current, targetSpeed, delta * 0.8);
+      const targetSpeed = Math.min(MAX_SPEED, BASE_SPEED + (levelRef.current - 1) * 2.6);
+      speedRef.current = THREE.MathUtils.lerp(speedRef.current, targetSpeed, Math.min(1, delta * 2.2));
 
       for (let i = 0; i < RING_COUNT; i++) {
         ringZ.current[i] += speedRef.current * delta;
@@ -448,7 +459,7 @@ function Scene({
             hasShieldRef.current = true;
             onShield(true);
             if (soundRef.current) beep(500, 0.16, "sine", 0.07, 900);
-          } else if (item.type === "bug" && sameLane) {
+          } else if (item.type === "bug" && sameLane && (item.heightVariant === 1 || !airborne)) {
             item.handled = true;
             if (hasShieldRef.current) {
               hasShieldRef.current = false;
@@ -485,7 +496,8 @@ function Scene({
 
         const g = poolRefs.current[i];
         if (g) {
-          g.position.set(LANE_X[item.lane], 0.55, item.z);
+          const posY = item.type === "bug" && item.heightVariant === 1 ? 1.55 : 0.55;
+          g.position.set(LANE_X[item.lane], posY, item.z);
           g.rotation.y = item.spin;
           g.rotation.x = item.type === "token" ? 0 : item.spin * 0.6;
           const show = item.type !== "none" && !item.handled;
