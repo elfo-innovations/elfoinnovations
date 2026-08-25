@@ -155,7 +155,7 @@ export function OfflineOverlay() {
             </div>
 
             <p className="mt-10 text-[11px] uppercase tracking-[0.3em] text-white/40">
-              Code Runner · Deliver code to the server
+              Deploy Rush 3D · Get the packet to the server
             </p>
           </div>
         ) : (
@@ -179,7 +179,7 @@ export function OfflineOverlay() {
               <CodeRunnerGame paused={restored} />
             </div>
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-white/60">
-              <span>Swipe / ← → to change lanes · Tap / Space to jump. Collect <code>&lt;/&gt;</code>, <code>{"{}"}</code>, AI, ☁. Dodge bugs & firewalls.</span>
+              <span>Swipe / ← → to change lanes · Tap / Space to jump. Collect cyan tokens, grab a 🛡 shield. Dodge red bugs & orange barriers.</span>
               <button onClick={() => setShowGame(false)} className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs text-white hover:bg-white/10">
                 ← Back
               </button>
