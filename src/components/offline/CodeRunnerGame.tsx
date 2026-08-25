@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, Fragment } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
- 
+
 /**
  * Deploy Rush 3D — a real three.js endless runner.
  * A glowing "deploy packet" flies down a neon tunnel, switching lanes and
@@ -9,7 +9,7 @@ import * as THREE from "three";
  * (HTML/CSS/JS/PHP/Laravel/React) and shields.
  * <CodeRunnerGame paused={boolean} /> — self-contained, own HUD.
  */
- 
+
 const LANE_X = [-2, 0, 2];
 const PLAYER_Z = 0;
 const CAMERA_Z = 6.4;
@@ -24,7 +24,9 @@ const BASE_SPEED = 10;
 const MAX_SPEED = 30;
 const LEVEL_SCORE_STEP = 120;
 const LEVEL_COLORS = ["#2a63ff", "#22d3ee", "#a855f7", "#f472b6", "#f59e0b", "#22c55e"];
- 
+const TRAIL_LEN = 10;
+const STAR_COUNT = 220;
+
 const LANGS = [
   { name: "HTML", bg: "#e34c26", fg: "#ffffff" },
   { name: "CSS", bg: "#2965f1", fg: "#ffffff" },
@@ -33,9 +35,14 @@ const LANGS = [
   { name: "Laravel", bg: "#ff2d20", fg: "#ffffff" },
   { name: "React", bg: "#0b1633", fg: "#61dafb" },
 ] as const;
- 
+
+// Small, single-lane errors — dodge by switching lanes.
+const SMALL_ERRORS = ["404", "TypeError", "NullPointer", "SyntaxError", "Undefined"] as const;
+// Big, all-lane errors — dodge by jumping.
+const BIG_ERRORS = ["500 Server Error", "Build Failed", "Merge Conflict", "Deploy Blocked"] as const;
+
 type ItemType = "none" | "bug" | "barrier" | "token" | "shield";
- 
+
 type PoolItem = {
   type: ItemType;
   lane: number;
@@ -43,10 +50,11 @@ type PoolItem = {
   handled: boolean;
   spin: number;
   lang: number;
+  errIdx: number;
 };
- 
+
 type Controls = { changeLane: (dir: -1 | 1) => void; jump: () => void };
- 
+
 function makeSound() {
   let ctx: AudioContext | null = null;
   const get = () => {
@@ -81,7 +89,7 @@ function makeSound() {
     }
   };
 }
- 
+
 /** Draws a rounded badge with a code-language name onto a canvas, for use as a Sprite texture. */
 function makeLangTexture(name: string, bg: string, fg: string): THREE.CanvasTexture {
   const canvas = document.createElement("canvas");
@@ -110,7 +118,60 @@ function makeLangTexture(name: string, bg: string, fg: string): THREE.CanvasText
   tex.needsUpdate = true;
   return tex;
 }
- 
+
+/** A soft radial glow, used for the player's trail sprites and the ambient starfield. */
+function makeGlowTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement("canvas");
+  canvas.width = 64;
+  canvas.height = 64;
+  const ctx = canvas.getContext("2d")!;
+  const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+  g.addColorStop(0, "rgba(255,255,255,1)");
+  g.addColorStop(0.4, "rgba(140,200,255,0.7)");
+  g.addColorStop(1, "rgba(140,200,255,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 64, 64);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.needsUpdate = true;
+  return tex;
+}
+
+/** Draws a red "error card" badge (hazard border + warning icon) for a specific error name. */
+function makeErrorTexture(label: string, big: boolean): THREE.CanvasTexture {
+  const w = big ? 512 : 256;
+  const h = 128;
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d")!;
+  const r = 18;
+  const grad = ctx.createLinearGradient(0, 0, w, h);
+  grad.addColorStop(0, "#7f1d1d");
+  grad.addColorStop(1, "#dc2626");
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.moveTo(r, 0);
+  ctx.arcTo(w, 0, w, h, r);
+  ctx.arcTo(w, h, 0, h, r);
+  ctx.arcTo(0, h, 0, 0, r);
+  ctx.arcTo(0, 0, w, 0, r);
+  ctx.closePath();
+  ctx.fill();
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = "#fbbf24";
+  ctx.setLineDash([14, 8]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = "#ffffff";
+  ctx.font = `bold ${big ? 40 : 36}px 'Segoe UI', system-ui, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(`⚠ ${label}`, w / 2, h / 2);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.needsUpdate = true;
+  return tex;
+}
+
 function Scene({
   paused,
   soundOn,
@@ -138,16 +199,37 @@ function Scene({
   const playerRef = useRef<THREE.Mesh>(null);
   const glowRef = useRef<THREE.PointLight>(null);
   const shieldRingRef = useRef<THREE.Mesh>(null);
- 
+  const trailRefs = useRef<(THREE.Sprite | null)[]>([]);
+  const trailPositions = useRef(
+    Array.from({ length: TRAIL_LEN }, () => ({ x: 0, y: 0.55, z: PLAYER_Z }))
+  );
+  const starGeoRef = useRef<THREE.BufferGeometry>(null);
+  const starPositions = useMemo(() => {
+    const arr = new Float32Array(STAR_COUNT * 3);
+    for (let i = 0; i < STAR_COUNT; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const radius = 1.8 + Math.random() * 5.4;
+      arr[i * 3] = Math.cos(angle) * radius;
+      arr[i * 3 + 1] = 0.3 + Math.random() * 5.5;
+      arr[i * 3 + 2] = -Math.random() * 44;
+    }
+    return arr;
+  }, []);
+  const glowTexture = useMemo(() => makeGlowTexture(), []);
+  const wallLRefs = useRef<THREE.Mesh[]>([]);
+  const wallRRefs = useRef<THREE.Mesh[]>([]);
+
   const ringRefs = useRef<THREE.Mesh[]>([]);
   const ringMatRefs = useRef<THREE.MeshStandardMaterial[]>([]);
   const ringZ = useRef<number[]>(Array.from({ length: RING_COUNT }, (_, i) => -i * RING_GAP));
- 
+
   const poolRefs = useRef<(THREE.Group | null)[]>([]);
   const pool = useRef<PoolItem[]>([]);
- 
+
   const langTextures = useMemo(() => LANGS.map((l) => makeLangTexture(l.name, l.bg, l.fg)), []);
- 
+  const smallErrorTextures = useMemo(() => SMALL_ERRORS.map((label) => makeErrorTexture(label, false)), []);
+  const bigErrorTextures = useMemo(() => BIG_ERRORS.map((label) => makeErrorTexture(label, true)), []);
+
   const laneRef = useRef(1);
   const targetXRef = useRef(LANE_X[1]);
   const jumpTRef = useRef(0);
@@ -165,11 +247,11 @@ function Scene({
   const idleT = useRef(0);
   const soundRef = useRef(soundOn);
   const beep = useMemo(() => makeSound(), []);
- 
+
   useEffect(() => {
     soundRef.current = soundOn;
   }, [soundOn]);
- 
+
   useEffect(() => {
     laneRef.current = 1;
     targetXRef.current = LANE_X[1];
@@ -184,6 +266,7 @@ function Scene({
     levelRef.current = 1;
     pendingClusterZRef.current = null;
     pendingClusterLaneRef.current = null;
+    trailPositions.current = Array.from({ length: TRAIL_LEN }, () => ({ x: 0, y: 0.55, z: PLAYER_Z }));
     onScore(0);
     onCombo(0);
     onShield(false);
@@ -194,7 +277,7 @@ function Scene({
         mat.emissive.set(LEVEL_COLORS[0]);
       }
     });
- 
+
     pool.current = Array.from({ length: POOL_SIZE }, () => ({
       type: "none" as ItemType,
       lane: 1,
@@ -202,25 +285,27 @@ function Scene({
       handled: true,
       spin: Math.random() * Math.PI,
       lang: 0,
+      errIdx: 0,
     }));
     ringZ.current = Array.from({ length: RING_COUNT }, (_, i) => -i * RING_GAP);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [restartToken]);
- 
+
   const spawnInto = useCallback((item: PoolItem) => {
     const level = levelRef.current;
- 
+
     if (pendingClusterZRef.current !== null && pendingClusterLaneRef.current !== null) {
       item.type = "bug";
       item.lane = pendingClusterLaneRef.current;
       item.z = pendingClusterZRef.current;
       item.handled = false;
       item.spin = Math.random() * Math.PI * 2;
+      item.errIdx = Math.floor(Math.random() * SMALL_ERRORS.length);
       pendingClusterZRef.current = null;
       pendingClusterLaneRef.current = null;
       return;
     }
- 
+
     const hazardBoost = Math.min(0.22, (level - 1) * 0.025);
     const roll = Math.random();
     let type: ItemType;
@@ -228,25 +313,27 @@ function Scene({
     else if (roll < 0.22 + hazardBoost * 1.3) type = "barrier";
     else if (roll < 0.28) type = "shield";
     else type = "token";
- 
+
     item.type = type;
     item.lane = type === "barrier" ? 1 : Math.floor(Math.random() * 3);
     item.z = nextSpawnZRef.current;
     item.handled = false;
     item.spin = Math.random() * Math.PI * 2;
     if (type === "token") item.lang = Math.floor(Math.random() * LANGS.length);
- 
+    if (type === "bug") item.errIdx = Math.floor(Math.random() * SMALL_ERRORS.length);
+    if (type === "barrier") item.errIdx = Math.floor(Math.random() * BIG_ERRORS.length);
+
     if (type === "bug" && level >= 4 && Math.random() < Math.min(0.35, (level - 3) * 0.08)) {
       const otherLanes = [0, 1, 2].filter((l) => l !== item.lane);
       pendingClusterZRef.current = item.z;
       pendingClusterLaneRef.current = otherLanes[Math.floor(Math.random() * otherLanes.length)];
     }
- 
+
     const gapMin = Math.max(4.2, 7 - (level - 1) * 0.35);
     const gapMax = Math.max(6.5, 13 - (level - 1) * 0.5);
     nextSpawnZRef.current -= gapMin + Math.random() * (gapMax - gapMin);
   }, []);
- 
+
   const changeLane = useCallback(
     (dir: -1 | 1) => {
       if (deadRef.current) return;
@@ -259,13 +346,13 @@ function Scene({
     },
     [beep]
   );
- 
+
   const doJump = useCallback(() => {
     if (deadRef.current || jumpTRef.current > 0) return;
     jumpTRef.current = 0.0001;
     if (soundRef.current) beep(520, 0.12, "square", 0.06, 720);
   }, [beep]);
- 
+
   // Expose controls to the outer component (used for touch handling scoped to the game area)
   useEffect(() => {
     controlsRef.current = { changeLane, jump: doJump };
@@ -273,7 +360,7 @@ function Scene({
       controlsRef.current = null;
     };
   }, [controlsRef, changeLane, doJump]);
- 
+
   // Keyboard controls
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -284,11 +371,11 @@ function Scene({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [changeLane, doJump]);
- 
+
   useFrame((state, rawDelta) => {
     const delta = Math.min(rawDelta, 0.05);
     idleT.current += delta;
- 
+
     if (!deadRef.current && !paused) {
       const newLevel = 1 + Math.floor(scoreRef.current / LEVEL_SCORE_STEP);
       if (newLevel !== levelRef.current) {
@@ -303,10 +390,10 @@ function Scene({
           }
         });
       }
- 
+
       const targetSpeed = Math.min(MAX_SPEED, BASE_SPEED + (levelRef.current - 1) * 1.7);
       speedRef.current = THREE.MathUtils.lerp(speedRef.current, targetSpeed, delta * 0.8);
- 
+
       for (let i = 0; i < RING_COUNT; i++) {
         ringZ.current[i] += speedRef.current * delta;
         if (ringZ.current[i] > CAMERA_Z + 2) ringZ.current[i] -= TUNNEL_LEN;
@@ -315,8 +402,22 @@ function Scene({
           m.position.z = ringZ.current[i];
           m.rotation.z += delta * 0.15;
         }
+        const wl = wallLRefs.current[i];
+        const wr = wallRRefs.current[i];
+        if (wl) wl.position.z = ringZ.current[i];
+        if (wr) wr.position.z = ringZ.current[i];
       }
- 
+
+      if (starGeoRef.current) {
+        const posAttr = starGeoRef.current.attributes.position as THREE.BufferAttribute;
+        const arr = posAttr.array as Float32Array;
+        for (let i = 0; i < STAR_COUNT; i++) {
+          arr[i * 3 + 2] += speedRef.current * delta * 0.55;
+          if (arr[i * 3 + 2] > CAMERA_Z) arr[i * 3 + 2] -= 44;
+        }
+        posAttr.needsUpdate = true;
+      }
+
       for (let i = 0; i < POOL_SIZE; i++) {
         const item = pool.current[i];
         if (item.type === "none") {
@@ -329,11 +430,11 @@ function Scene({
           item.type = "none";
           continue;
         }
- 
+
         if (!item.handled && Math.abs(item.z - PLAYER_Z) < COLLIDE_RADIUS) {
           const sameLane = item.lane === laneRef.current;
           const airborne = jumpTRef.current > 0.15 && jumpTRef.current < 0.85;
- 
+
           if (item.type === "token" && sameLane) {
             item.handled = true;
             comboRef.current = Math.min(8, comboRef.current + 1);
@@ -381,7 +482,7 @@ function Scene({
             }
           }
         }
- 
+
         const g = poolRefs.current[i];
         if (g) {
           g.position.set(LANE_X[item.lane], 0.55, item.z);
@@ -390,32 +491,36 @@ function Scene({
           const show = item.type !== "none" && !item.handled;
           g.scale.setScalar(show ? 1 : 0);
           const children = g.children as (THREE.Mesh | THREE.Sprite)[];
-          const bugM = children[0];
-          const barrierM = children[1];
-          const shieldM = children[2];
-          if (bugM) bugM.visible = item.type === "bug";
-          if (barrierM) barrierM.visible = item.type === "barrier";
+          const shieldM = children[0];
           if (shieldM) shieldM.visible = item.type === "shield";
+          for (let ei = 0; ei < SMALL_ERRORS.length; ei++) {
+            const sp = children[1 + ei];
+            if (sp) sp.visible = item.type === "bug" && item.errIdx === ei;
+          }
+          for (let ei = 0; ei < BIG_ERRORS.length; ei++) {
+            const sp = children[1 + SMALL_ERRORS.length + ei];
+            if (sp) sp.visible = item.type === "barrier" && item.errIdx === ei;
+          }
           for (let li = 0; li < LANGS.length; li++) {
-            const sprite = children[3 + li];
+            const sprite = children[1 + SMALL_ERRORS.length + BIG_ERRORS.length + li];
             if (sprite) sprite.visible = item.type === "token" && item.lang === li;
           }
         }
       }
- 
+
       scoreRef.current += delta * 3.5;
       const flooredScore = Math.floor(scoreRef.current);
       if (flooredScore !== lastEmittedScoreRef.current) {
         lastEmittedScoreRef.current = flooredScore;
         onScore(flooredScore);
       }
- 
+
       if (jumpTRef.current > 0) {
         jumpTRef.current += delta / JUMP_DURATION;
         if (jumpTRef.current >= 1) jumpTRef.current = 0;
       }
     }
- 
+
     if (playerRef.current) {
       const px = playerRef.current.position.x;
       const nx = THREE.MathUtils.lerp(px, targetXRef.current, Math.min(1, delta * 10));
@@ -430,7 +535,7 @@ function Scene({
         0.2
       );
       playerRef.current.rotation.y += delta * (deadRef.current ? 0 : 1.4);
- 
+
       if (glowRef.current) {
         glowRef.current.position.set(nx, playerRef.current.position.y, PLAYER_Z + 0.5);
       }
@@ -439,21 +544,44 @@ function Scene({
         shieldRingRef.current.visible = hasShieldRef.current;
         shieldRingRef.current.rotation.z += delta * 2;
       }
+
+      // Comet-tail trail: each segment eases toward the previous segment's position.
+      let prevX = playerRef.current.position.x;
+      let prevY = playerRef.current.position.y;
+      let prevZ = playerRef.current.position.z;
+      for (let i = 0; i < TRAIL_LEN; i++) {
+        const pos = trailPositions.current[i];
+        pos.x = THREE.MathUtils.lerp(pos.x, prevX, 0.5);
+        pos.y = THREE.MathUtils.lerp(pos.y, prevY, 0.5);
+        pos.z = THREE.MathUtils.lerp(pos.z, prevZ, 0.5);
+        const seg = trailRefs.current[i];
+        if (seg) {
+          seg.position.set(pos.x, pos.y, pos.z);
+          const t = 1 - i / TRAIL_LEN;
+          const alive = deadRef.current ? 0 : 1;
+          seg.scale.setScalar(0.55 * t * alive);
+          (seg.material as THREE.SpriteMaterial).opacity = 0.6 * t * alive;
+        }
+        prevX = pos.x;
+        prevY = pos.y;
+        prevZ = pos.z;
+      }
     }
- 
+
     // Responsive camera: widen FOV and pull back on narrow/portrait (mobile) viewports
     // so all 3 lanes stay comfortably visible.
     const aspect = state.size.width / state.size.height;
-    let fov = 60;
+    const speedPulse = Math.min(9, Math.max(0, (speedRef.current - BASE_SPEED) * 0.35));
+    let fov = 60 + speedPulse;
     let camZ = CAMERA_Z;
     if (aspect < 0.55) {
-      fov = 84;
+      fov = 84 + speedPulse;
       camZ = 8.2;
     } else if (aspect < 0.75) {
-      fov = 76;
+      fov = 76 + speedPulse;
       camZ = 7.4;
     } else if (aspect < 1.05) {
-      fov = 68;
+      fov = 68 + speedPulse;
       camZ = 6.8;
     }
     const cam = state.camera as THREE.PerspectiveCamera;
@@ -461,7 +589,7 @@ function Scene({
       cam.fov = fov;
       cam.updateProjectionMatrix();
     }
- 
+
     cameraShakeRef.current = Math.max(0, cameraShakeRef.current - delta * 1.6);
     const shake = cameraShakeRef.current;
     cam.position.x = (Math.random() - 0.5) * shake * 0.4;
@@ -469,7 +597,7 @@ function Scene({
     cam.position.z = camZ;
     cam.lookAt(0, 0.6, -2);
   });
- 
+
   return (
     <group ref={groupRef}>
       <color attach="background" args={["#050a24"]} />
@@ -477,28 +605,82 @@ function Scene({
       <ambientLight intensity={0.35} color="#5b7bff" />
       <pointLight ref={glowRef} intensity={6} distance={9} color="#4fa8ff" />
       <directionalLight position={[3, 8, 4]} intensity={0.25} color="#8fd1ff" />
- 
+
       {Array.from({ length: RING_COUNT }).map((_, i) => (
-        <mesh
-          key={i}
-          ref={(m) => {
-            if (m) ringRefs.current[i] = m;
-          }}
-          position={[0, 1.4, ringZ.current[i]]}
-        >
-          <torusGeometry args={[3.6, 0.03, 8, 24]} />
-          <meshStandardMaterial
+        <Fragment key={i}>
+          <mesh
             ref={(m) => {
-              if (m) ringMatRefs.current[i] = m;
+              if (m) ringRefs.current[i] = m;
             }}
-            color="#2a63ff"
-            emissive="#2a63ff"
-            emissiveIntensity={1.4}
-            toneMapped={false}
-          />
-        </mesh>
+            position={[0, 1.4, ringZ.current[i]]}
+          >
+            <torusGeometry args={[3.6, 0.03, 8, 24]} />
+            <meshStandardMaterial
+              ref={(m) => {
+                if (m) ringMatRefs.current[i] = m;
+              }}
+              color="#2a63ff"
+              emissive="#2a63ff"
+              emissiveIntensity={1.4}
+              toneMapped={false}
+            />
+          </mesh>
+          <mesh
+            ref={(m) => {
+              if (m) wallLRefs.current[i] = m;
+            }}
+            position={[-3.55, 1.4, ringZ.current[i]]}
+            rotation={[0, Math.PI / 2, 0]}
+          >
+            <planeGeometry args={[RING_GAP * 1.05, 3.4]} />
+            <meshStandardMaterial
+              color="#0d1c4d"
+              emissive="#1c3a8f"
+              emissiveIntensity={0.5}
+              transparent
+              opacity={0.32}
+              side={THREE.DoubleSide}
+              toneMapped={false}
+            />
+          </mesh>
+          <mesh
+            ref={(m) => {
+              if (m) wallRRefs.current[i] = m;
+            }}
+            position={[3.55, 1.4, ringZ.current[i]]}
+            rotation={[0, -Math.PI / 2, 0]}
+          >
+            <planeGeometry args={[RING_GAP * 1.05, 3.4]} />
+            <meshStandardMaterial
+              color="#0d1c4d"
+              emissive="#1c3a8f"
+              emissiveIntensity={0.5}
+              transparent
+              opacity={0.32}
+              side={THREE.DoubleSide}
+              toneMapped={false}
+            />
+          </mesh>
+        </Fragment>
       ))}
- 
+
+      {/* Ambient drifting starfield for depth */}
+      <points>
+        <bufferGeometry ref={starGeoRef}>
+          <bufferAttribute attach="attributes-position" count={STAR_COUNT} array={starPositions} itemSize={3} />
+        </bufferGeometry>
+        <pointsMaterial
+          map={glowTexture}
+          size={0.06}
+          sizeAttenuation
+          transparent
+          depthWrite={false}
+          opacity={0.75}
+          color="#bcdcff"
+          blending={THREE.AdditiveBlending}
+        />
+      </points>
+
       <mesh position={[0, -0.55, -TUNNEL_LEN / 2]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[8, TUNNEL_LEN + 20]} />
         <meshStandardMaterial color="#070d2c" metalness={0.4} roughness={0.6} />
@@ -509,7 +691,7 @@ function Scene({
           <meshStandardMaterial color="#4fa8ff" emissive="#4fa8ff" emissiveIntensity={2} toneMapped={false} />
         </mesh>
       ))}
- 
+
       {/* Pool items — each slot pre-renders bug/barrier/shield meshes + 6 language sprites; useFrame toggles visibility */}
       {Array.from({ length: POOL_SIZE }).map((_, i) => (
         <group
@@ -519,17 +701,19 @@ function Scene({
           }}
         >
           <mesh visible={false}>
-            <octahedronGeometry args={[0.4, 0]} />
-            <meshStandardMaterial color="#ff4d4d" emissive="#ff2222" emissiveIntensity={1.8} toneMapped={false} />
-          </mesh>
-          <mesh visible={false}>
-            <boxGeometry args={[5.6, 0.9, 0.22]} />
-            <meshStandardMaterial color="#ff7a3d" emissive="#ff5a1f" emissiveIntensity={1.2} toneMapped={false} />
-          </mesh>
-          <mesh visible={false}>
             <torusGeometry args={[0.32, 0.11, 10, 20]} />
             <meshStandardMaterial color="#c084fc" emissive="#a855f7" emissiveIntensity={1.6} toneMapped={false} />
           </mesh>
+          {SMALL_ERRORS.map((_, ei) => (
+            <sprite key={`sm-${ei}`} visible={false} scale={[1.15, 0.58, 1]}>
+              <spriteMaterial map={smallErrorTextures[ei]} transparent depthWrite={false} />
+            </sprite>
+          ))}
+          {BIG_ERRORS.map((_, ei) => (
+            <sprite key={`bg-${ei}`} visible={false} scale={[5.6, 1.4, 1]}>
+              <spriteMaterial map={bigErrorTextures[ei]} transparent depthWrite={false} />
+            </sprite>
+          ))}
           {LANGS.map((_, li) => (
             <sprite key={li} visible={false} scale={[0.85, 0.42, 1]}>
               <spriteMaterial map={langTextures[li]} transparent depthWrite={false} />
@@ -537,7 +721,26 @@ function Scene({
           ))}
         </group>
       ))}
- 
+
+      {Array.from({ length: TRAIL_LEN }).map((_, i) => (
+        <sprite
+          key={i}
+          ref={(s) => {
+            if (s) trailRefs.current[i] = s;
+          }}
+          scale={[0.5, 0.5, 1]}
+        >
+          <spriteMaterial
+            map={glowTexture}
+            transparent
+            depthWrite={false}
+            opacity={0}
+            color="#7cc4ff"
+            blending={THREE.AdditiveBlending}
+          />
+        </sprite>
+      ))}
+
       <mesh ref={playerRef} position={[0, 0.55, PLAYER_Z]}>
         <icosahedronGeometry args={[0.42, 0]} />
         <meshStandardMaterial
@@ -556,7 +759,7 @@ function Scene({
     </group>
   );
 }
- 
+
 export default function CodeRunnerGame({ paused = false }: { paused?: boolean }) {
   const [score, setScore] = useState(0);
   const [combo, setCombo] = useState(0);
@@ -566,11 +769,12 @@ export default function CodeRunnerGame({ paused = false }: { paused?: boolean })
   const [level, setLevel] = useState(1);
   const [levelToast, setLevelToast] = useState<number | null>(null);
   const [flashOpacity, setFlashOpacity] = useState(0);
+  const [countdown, setCountdown] = useState<number | null>(3);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<Controls | null>(null);
- 
+
   const [best, setBest] = useState<number>(() => {
     if (typeof window === "undefined") return 0;
     return Number(localStorage.getItem("elfo-runner-best") || "0");
@@ -579,11 +783,11 @@ export default function CodeRunnerGame({ paused = false }: { paused?: boolean })
     if (typeof window === "undefined") return true;
     return localStorage.getItem("elfo-runner-sound") !== "0";
   });
- 
+
   useEffect(() => {
     if (typeof window !== "undefined") localStorage.setItem("elfo-runner-sound", soundOn ? "1" : "0");
   }, [soundOn]);
- 
+
   const handleLevelUp = useCallback((n: number) => {
     setLevel(n);
     if (n > 1) {
@@ -592,13 +796,13 @@ export default function CodeRunnerGame({ paused = false }: { paused?: boolean })
       toastTimer.current = setTimeout(() => setLevelToast(null), 1400);
     }
   }, []);
- 
+
   const handleHit = useCallback((fatal: boolean) => {
     setFlashOpacity(fatal ? 0.6 : 0.32);
     if (flashTimer.current) clearTimeout(flashTimer.current);
     flashTimer.current = setTimeout(() => setFlashOpacity(0), 40);
   }, []);
- 
+
   const handleDead = useCallback(() => {
     setDead(true);
     setScore((s) => {
@@ -611,7 +815,7 @@ export default function CodeRunnerGame({ paused = false }: { paused?: boolean })
       return rounded;
     });
   }, []);
- 
+
   const restart = useCallback(() => {
     setDead(false);
     setScore(0);
@@ -622,7 +826,22 @@ export default function CodeRunnerGame({ paused = false }: { paused?: boolean })
     setFlashOpacity(0);
     setRestartToken((t) => t + 1);
   }, []);
- 
+
+  // 3-2-1-GO countdown, on first mount and every restart — gameplay stays paused until it finishes.
+  useEffect(() => {
+    setCountdown(3);
+    const t1 = setTimeout(() => setCountdown(2), 700);
+    const t2 = setTimeout(() => setCountdown(1), 1400);
+    const t3 = setTimeout(() => setCountdown(0), 2100);
+    const t4 = setTimeout(() => setCountdown(null), 2500);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      clearTimeout(t4);
+    };
+  }, [restartToken]);
+
   // Touch controls, scoped to the game container only (so taps on the sound/back
   // buttons don't also get interpreted as a jump/lane-change on mobile).
   useEffect(() => {
@@ -648,7 +867,7 @@ export default function CodeRunnerGame({ paused = false }: { paused?: boolean })
       el.removeEventListener("touchend", onEnd);
     };
   }, []);
- 
+
   return (
     <div ref={containerRef} className="relative h-full w-full touch-none select-none">
       <Canvas
@@ -657,7 +876,7 @@ export default function CodeRunnerGame({ paused = false }: { paused?: boolean })
         className="rounded-xl"
       >
         <Scene
-          paused={paused || dead}
+          paused={paused || dead || countdown !== null}
           soundOn={soundOn}
           onScore={(n) => setScore(n)}
           onDead={handleDead}
@@ -669,7 +888,13 @@ export default function CodeRunnerGame({ paused = false }: { paused?: boolean })
           controlsRef={controlsRef}
         />
       </Canvas>
- 
+
+      {/* Permanent cinematic vignette */}
+      <div
+        className="pointer-events-none absolute inset-0 z-[5]"
+        style={{ boxShadow: "inset 0 0 130px 36px rgba(0,0,12,0.55)" }}
+      />
+
       {/* Red danger flash on hit */}
       <div
         className="pointer-events-none absolute inset-0 z-10 transition-opacity duration-500 ease-out"
@@ -678,7 +903,7 @@ export default function CodeRunnerGame({ paused = false }: { paused?: boolean })
           background: "radial-gradient(circle, transparent 38%, rgba(239,68,68,0.95) 145%)",
         }}
       />
- 
+
       {/* HUD */}
       <div className="pointer-events-none absolute left-2 top-2 z-20 flex flex-col gap-1 sm:left-3 sm:top-3">
         <div className="flex items-center gap-1.5">
@@ -700,7 +925,7 @@ export default function CodeRunnerGame({ paused = false }: { paused?: boolean })
           </div>
         )}
       </div>
- 
+
       {levelToast !== null && (
         <div className="pointer-events-none absolute inset-x-0 top-12 z-20 flex justify-center sm:top-14">
           <div className="animate-in fade-in zoom-in rounded-full border border-white/20 bg-gradient-to-r from-blue-500/90 to-indigo-500/90 px-4 py-1.5 text-xs font-bold text-white shadow-[0_10px_30px_-6px_rgba(59,130,246,0.8)] duration-300 sm:px-5 sm:text-sm">
@@ -708,7 +933,7 @@ export default function CodeRunnerGame({ paused = false }: { paused?: boolean })
           </div>
         </div>
       )}
- 
+
       <button
         type="button"
         onTouchEnd={(e) => e.stopPropagation()}
@@ -722,12 +947,24 @@ export default function CodeRunnerGame({ paused = false }: { paused?: boolean })
       >
         {soundOn ? "🔊" : "🔇"}
       </button>
- 
+
       <div className="pointer-events-none absolute inset-x-0 bottom-4 z-20 flex justify-between px-4 text-[10px] text-white/40 sm:hidden">
         <span>← swipe →</span>
         <span>tap / swipe ↑ = jump</span>
       </div>
- 
+
+      {countdown !== null && (
+        <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center bg-black/20">
+          <div
+            key={countdown}
+            className="animate-in zoom-in fade-in text-7xl font-black text-white duration-300 sm:text-8xl"
+            style={{ textShadow: "0 0 40px rgba(79,168,255,0.9)" }}
+          >
+            {countdown === 0 ? "GO!" : countdown}
+          </div>
+        </div>
+      )}
+
       {dead && (
         <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-2.5 bg-[#050a24]/75 px-4 text-center backdrop-blur-sm">
           <div className="text-xs uppercase tracking-widest text-red-300 sm:text-sm">Deploy failed</div>
@@ -748,4 +985,3 @@ export default function CodeRunnerGame({ paused = false }: { paused?: boolean })
     </div>
   );
 }
- 
