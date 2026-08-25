@@ -500,7 +500,7 @@ function Scene({
           g.position.set(LANE_X[item.lane], posY, item.z);
           g.rotation.y = item.spin;
           g.rotation.x = item.type === "token" ? 0 : item.spin * 0.6;
-          const show = item.type !== "none" && !item.handled;
+          const show = !item.handled;
           g.scale.setScalar(show ? 1 : 0);
           const children = g.children as (THREE.Mesh | THREE.Sprite)[];
           const shieldM = children[0];
@@ -679,7 +679,7 @@ function Scene({
       {/* Ambient drifting starfield for depth */}
       <points>
         <bufferGeometry ref={starGeoRef}>
-          <bufferAttribute attach="attributes-position" count={STAR_COUNT} array={starPositions} itemSize={3} />
+          <bufferAttribute attach="attributes-position" args={[starPositions, 3]} count={STAR_COUNT} />
         </bufferGeometry>
         <pointsMaterial
           map={glowTexture}

@@ -33,9 +33,12 @@ export function PricingSection() {
           <p className="mt-4 text-muted-foreground">No hidden fees. See it live before you pay.</p>
         </div>
 
-        <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        <div className="mt-12 flex flex-wrap justify-center gap-4">
           {plans.map((p, i) => (
-            <div key={p.id ?? i} className={`glass-card relative flex flex-col rounded-2xl p-6 ${p.is_popular ? "border-primary electric-glow" : ""}`}>
+            <div
+              key={p.id ?? i}
+              className={`glass-card relative flex w-full flex-col rounded-2xl p-6 sm:w-[calc(50%-0.5rem)] lg:w-[260px] ${p.is_popular ? "border-primary electric-glow" : ""}`}
+            >
               {p.is_popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-primary-foreground">
                   <Sparkles className="mr-1 inline h-3 w-3" />Popular

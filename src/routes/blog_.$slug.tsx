@@ -6,6 +6,7 @@ import { PublicLayout } from "@/components/site/PublicLayout";
 import { ArrowLeft, Calendar, ListTree } from "lucide-react";
 import type { ReactNode } from "react";
 import { sanitizeHtml } from "@/components/web-portal/RichTextEditor";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 const SITE = "https://elfoinnovations.com";
 
@@ -68,6 +69,22 @@ export const Route = createFileRoute("/blog_/$slug")({
                 ],
               }),
             },
+            ...(Array.isArray(b.faqs) && b.faqs.length > 0
+              ? [
+                  {
+                    type: "application/ld+json",
+                    children: JSON.stringify({
+                      "@context": "https://schema.org",
+                      "@type": "FAQPage",
+                      mainEntity: b.faqs.map((f: { question: string; answer: string }) => ({
+                        "@type": "Question",
+                        name: f.question,
+                        acceptedAnswer: { "@type": "Answer", text: f.answer },
+                      })),
+                    }),
+                  },
+                ]
+              : []),
           ]
         : [],
     };
@@ -354,6 +371,20 @@ function BlogPost() {
                 {t}
               </span>
             ))}
+          </div>
+        )}
+
+        {Array.isArray(b.faqs) && b.faqs.length > 0 && (
+          <div className="mt-10">
+            <h2 className="font-display text-2xl font-bold tracking-tight">Frequently Asked Questions</h2>
+            <Accordion type="single" collapsible className="mt-4">
+              {b.faqs.map((f: { question: string; answer: string }, i: number) => (
+                <AccordionItem key={i} value={`faq-${i}`}>
+                  <AccordionTrigger>{f.question}</AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground">{f.answer}</AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
           </div>
         )}
       </article>
