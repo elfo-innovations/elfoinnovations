@@ -91,18 +91,13 @@ export function Monitor3D() {
           <Preload all />
         </Canvas>
  
-        <button
+        {/* <button
           onClick={() => controlsRef.current?.reset()}
           className="absolute right-3 top-3 rounded-full border border-foreground/10 bg-background/70 px-3 py-1 text-[10px] uppercase tracking-widest text-foreground/70 backdrop-blur transition hover:bg-foreground/10"
         >
           Reset
-        </button>
-      </div>
- 
-      <div className="pointer-events-none mt-3 rounded-full border border-foreground/10 bg-background/70 px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-foreground/70 backdrop-blur">
-        Drag to rotate · Scroll to zoom · Press R to reset
+        </button> */}
       </div>
     </div>
   );
 }
- 

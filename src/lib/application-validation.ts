@@ -119,7 +119,8 @@ export function validateApplication(v: ApplicationInput): Record<string, string>
   else if (v.motivation.trim().length < 40) e.motivation = "Please write at least 40 characters";
   else if (v.motivation.trim().length > 1000) e.motivation = "Keep this under 1000 characters";
 
-  if (v.resume_name && !/\.pdf$/i.test(v.resume_name)) e.resume = "Resume must be a PDF file";
+  if (!v.resume_name?.trim()) e.resume = "Resume is required";
+  else if (!/\.pdf$/i.test(v.resume_name)) e.resume = "Resume must be a PDF file";
 
   if (!v.agreed) e.agreed = "You must accept the agreement";
 

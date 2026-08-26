@@ -264,12 +264,12 @@ export function DeveloperApplicationModal({ open, onOpenChange }: { open: boolea
                 <Textarea className="min-h-[90px] rounded-xl" value={form.motivation} onChange={(e) => set("motivation", e.target.value)} placeholder="What excites you about working with our team?" />
               </Field>
 
-              <Field label="Resume (PDF, max 5MB)" error={errors.resume}>
+              <Field label="Resume (PDF, max 5MB)" required error={errors.resume}>
                 <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-primary/30 bg-primary/5 px-4 py-4 transition hover:border-primary/60">
                   <input type="file" accept="application/pdf,.pdf" className="hidden" onChange={(e) => pickFile(e.target.files?.[0] ?? null)} />
                   {file ? <FileText className="h-5 w-5 shrink-0 text-primary" /> : <UploadCloud className="h-5 w-5 shrink-0 text-primary" />}
                   <span className="min-w-0 flex-1 truncate text-sm">
-                    {file ? file.name : "Click to upload your resume (optional)"}
+                    {file ? file.name : "Click to upload your resume"}
                   </span>
                   {file && (
                     <button
