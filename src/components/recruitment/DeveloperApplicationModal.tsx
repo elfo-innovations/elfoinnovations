@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState, type ReactNode, type KeyboardEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2, UploadCloud, FileText, X, CheckCircle2, Rocket, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -148,6 +148,20 @@ export function DeveloperApplicationModal({ open, onOpenChange }: { open: boolea
     }
   };
 
+  // Let people submit by pressing Enter instead of forcing a mouse click on the
+  // button, even though this dialog intentionally doesn't use a <form> tag.
+  // Enter inside a <textarea> still inserts a newline as expected; the skills
+  // input already calls preventDefault() on Enter to add a skill chip, so that
+  // case is skipped here (e.defaultPrevented is already true by the time this
+  // bubbles up).
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== "Enter" || e.defaultPrevented) return;
+    const tag = (e.target as HTMLElement).tagName;
+    if (tag === "TEXTAREA" || tag === "BUTTON") return;
+    e.preventDefault();
+    if (!busy) onSubmit();
+  };
+
   return (
     <Dialog open={open} onOpenChange={close}>
       <DialogContent className="max-h-[92vh] w-[calc(100vw-1.5rem)] max-w-2xl overflow-y-auto rounded-3xl border-primary/20 bg-card/95 p-0 backdrop-blur-xl sm:w-full">
@@ -181,7 +195,7 @@ export function DeveloperApplicationModal({ open, onOpenChange }: { open: boolea
               </p>
             </div>
 
-            <div className="space-y-5">
+            <div className="space-y-5" onKeyDown={onKeyDown}>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Full name" required error={errors.full_name}>
                   <Input className="rounded-xl" value={form.full_name} onChange={(e) => set("full_name", e.target.value)} placeholder="Jane Doe" />

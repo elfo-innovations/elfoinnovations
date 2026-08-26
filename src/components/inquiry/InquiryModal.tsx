@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type KeyboardEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check, Loader2, Sparkles } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -174,10 +174,28 @@ export function InquiryModal({ open, onClose }: { open: boolean; onClose: () => 
     setDone({ code: leadCode });
   };
 
+  // Let people press Enter to advance/submit instead of forcing a mouse click,
+  // even though this dialog intentionally doesn't use a <form> tag.
+  // - Enter inside the description <textarea> (step 0) still inserts a newline.
+  // - Enter on a budget option button / select trigger is left alone (those
+  //   components already handle Enter themselves via e.preventDefault()).
+  // - Otherwise: step 0/1 -> Continue (only if that step is valid), step 2 -> Submit.
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== "Enter" || e.defaultPrevented) return;
+    const tag = (e.target as HTMLElement).tagName;
+    if (tag === "TEXTAREA" || tag === "BUTTON") return;
+    e.preventDefault();
+    if (step < 2) {
+      if (canNext) setStep(step + 1);
+    } else if (!submitting) {
+      submit();
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={(v) => !v && close()}>
       <DialogContent className="max-h-[92vh] max-w-3xl gap-0 overflow-y-auto p-0 sm:rounded-3xl">
-        <div className="relative bg-hero-radial">
+        <div className="relative bg-hero-radial" onKeyDown={onKeyDown}>
           {done ? (
             <div className="flex flex-col items-center px-8 py-16 text-center">
               <div className="relative mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
