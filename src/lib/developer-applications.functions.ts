@@ -65,6 +65,29 @@ export const submitDeveloperApplication = createServerFn({ method: "POST" })
       html: applicationReceivedEmail({ name: data.full_name.trim(), role: data.primary_role }),
     });
 
+    // Fire-and-forget: notify admin inbox, mirroring the inquiry-lead flow.
+    const adminTo = process.env["ADMIN_NOTIFY_EMAIL"] || "support@elfoinnovations.com";
+    sendEmail({
+      to: adminTo,
+      replyTo: email,
+      subject: `New developer application — ${data.full_name.trim()} (${data.primary_role})`,
+      html: `
+        <div style="font-family:sans-serif;max-width:560px;margin:0 auto">
+          <h2>New developer application: ${data.full_name.trim()}</h2>
+          <p><b>Email:</b> ${email}<br/>
+             <b>Phone:</b> ${data.phone.trim()}<br/>
+             <b>Location:</b> ${data.city.trim()}, ${data.country.trim()}<br/>
+             <b>Role:</b> ${data.primary_role}<br/>
+             <b>Experience:</b> ${data.years_experience}<br/>
+             <b>Status:</b> ${data.current_status}<br/>
+             <b>Skills:</b> ${data.skills.join(", ")}<br/>
+             <b>GitHub:</b> ${normalizeUrl(data.github_url)}${data.linkedin_url?.trim() ? `<br/><b>LinkedIn:</b> ${normalizeUrl(data.linkedin_url)}` : ""}${data.portfolio_url?.trim() ? `<br/><b>Portfolio:</b> ${normalizeUrl(data.portfolio_url)}` : ""}</p>
+          <p><b>Bio:</b><br/>${data.bio.trim()}</p>
+          <p><b>Motivation:</b><br/>${data.motivation.trim()}</p>
+          <p style="color:#888;font-size:12px">Reply to this email to respond directly to the applicant. Review in the admin dashboard to accept or reject.</p>
+        </div>`,
+    }).catch((e) => console.error("[dev application notify] failed", e));
+
     return { ok: true, emailSent: mail.sent, emailError: mail.error ?? null };
   });
 
