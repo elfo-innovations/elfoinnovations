@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Check, Loader2, Sparkles, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Loader2, Sparkles } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { enqueueInquiry } from "@/lib/offline-queue";
 import { useServerFn } from "@tanstack/react-start";
 import { notifyAdminOfLead } from "@/lib/leads-notify.functions";
+import { cn } from "@/lib/utils";
 
 type BudgetReadiness = "yes_approved" | "maybe_depends" | "not_yet_exploring";
 
@@ -37,28 +38,47 @@ export function InquiryModal({ open, onClose }: { open: boolean; onClose: () => 
   const [timeline, setTimeline] = useState("");
   const [estBudget, setEstBudget] = useState("");
   const [contactMethod, setContactMethod] = useState("email");
+  const [touched, setTouched] = useState<{ fullName?: boolean; email?: boolean; phone?: boolean; estBudget?: boolean; timeline?: boolean }>({});
+  const markTouched = (field: keyof typeof touched) => setTouched((t) => ({ ...t, [field]: true }));
 
   const reset = () => {
     setStep(0); setDone(null); setDescription(""); setBudget(null);
     setFullName(""); setEmail(""); setPhone(defaultPhone()); setCompany("");
-    setTimeline(""); setEstBudget(""); setContactMethod("email");
+    setTimeline(""); setEstBudget(""); setContactMethod("email"); setTouched({});
   };
 
   const close = () => { onClose(); setTimeout(reset, 300); };
+
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isNameValid = fullName.trim().length >= 2;
 
   const canNext =
     (step === 0 && description.trim().length >= 20) ||
     (step === 1 && budget !== null) ||
     (step === 2 &&
-      fullName.trim().length >= 2 &&
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) &&
+      isNameValid &&
+      isEmailValid &&
       phone.valid &&
       !!estBudget &&
       !!timeline);
 
+  const nameError = touched.fullName && !isNameValid ? "Full name is required" : null;
+  const emailError = touched.email && !isEmailValid
+    ? (email.trim().length === 0 ? "Email is required" : "Enter a valid email address")
+    : null;
+  const phoneError = touched.phone && !phone.valid ? "Enter a valid phone number" : null;
+  const estBudgetError = touched.estBudget && !estBudget ? "Estimated budget is required" : null;
+  const timelineError = touched.timeline && !timeline ? "Timeline is required" : null;
+
+  // Step-2 fields are validated on submit instead of disabling the button,
+  // so the person always sees *why* it didn't go through (inline red text)
+  // rather than a button that just silently refuses to respond.
   const submit = async () => {
     if (!canNext) {
-      if (!estBudget || !timeline) {
+      setTouched({ fullName: true, email: true, phone: true, estBudget: true, timeline: true });
+      if (!isNameValid || !isEmailValid || !phone.valid) {
+        toast.error("Please fix the highlighted fields before submitting");
+      } else if (!estBudget || !timeline) {
         toast.error("Estimated budget and timeline are required");
       }
       return;
@@ -154,13 +174,10 @@ export function InquiryModal({ open, onClose }: { open: boolean; onClose: () => 
     setDone({ code: leadCode });
   };
 
-
   return (
     <Dialog open={open} onOpenChange={(v) => !v && close()}>
       <DialogContent className="max-h-[92vh] max-w-3xl gap-0 overflow-y-auto p-0 sm:rounded-3xl">
         <div className="relative bg-hero-radial">
-
-
           {done ? (
             <div className="flex flex-col items-center px-8 py-16 text-center">
               <div className="relative mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
@@ -243,15 +260,41 @@ export function InquiryModal({ open, onClose }: { open: boolean; onClose: () => 
                       <div className="mt-5 grid gap-4 sm:grid-cols-2">
                         <div className="sm:col-span-1">
                           <Label>Full Name *</Label>
-                          <Input value={fullName} onChange={(e) => setFullName(e.target.value)} className="mt-1.5 rounded-xl" placeholder="Jane Doe" />
+                          <Input
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                            onBlur={() => markTouched("fullName")}
+                            aria-invalid={!!nameError}
+                            className={cn("mt-1.5 rounded-xl", nameError && "border-destructive focus-visible:ring-destructive")}
+                            placeholder="Jane Doe"
+                          />
+                          {nameError && <p className="mt-1 text-xs text-destructive">{nameError}</p>}
                         </div>
                         <div>
                           <Label>Email *</Label>
-                          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1.5 rounded-xl" placeholder="jane@company.com" />
+                          <Input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            onBlur={() => markTouched("email")}
+                            aria-invalid={!!emailError}
+                            className={cn("mt-1.5 rounded-xl", emailError && "border-destructive focus-visible:ring-destructive")}
+                            placeholder="jane@company.com"
+                          />
+                          {emailError && <p className="mt-1 text-xs text-destructive">{emailError}</p>}
                         </div>
                         <div className="sm:col-span-2">
                           <Label>Phone Number *</Label>
-                          <div className="mt-1.5"><PhoneInput value={phone} onChange={setPhone} /></div>
+                          <div
+                            className="mt-1.5"
+                            onBlur={(e) => {
+                              // Only mark touched once focus actually leaves the phone group.
+                              if (!e.currentTarget.contains(e.relatedTarget as Node)) markTouched("phone");
+                            }}
+                          >
+                            <PhoneInput value={phone} onChange={setPhone} />
+                          </div>
+                          {phoneError && <p className="mt-1 text-xs text-destructive">{phoneError}</p>}
                         </div>
                         <div>
                           <Label>Company</Label>
@@ -259,8 +302,17 @@ export function InquiryModal({ open, onClose }: { open: boolean; onClose: () => 
                         </div>
                         <div>
                           <Label>Estimated Budget *</Label>
-                          <Select value={estBudget} onValueChange={setEstBudget}>
-                            <SelectTrigger className="mt-1.5 rounded-xl"><SelectValue placeholder="Select" /></SelectTrigger>
+                          <Select
+                            value={estBudget}
+                            onValueChange={(v) => { setEstBudget(v); markTouched("estBudget"); }}
+                            onOpenChange={(open) => { if (!open) markTouched("estBudget"); }}
+                          >
+                            <SelectTrigger
+                              aria-invalid={!!estBudgetError}
+                              className={cn("mt-1.5 rounded-xl", estBudgetError && "border-destructive focus:ring-destructive")}
+                            >
+                              <SelectValue placeholder="Select" />
+                            </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="500">$500 — Starter</SelectItem>
                               <SelectItem value="1000">$1,000 — Professional</SelectItem>
@@ -268,11 +320,21 @@ export function InquiryModal({ open, onClose }: { open: boolean; onClose: () => 
                               <SelectItem value="custom">Custom — Premium / Enterprise</SelectItem>
                             </SelectContent>
                           </Select>
+                          {estBudgetError && <p className="mt-1 text-xs text-destructive">{estBudgetError}</p>}
                         </div>
                         <div>
                           <Label>Timeline *</Label>
-                          <Select value={timeline} onValueChange={setTimeline}>
-                            <SelectTrigger className="mt-1.5 rounded-xl"><SelectValue placeholder="Select" /></SelectTrigger>
+                          <Select
+                            value={timeline}
+                            onValueChange={(v) => { setTimeline(v); markTouched("timeline"); }}
+                            onOpenChange={(open) => { if (!open) markTouched("timeline"); }}
+                          >
+                            <SelectTrigger
+                              aria-invalid={!!timelineError}
+                              className={cn("mt-1.5 rounded-xl", timelineError && "border-destructive focus:ring-destructive")}
+                            >
+                              <SelectValue placeholder="Select" />
+                            </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="asap">ASAP</SelectItem>
                               <SelectItem value="1_month">Within 1 month</SelectItem>
@@ -281,6 +343,7 @@ export function InquiryModal({ open, onClose }: { open: boolean; onClose: () => 
                               <SelectItem value="flexible">Flexible</SelectItem>
                             </SelectContent>
                           </Select>
+                          {timelineError && <p className="mt-1 text-xs text-destructive">{timelineError}</p>}
                         </div>
                         <div>
                           <Label>Preferred Contact Method</Label>
@@ -309,7 +372,7 @@ export function InquiryModal({ open, onClose }: { open: boolean; onClose: () => 
                     Continue <ArrowRight className="ml-1.5 h-4 w-4" />
                   </Button>
                 ) : (
-                  <Button disabled={!canNext || submitting} onClick={submit} className="rounded-full px-6 electric-glow">
+                  <Button disabled={submitting} onClick={submit} className="rounded-full px-6 electric-glow">
                     {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Sending…</> : <>Submit Inquiry <ArrowRight className="ml-1.5 h-4 w-4" /></>}
                   </Button>
                 )}
