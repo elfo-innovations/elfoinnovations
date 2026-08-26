@@ -12,13 +12,17 @@ type LeadNotifyInput = {
 };
 
 // No auth required — this fires right after the public inquiry form insert.
+// Sends BOTH the admin notification email and a confirmation email to the
+// client who submitted the form. Admin push notification is handled
+// separately by the public.notify_new_lead() DB trigger on insert.
 export const notifyAdminOfLead = createServerFn({ method: "POST" })
   .inputValidator((input: LeadNotifyInput) => input)
   .handler(async ({ data }) => {
     const { sendEmail } = await import("@/lib/email.server");
+    const { leadReceivedEmail } = await import("@/lib/email-templates");
     const adminTo = process.env["ADMIN_NOTIFY_EMAIL"] || "support@elfoinnovations.com"; // your Zoho inbox
 
-    return sendEmail({
+    const adminMail = await sendEmail({
       to: adminTo,
       replyTo: data.email, // admin hits "Reply" in their inbox → goes straight to the client
       subject: `New inquiry (${data.lead_code}) — ${data.full_name}`,
@@ -33,7 +37,21 @@ export const notifyAdminOfLead = createServerFn({ method: "POST" })
           <p style="color:#888;font-size:12px">Lead code: ${data.lead_code} — reply to this email to respond directly to the client.</p>
         </div>`,
     }).catch((e) => {
-      console.error("[lead notify] failed", e);
-      return { sent: false, provider: "error" };
+      console.error("[lead notify] admin email failed", e);
+      return { sent: false, provider: "error", error: String(e) };
     });
+
+    const clientMail = await sendEmail({
+      to: data.email,
+      subject: "We received your inquiry — ELFO Innovations",
+      html: leadReceivedEmail({ name: data.full_name, leadCode: data.lead_code }),
+    }).catch((e) => {
+      console.error("[lead notify] client email failed", e);
+      return { sent: false, provider: "error", error: String(e) };
+    });
+
+    if (!adminMail.sent) console.error("[lead notify] admin email not sent:", (adminMail as any).error);
+    if (!clientMail.sent) console.error("[lead notify] client email not sent:", (clientMail as any).error);
+
+    return { ok: true, adminEmailSent: adminMail.sent, clientEmailSent: clientMail.sent };
   });

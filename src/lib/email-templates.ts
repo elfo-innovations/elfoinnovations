@@ -67,6 +67,18 @@ export function applicationReceivedEmail(p: { name: string; role: string }) {
   );
 }
 
+export function leadReceivedEmail(p: { name: string; leadCode: string }) {
+  return shell(
+    "We received your inquiry",
+    `<h1 style="margin:0 0 12px;font-size:22px;color:${BRAND.text};">Inquiry received</h1>
+     <p style="margin:0 0 14px;">Hi ${esc(p.name)},</p>
+     <p style="margin:0 0 14px;color:${BRAND.muted};">Thanks for reaching out to <strong style="color:${BRAND.text};">ELFO Innovations</strong>. We've received your
+     project inquiry (reference <strong style="color:${BRAND.electric};">${esc(p.leadCode)}</strong>) and our team is already looking it over.</p>
+     <p style="margin:0 0 14px;color:${BRAND.muted};">Someone from our team will reply to this email shortly to discuss next steps. No action is needed from you right now.</p>
+     ${button(BRAND.site, "Visit ELFO Innovations")}`,
+  );
+}
+
 export function acceptanceEmail(p: {
   name: string;
   message: string;
