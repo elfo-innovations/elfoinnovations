@@ -29,7 +29,7 @@ export function LanguageSwitcher({ compact = false, scope }: { compact?: boolean
           )}
         >
           <Globe className="h-3.5 w-3.5 text-primary" />
-          <span className="hidden sm:inline">{current.native}</span>
+          <span className="notranslate hidden sm:inline" translate="no">{current.native}</span>
           <span className="sm:hidden">{current.flag}</span>
           <ChevronDown className={cn("h-3 w-3 transition-transform duration-200", open && "rotate-180")} />
         </button>
@@ -57,8 +57,8 @@ export function LanguageSwitcher({ compact = false, scope }: { compact?: boolean
                 >
                   <span className="flex min-w-0 items-center gap-2">
                     <span className="text-base leading-none">{lng.flag}</span>
-                    <span className="truncate font-medium">{lng.native}</span>
-                    <span className="hidden text-[10px] text-muted-foreground xs:inline">{lng.label}</span>
+                    <span className="notranslate truncate font-medium" translate="no">{lng.native}</span>
+                    <span className="notranslate hidden text-[10px] text-muted-foreground xs:inline" translate="no">{lng.label}</span>
                   </span>
                   {active && <Check className="h-3.5 w-3.5 shrink-0" />}
                 </button>
