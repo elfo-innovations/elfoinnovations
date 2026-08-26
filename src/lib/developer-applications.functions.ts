@@ -65,9 +65,11 @@ export const submitDeveloperApplication = createServerFn({ method: "POST" })
       html: applicationReceivedEmail({ name: data.full_name.trim(), role: data.primary_role }),
     });
 
-    // Fire-and-forget: notify admin inbox, mirroring the inquiry-lead flow.
+    // Notify admin inbox. Must be awaited — in the edge runtime an
+    // un-awaited fire-and-forget call can be killed as soon as the
+    // handler returns, which was silently dropping this email.
     const adminTo = process.env["ADMIN_NOTIFY_EMAIL"] || "support@elfoinnovations.com";
-    sendEmail({
+    const adminMail = await sendEmail({
       to: adminTo,
       replyTo: email,
       subject: `New developer application — ${data.full_name.trim()} (${data.primary_role})`,
@@ -86,7 +88,13 @@ export const submitDeveloperApplication = createServerFn({ method: "POST" })
           <p><b>Motivation:</b><br/>${data.motivation.trim()}</p>
           <p style="color:#888;font-size:12px">Reply to this email to respond directly to the applicant. Review in the admin dashboard to accept or reject.</p>
         </div>`,
-    }).catch((e) => console.error("[dev application notify] failed", e));
+    }).catch((e) => {
+      console.error("[dev application notify] failed", e);
+      return { sent: false, provider: "error", error: String(e) };
+    });
+    if (!adminMail.sent) {
+      console.error("[dev application] admin notify email not sent:", adminMail.error);
+    }
 
     return { ok: true, emailSent: mail.sent, emailError: mail.error ?? null };
   });
