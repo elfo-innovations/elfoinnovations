@@ -4,11 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { PublicLayout } from "@/components/site/PublicLayout";
 import { ArrowRight, Calendar, Newspaper } from "lucide-react";
 
-const URL = "https://elfoinnovations.com/blog";
+const URL = "https://elfoinnovations.com/blogs";
 const TITLE = "Software Development Insights, Guides & Technology Blog | ELFO Innovations";
 const DESC = "Deep-dive articles on custom software development, web and mobile engineering, SaaS architecture, and product strategy from the ELFO Innovations team.";
 
-export const Route = createFileRoute("/blog")({
+export const Route = createFileRoute("/blogs")({
   loader: async () => {
     const { data, error } = await supabase
       .from("blogs")
@@ -81,7 +81,7 @@ function BlogIndex() {
         ) : (
           <div className="grid gap-8 md:grid-cols-2">
             {(data ?? []).map((b: any) => (
-              <Link key={b.id} to="/blog/$slug" params={{ slug: b.slug }} className="group glass-card block overflow-hidden rounded-2xl transition-all hover:electric-glow">
+              <Link key={b.id} to="/blogs/$slug" params={{ slug: b.slug }} className="group glass-card block overflow-hidden rounded-2xl transition-all hover:electric-glow">
                 {b.cover_image && (
                   <div className="aspect-[16/9] overflow-hidden bg-muted">
                     <img src={b.cover_image} alt={b.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />

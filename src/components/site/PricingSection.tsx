@@ -18,7 +18,7 @@ const DEFAULTS = [
 export function PricingSection() {
   const { open } = useInquiry();
   const { i18n } = useTranslation();
-  const { data } = useQuery({
+  const { data, isPending } = useQuery({
     queryKey: ["pricing_plans"],
     queryFn: async () => (await supabase.from("pricing_plans").select("*").eq("is_active", true).order("sort_order")).data,
   });
@@ -34,7 +34,21 @@ export function PricingSection() {
         </div>
 
         <div className="mt-12 flex flex-wrap justify-center gap-4">
-          {plans.map((p, i) => (
+          {isPending
+            ? Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="glass-card flex w-full flex-col rounded-2xl p-6 sm:w-[calc(50%-0.5rem)] lg:w-[260px]">
+                  <div className="h-3 w-20 animate-pulse rounded bg-muted" />
+                  <div className="mt-3 h-8 w-24 animate-pulse rounded bg-muted" />
+                  <div className="mt-2 h-3 w-full animate-pulse rounded bg-muted" />
+                  <div className="mt-5 space-y-2.5">
+                    {Array.from({ length: 4 }).map((__, j) => (
+                      <div key={j} className="h-3 w-full animate-pulse rounded bg-muted" />
+                    ))}
+                  </div>
+                  <div className="mt-6 h-10 w-full animate-pulse rounded-full bg-muted" />
+                </div>
+              ))
+            : plans.map((p, i) => (
             <div
               key={p.id ?? i}
               className={`glass-card relative flex w-full flex-col rounded-2xl p-6 sm:w-[calc(50%-0.5rem)] lg:w-[260px] ${p.is_popular ? "border-primary electric-glow" : ""}`}

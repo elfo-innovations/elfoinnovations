@@ -154,7 +154,7 @@ function AdminBlogs() {
           <p className="mt-1 text-sm text-muted-foreground">SEO articles that rank your site. Publish long-form to grow organic traffic.</p>
         </div>
         <div className="flex gap-2">
-          <a href="/blog" target="_blank" rel="noreferrer"><Button variant="outline" className="rounded-full"><ExternalLink className="mr-1.5 h-4 w-4" /> View blog</Button></a>
+          <a href="/blogs" target="_blank" rel="noreferrer"><Button variant="outline" className="rounded-full"><ExternalLink className="mr-1.5 h-4 w-4" /> View blog</Button></a>
           <Button onClick={startNew} className="rounded-full electric-glow"><Plus className="mr-1.5 h-4 w-4" /> New Article</Button>
         </div>
       </div>
@@ -213,7 +213,7 @@ function AdminBlogs() {
             <div className="grid gap-1.5">
               <Label>Slug * (URL)</Label>
               <Input value={form.slug} onChange={(e) => setForm({ ...form, slug: slugify(e.target.value) })} placeholder="how-we-ship-enterprise-software" />
-              <p className="text-xs text-muted-foreground">Will appear at /blog/{form.slug || "your-slug"}</p>
+              <p className="text-xs text-muted-foreground">Will appear at /blogs/{form.slug || "your-slug"}</p>
             </div>
             <div className="grid gap-1.5">
               <Label>Category</Label>

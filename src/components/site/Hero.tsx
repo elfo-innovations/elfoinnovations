@@ -27,8 +27,25 @@ function DeferredMonitor3D() {
     const w: any = window;
     const schedule = w.requestIdleCallback || ((cb: any) => setTimeout(cb, 200));
     const cancel = w.cancelIdleCallback || clearTimeout;
-    const id = schedule(() => setReady(true), { timeout: 1500 });
-    return () => cancel(id);
+    let idleId: any;
+
+    const startLoading = () => {
+      idleId = schedule(() => setReady(true), { timeout: 1500 });
+    };
+
+    // Wait for the rest of the page (images, fonts, other sections) to fully
+    // finish loading before we even start fetching the 3D chunk + GLTF model,
+    // so the 3D scene never competes with the site's own load.
+    if (document.readyState === "complete") {
+      startLoading();
+    } else {
+      window.addEventListener("load", startLoading, { once: true });
+    }
+
+    return () => {
+      window.removeEventListener("load", startLoading);
+      if (idleId !== undefined) cancel(idleId);
+    };
   }, []);
   if (!ready) return <Monitor3DPlaceholder />;
   return (
@@ -45,18 +62,18 @@ export function Hero() {
     queryFn: async () => (await supabase.from("hero_content").select("*").maybeSingle()).data,
   });
   const h: any = data || {};
-  const heading: string = h.heading || "Custom Software Development for Web, Mobile & SaaS";
+  const heading: string = h.heading || "SOLUTIONS TODAY SUCCESS TOMORROW";
 
-  const highlightRaw: string = h.highlight || "";
+  const highlightRaw: string = h.highlight ?? "TODAY, TOMORROW";
   // Support multiple highlighted phrases separated by "|" or ","
   const highlights = highlightRaw.split(/[|,]/).map((s) => s.trim()).filter(Boolean);
   const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const pattern = highlights.length ? new RegExp(`(${highlights.map(escape).join("|")})`, "gi") : null;
   const segments = pattern ? heading.split(pattern) : [heading];
-  const headingStyle = h.heading_font ? { fontFamily: `"${h.heading_font}", var(--font-display)` } : undefined;
+  const headingStyle = { fontFamily: `"${h.heading_font || "Poppins"}", var(--font-display)` };
   const trust: { label: string }[] = (h.trust_items as any) || [
-    { label: "No upfront payment" },
-    { label: "See before you buy" },
+    { label: "130+ shipped" },
+    { label: "4.9/5 client rating" },
     { label: "Enterprise-grade delivery" },
   ];
 
@@ -123,14 +140,16 @@ export function Hero() {
                 : <span key={i}>{seg}</span>
             )}
           </h1>
-          <p className="mt-6 max-w-xl text-lg text-muted-foreground">{h.description}</p>
+          <p className="mt-6 max-w-xl text-lg text-muted-foreground">
+            {h.description || "ELFO INNOVATIONS designs, builds, and hosts world-class software with a supervised 4-stage pipeline."}
+          </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Button size="lg" onClick={h.primary_cta_action === "inquiry" ? open : undefined} className="rounded-full px-7 electric-glow">
-              {h.primary_cta_label || "Get Started"} <ArrowRight className="ml-2 h-4 w-4" />
+            <Button size="lg" onClick={(h.primary_cta_action ?? "inquiry") === "inquiry" ? open : undefined} className="rounded-full px-7 electric-glow">
+              {h.primary_cta_label || "Start your project"} <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
-            {h.secondary_cta_label && (
+            {(data ? h.secondary_cta_label : true) && (
               <Link to={h.secondary_cta_href || "/portfolio"}>
-                <Button size="lg" variant="outline" className="rounded-full px-7">{h.secondary_cta_label}</Button>
+                <Button size="lg" variant="outline" className="rounded-full px-7">{h.secondary_cta_label || "See our work"}</Button>
               </Link>
             )}
           </div>

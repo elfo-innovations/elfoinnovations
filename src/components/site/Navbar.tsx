@@ -16,7 +16,7 @@ const NAV_KEY_BY_HREF: Record<string, string> = {
   "/services": "nav.services",
   "/portfolio": "nav.portfolio",
   "/pricing": "nav.pricing",
-  "/blog": "nav.blog",
+  "/blogs": "nav.blog",
   "/about": "nav.about",
   "/contact": "nav.contact",
 };
@@ -38,7 +38,7 @@ export function Navbar() {
     { id: "s", label: t("nav.services"), href: "/services" },
     { id: "p", label: t("nav.portfolio"), href: "/portfolio" },
     { id: "pr", label: t("nav.pricing"), href: "/pricing" },
-    { id: "b", label: t("nav.blog"), href: "/blog" },
+    { id: "b", label: t("nav.blog"), href: "/blogs" },
     { id: "a", label: t("nav.about"), href: "/about" },
   ];
   const links = (data && data.length > 0 ? data : FALLBACK) as any[];

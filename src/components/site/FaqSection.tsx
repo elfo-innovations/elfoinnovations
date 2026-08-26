@@ -81,7 +81,7 @@ const DEFAULTS = [
 ];
 
 export function FaqSection() {
-  const { data } = useQuery({
+  const { data, isPending } = useQuery({
     queryKey: ["faqs"],
     queryFn: async () =>
       (await supabase.from("faqs").select("*").eq("is_active", true).order("sort_order")).data,
@@ -100,7 +100,13 @@ export function FaqSection() {
           </h2>
         </div>
         <Accordion type="single" collapsible className="mt-10 space-y-3">
-          {items.map((f, i) => (
+          {isPending
+            ? Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="glass-card rounded-2xl border-0 px-5 py-4">
+                  <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+                </div>
+              ))
+            : items.map((f, i) => (
             <AccordionItem
               key={f.id ?? i}
               value={`i${i}`}

@@ -10,10 +10,10 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 
 const SITE = "https://elfoinnovations.com";
 
-export const Route = createFileRoute("/blog_/$slug")({
+export const Route = createFileRoute("/blogs_/$slug")({
   head: ({ loaderData, params }: any) => {
     const b = loaderData;
-    const url = `${SITE}/blog/${params.slug}`;
+    const url = `${SITE}/blogs/${params.slug}`;
     const title =
       b?.meta_title ||
       (b?.title ? `${b.title} | ELFO Innovations Blog` : "Article — ELFO Innovations");
@@ -64,7 +64,7 @@ export const Route = createFileRoute("/blog_/$slug")({
                 "@type": "BreadcrumbList",
                 itemListElement: [
                   { "@type": "ListItem", position: 1, name: "Home", item: `${SITE}/` },
-                  { "@type": "ListItem", position: 2, name: "Blog", item: `${SITE}/blog` },
+                  { "@type": "ListItem", position: 2, name: "Blog", item: `${SITE}/blogs` },
                   { "@type": "ListItem", position: 3, name: b.title, item: url },
                 ],
               }),
@@ -105,7 +105,7 @@ export const Route = createFileRoute("/blog_/$slug")({
     <PublicLayout>
       <div className="mx-auto max-w-2xl px-4 py-24 text-center">
         <h1 className="text-2xl font-bold">Article unavailable</h1>
-        <Link to="/blog" className="mt-4 inline-block text-primary">
+        <Link to="/blogs" className="mt-4 inline-block text-primary">
           ← Back to blog
         </Link>
       </div>
@@ -115,7 +115,7 @@ export const Route = createFileRoute("/blog_/$slug")({
     <PublicLayout>
       <div className="mx-auto max-w-2xl px-4 py-24 text-center">
         <h1 className="text-2xl font-bold">Article not found</h1>
-        <Link to="/blog" className="mt-4 inline-block text-primary">
+        <Link to="/blogs" className="mt-4 inline-block text-primary">
           ← Back to blog
         </Link>
       </div>
@@ -308,7 +308,7 @@ function BlogPost() {
     <PublicLayout>
       <article className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
         <Link
-          to="/blog"
+          to="/blogs"
           className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" /> All articles
@@ -397,7 +397,7 @@ function BlogPost() {
               {(related ?? []).map((r: any) => (
                 <Link
                   key={r.id}
-                  to="/blog/$slug"
+                  to="/blogs/$slug"
                   params={{ slug: r.slug }}
                   className="glass-card group block overflow-hidden rounded-2xl transition-all hover:electric-glow"
                 >
