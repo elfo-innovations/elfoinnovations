@@ -46,6 +46,7 @@ const EMPTY = {
   tags: "",
   category: "",
   tldr: "",
+  faqs: [] as { question: string; answer: string }[],
   author_name: "ELFO INNOVATIONS",
   meta_title: "",
   meta_description: "",
@@ -72,6 +73,7 @@ function AdminBlogs() {
       id: b.id, slug: b.slug, title: b.title, excerpt: b.excerpt ?? "",
       content_md: b.content_md ?? "", content_html: b.content_html ?? "", cover_image: b.cover_image ?? "",
       tags: (b.tags ?? []).join(", "), category: b.category ?? "", tldr: b.tldr ?? "",
+      faqs: Array.isArray(b.faqs) ? b.faqs : [],
       author_name: b.author_name ?? "ELFO INNOVATIONS",
       meta_title: b.meta_title ?? "", meta_description: b.meta_description ?? "",
       is_published: !!b.is_published, reading_minutes: b.reading_minutes ?? null,
@@ -107,6 +109,7 @@ function AdminBlogs() {
       content_html: form.content_html || null,
       cover_image: form.cover_image || null,
       tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
+      faqs: form.faqs,
       category: form.category || null,
       tldr: form.tldr.trim() || null,
       author_name: form.author_name.trim() || "ELFO INNOVATIONS",
@@ -151,7 +154,7 @@ function AdminBlogs() {
           <p className="mt-1 text-sm text-muted-foreground">SEO articles that rank your site. Publish long-form to grow organic traffic.</p>
         </div>
         <div className="flex gap-2">
-          <a href="/blog" target="_blank" rel="noreferrer"><Button variant="outline" className="rounded-full"><ExternalLink className="mr-1.5 h-4 w-4" /> View blog</Button></a>
+          <a href="/blogs" target="_blank" rel="noreferrer"><Button variant="outline" className="rounded-full"><ExternalLink className="mr-1.5 h-4 w-4" /> View blog</Button></a>
           <Button onClick={startNew} className="rounded-full electric-glow"><Plus className="mr-1.5 h-4 w-4" /> New Article</Button>
         </div>
       </div>
@@ -210,7 +213,7 @@ function AdminBlogs() {
             <div className="grid gap-1.5">
               <Label>Slug * (URL)</Label>
               <Input value={form.slug} onChange={(e) => setForm({ ...form, slug: slugify(e.target.value) })} placeholder="how-we-ship-enterprise-software" />
-              <p className="text-xs text-muted-foreground">Will appear at /blog/{form.slug || "your-slug"}</p>
+              <p className="text-xs text-muted-foreground">Will appear at /blogs/{form.slug || "your-slug"}</p>
             </div>
             <div className="grid gap-1.5">
               <Label>Category</Label>
@@ -275,6 +278,50 @@ function AdminBlogs() {
               <div className="flex items-end gap-3">
                 <Switch checked={form.is_published} onCheckedChange={(v) => setForm({ ...form, is_published: v })} />
                 <span className="text-sm">{form.is_published ? "Published" : "Draft"}</span>
+              </div>
+            </div>
+            <div>
+              <Label>FAQs (optional — powers FAQ schema for SEO/AEO)</Label>
+              <div className="mt-2 space-y-3">
+                {form.faqs.map((f, i) => (
+                  <div key={i} className="glass-card space-y-2 rounded-xl p-3">
+                    <div className="flex gap-2">
+                      <Input
+                        value={f.question}
+                        onChange={(e) => {
+                          const n = [...form.faqs];
+                          n[i] = { ...n[i], question: e.target.value };
+                          setForm({ ...form, faqs: n });
+                        }}
+                        placeholder="Question"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setForm({ ...form, faqs: form.faqs.filter((_, k) => k !== i) })}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <Textarea
+                      rows={2}
+                      value={f.answer}
+                      onChange={(e) => {
+                        const n = [...form.faqs];
+                        n[i] = { ...n[i], answer: e.target.value };
+                        setForm({ ...form, faqs: n });
+                      }}
+                      placeholder="Answer"
+                    />
+                  </div>
+                ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setForm({ ...form, faqs: [...form.faqs, { question: "", answer: "" }] })}
+                >
+                  <Plus className="mr-1 h-4 w-4" />Add FAQ
+                </Button>
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">

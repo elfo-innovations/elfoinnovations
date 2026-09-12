@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ElfoLogo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
+import { useInquiry } from "@/hooks/use-inquiry";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { open: openInquiry } = useInquiry();
   const [busy, setBusy] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -71,7 +73,7 @@ function AuthPage() {
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign in"}
             </Button>
             <p className="text-center text-xs text-muted-foreground">
-              Don't have an account yet? <Link to="/" className="text-primary hover:underline">Start a project inquiry</Link> and we'll set one up for you.
+              Don't have an account yet? <button type="button" onClick={openInquiry} className="text-primary hover:underline">Start a project inquiry</button> and we'll set one up for you.
             </p>
           </div>
         </div>

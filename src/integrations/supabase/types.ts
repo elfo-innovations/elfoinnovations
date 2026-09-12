@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.15"
   }
   public: {
     Tables: {
@@ -128,10 +128,13 @@ export type Database = {
       blogs: {
         Row: {
           author_name: string
+          category: string | null
+          content_html: string | null
           content_md: string
           cover_image: string | null
           created_at: string
           excerpt: string | null
+          faqs: Json
           id: string
           is_published: boolean
           meta_description: string | null
@@ -141,14 +144,18 @@ export type Database = {
           slug: string
           tags: string[]
           title: string
+          tldr: string | null
           updated_at: string
         }
         Insert: {
           author_name?: string
+          category?: string | null
+          content_html?: string | null
           content_md?: string
           cover_image?: string | null
           created_at?: string
           excerpt?: string | null
+          faqs?: Json
           id?: string
           is_published?: boolean
           meta_description?: string | null
@@ -158,14 +165,18 @@ export type Database = {
           slug: string
           tags?: string[]
           title: string
+          tldr?: string | null
           updated_at?: string
         }
         Update: {
           author_name?: string
+          category?: string | null
+          content_html?: string | null
           content_md?: string
           cover_image?: string | null
           created_at?: string
           excerpt?: string | null
+          faqs?: Json
           id?: string
           is_published?: boolean
           meta_description?: string | null
@@ -175,6 +186,7 @@ export type Database = {
           slug?: string
           tags?: string[]
           title?: string
+          tldr?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -324,7 +336,11 @@ export type Database = {
           full_name: string
           id: string
           notes: string | null
+          pending_referral_discount_percent: number
           phone: string | null
+          referral_code: string | null
+          referral_reward_given: boolean
+          referred_by_client_id: string | null
           source_lead_id: string | null
           updated_at: string
           user_id: string | null
@@ -338,7 +354,11 @@ export type Database = {
           full_name: string
           id?: string
           notes?: string | null
+          pending_referral_discount_percent?: number
           phone?: string | null
+          referral_code?: string | null
+          referral_reward_given?: boolean
+          referred_by_client_id?: string | null
           source_lead_id?: string | null
           updated_at?: string
           user_id?: string | null
@@ -352,12 +372,23 @@ export type Database = {
           full_name?: string
           id?: string
           notes?: string | null
+          pending_referral_discount_percent?: number
           phone?: string | null
+          referral_code?: string | null
+          referral_reward_given?: boolean
+          referred_by_client_id?: string | null
           source_lead_id?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "clients_referred_by_client_id_fkey"
+            columns: ["referred_by_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "clients_source_lead_id_fkey"
             columns: ["source_lead_id"]
@@ -1130,6 +1161,72 @@ export type Database = {
           },
         ]
       }
+      project_invoices: {
+        Row: {
+          client_id: string
+          created_at: string
+          currency: string
+          discount: number
+          id: string
+          invoice_number: string
+          items: Json
+          project_id: string
+          status: string
+          subtotal: number
+          tax_amount: number
+          tax_rate: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          currency?: string
+          discount?: number
+          id?: string
+          invoice_number: string
+          items?: Json
+          project_id: string
+          status?: string
+          subtotal?: number
+          tax_amount?: number
+          tax_rate?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          currency?: string
+          discount?: number
+          id?: string
+          invoice_number?: string
+          items?: Json
+          project_id?: string
+          status?: string
+          subtotal?: number
+          tax_amount?: number
+          tax_rate?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_invoices_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_stages: {
         Row: {
           admin_approved_at: string | null
@@ -1194,6 +1291,8 @@ export type Database = {
           created_at: string
           deadline: string | null
           developer_id: string | null
+          discount_percent: number
+          discount_reason: string | null
           id: string
           internal_notes: string | null
           name: string
@@ -1201,6 +1300,7 @@ export type Database = {
           progress_percent: number
           project_code: string
           requirements: string | null
+          selected_services: Json
           start_date: string | null
           status: Database["public"]["Enums"]["project_status"]
           technologies: string[] | null
@@ -1213,6 +1313,8 @@ export type Database = {
           created_at?: string
           deadline?: string | null
           developer_id?: string | null
+          discount_percent?: number
+          discount_reason?: string | null
           id?: string
           internal_notes?: string | null
           name: string
@@ -1220,6 +1322,7 @@ export type Database = {
           progress_percent?: number
           project_code?: string
           requirements?: string | null
+          selected_services?: Json
           start_date?: string | null
           status?: Database["public"]["Enums"]["project_status"]
           technologies?: string[] | null
@@ -1232,6 +1335,8 @@ export type Database = {
           created_at?: string
           deadline?: string | null
           developer_id?: string | null
+          discount_percent?: number
+          discount_reason?: string | null
           id?: string
           internal_notes?: string | null
           name?: string
@@ -1239,6 +1344,7 @@ export type Database = {
           progress_percent?: number
           project_code?: string
           requirements?: string | null
+          selected_services?: Json
           start_date?: string | null
           status?: Database["public"]["Enums"]["project_status"]
           technologies?: string[] | null
@@ -1345,6 +1451,65 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_events: {
+        Row: {
+          created_at: string
+          discount_percent: number
+          id: string
+          referred_client_id: string
+          referred_project_id: string | null
+          referrer_client_id: string
+          referrer_project_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          discount_percent?: number
+          id?: string
+          referred_client_id: string
+          referred_project_id?: string | null
+          referrer_client_id: string
+          referrer_project_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          discount_percent?: number
+          id?: string
+          referred_client_id?: string
+          referred_project_id?: string | null
+          referrer_client_id?: string
+          referrer_project_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_events_referred_client_id_fkey"
+            columns: ["referred_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_events_referred_project_id_fkey"
+            columns: ["referred_project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_events_referrer_client_id_fkey"
+            columns: ["referrer_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_events_referrer_project_id_fkey"
+            columns: ["referrer_project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           created_at: string
@@ -1355,6 +1520,7 @@ export type Database = {
           id: string
           image_url: string | null
           is_active: boolean
+          price: number
           sort_order: number
           title: string
           updated_at: string
@@ -1368,6 +1534,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          price?: number
           sort_order?: number
           title: string
           updated_at?: string
@@ -1381,6 +1548,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          price?: number
           sort_order?: number
           title?: string
           updated_at?: string
@@ -1493,6 +1661,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      notify_admins_referral_reward: {
+        Args: { p_referred_name: string; p_referrer_name: string }
+        Returns: undefined
+      }
+      project_is_payment_locked: {
+        Args: { p_project_id: string }
+        Returns: boolean
+      }
+      redeem_referral_code: { Args: { p_code: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "developer" | "client"

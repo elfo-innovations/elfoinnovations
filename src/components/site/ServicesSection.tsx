@@ -23,7 +23,7 @@ const ICONS: Record<string, any> = { Code2, Smartphone, Cloud, Building2, Shoppi
 
 export function ServicesSection() {
   const { open } = useInquiry();
-  const { data } = useQuery({
+  const { data, isPending } = useQuery({
     queryKey: ["services"],
     queryFn: async () => (await supabase.from("services").select("*").eq("is_active", true).order("sort_order")).data,
   });
@@ -41,7 +41,18 @@ export function ServicesSection() {
         </div>
 
         <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {items.map((s, i) => {
+          {isPending
+            ? Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="glass-card rounded-2xl p-6">
+                  <div className="h-11 w-11 animate-pulse rounded-xl bg-muted" />
+                  <div className="mt-5 h-4 w-2/3 animate-pulse rounded bg-muted" />
+                  <div className="mt-3 space-y-1.5">
+                    <div className="h-3 w-full animate-pulse rounded bg-muted" />
+                    <div className="h-3 w-4/5 animate-pulse rounded bg-muted" />
+                  </div>
+                </div>
+              ))
+            : items.map((s, i) => {
             const Icon = ICONS[s.icon] || Code2;
             return (
               <div key={s.id ?? i} onClick={open} className="glass-card group cursor-pointer rounded-2xl p-6 transition-all hover:-translate-y-1 hover:electric-glow">

@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BlogRouteImport } from './routes/blog'
+import { Route as BlogsRouteImport } from './routes/blogs'
 import { Route as PortfolioRouteImport } from './routes/portfolio'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as ProfileRouteImport } from './routes/profile'
@@ -31,6 +32,7 @@ import { Route as AdminReviewsRouteImport } from './routes/admin.reviews'
 import { Route as AdminSiteChatRouteImport } from './routes/admin.site-chat'
 import { Route as AdminWebPortalRouteImport } from './routes/admin.web-portal'
 import { Route as BlogSlugRouteImport } from './routes/blog_.$slug'
+import { Route as BlogsSlugRouteImport } from './routes/blogs_.$slug'
 import { Route as ClientIndexRouteImport } from './routes/client.index'
 import { Route as ClientImportantInfoRouteImport } from './routes/client.important-info'
 import { Route as ClientInvoicesRouteImport } from './routes/client.invoices'
@@ -63,6 +65,11 @@ const AuthRoute = AuthRouteImport.update({
 const BlogRoute = BlogRouteImport.update({
   id: '/blog',
   path: '/blog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogsRoute = BlogsRouteImport.update({
+  id: '/blogs',
+  path: '/blogs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PortfolioRoute = PortfolioRouteImport.update({
@@ -155,6 +162,11 @@ const BlogSlugRoute = BlogSlugRouteImport.update({
   path: '/blog/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogsSlugRoute = BlogsSlugRouteImport.update({
+  id: '/blogs_/$slug',
+  path: '/blogs/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ClientIndexRoute = ClientIndexRouteImport.update({
   id: '/client/',
   path: '/client/',
@@ -227,6 +239,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/blog': typeof BlogRoute
+  '/blogs': typeof BlogsRoute
   '/portfolio': typeof PortfolioRoute
   '/pricing': typeof PricingRoute
   '/profile': typeof ProfileRoute
@@ -244,6 +257,7 @@ export interface FileRoutesByFullPath {
   '/admin/site-chat': typeof AdminSiteChatRoute
   '/admin/web-portal': typeof AdminWebPortalRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/blogs/$slug': typeof BlogsSlugRoute
   '/client/important-info': typeof ClientImportantInfoRoute
   '/client/invoices': typeof ClientInvoicesRoute
   '/client/messages': typeof ClientMessagesRoute
@@ -264,6 +278,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/blog': typeof BlogRoute
+  '/blogs': typeof BlogsRoute
   '/portfolio': typeof PortfolioRoute
   '/pricing': typeof PricingRoute
   '/profile': typeof ProfileRoute
@@ -281,6 +296,7 @@ export interface FileRoutesByTo {
   '/admin/site-chat': typeof AdminSiteChatRoute
   '/admin/web-portal': typeof AdminWebPortalRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/blogs/$slug': typeof BlogsSlugRoute
   '/client/important-info': typeof ClientImportantInfoRoute
   '/client/invoices': typeof ClientInvoicesRoute
   '/client/messages': typeof ClientMessagesRoute
@@ -302,6 +318,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/blog': typeof BlogRoute
+  '/blogs': typeof BlogsRoute
   '/portfolio': typeof PortfolioRoute
   '/pricing': typeof PricingRoute
   '/profile': typeof ProfileRoute
@@ -319,6 +336,7 @@ export interface FileRoutesById {
   '/admin/site-chat': typeof AdminSiteChatRoute
   '/admin/web-portal': typeof AdminWebPortalRoute
   '/blog_/$slug': typeof BlogSlugRoute
+  '/blogs_/$slug': typeof BlogsSlugRoute
   '/client/important-info': typeof ClientImportantInfoRoute
   '/client/invoices': typeof ClientInvoicesRoute
   '/client/messages': typeof ClientMessagesRoute
@@ -341,6 +359,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/auth'
     | '/blog'
+    | '/blogs'
     | '/portfolio'
     | '/pricing'
     | '/profile'
@@ -358,6 +377,7 @@ export interface FileRouteTypes {
     | '/admin/site-chat'
     | '/admin/web-portal'
     | '/blog/$slug'
+    | '/blogs/$slug'
     | '/client/important-info'
     | '/client/invoices'
     | '/client/messages'
@@ -378,6 +398,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/auth'
     | '/blog'
+    | '/blogs'
     | '/portfolio'
     | '/pricing'
     | '/profile'
@@ -395,6 +416,7 @@ export interface FileRouteTypes {
     | '/admin/site-chat'
     | '/admin/web-portal'
     | '/blog/$slug'
+    | '/blogs/$slug'
     | '/client/important-info'
     | '/client/invoices'
     | '/client/messages'
@@ -415,6 +437,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/auth'
     | '/blog'
+    | '/blogs'
     | '/portfolio'
     | '/pricing'
     | '/profile'
@@ -432,6 +455,7 @@ export interface FileRouteTypes {
     | '/admin/site-chat'
     | '/admin/web-portal'
     | '/blog_/$slug'
+    | '/blogs_/$slug'
     | '/client/important-info'
     | '/client/invoices'
     | '/client/messages'
@@ -453,6 +477,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
   BlogRoute: typeof BlogRoute
+  BlogsRoute: typeof BlogsRoute
   PortfolioRoute: typeof PortfolioRoute
   PricingRoute: typeof PricingRoute
   ProfileRoute: typeof ProfileRoute
@@ -470,6 +495,7 @@ export interface RootRouteChildren {
   AdminSiteChatRoute: typeof AdminSiteChatRoute
   AdminWebPortalRoute: typeof AdminWebPortalRoute
   BlogSlugRoute: typeof BlogSlugRoute
+  BlogsSlugRoute: typeof BlogsSlugRoute
   ClientImportantInfoRoute: typeof ClientImportantInfoRoute
   ClientInvoicesRoute: typeof ClientInvoicesRoute
   ClientMessagesRoute: typeof ClientMessagesRoute
@@ -514,6 +540,13 @@ declare module '@tanstack/react-router' {
       path: '/blog'
       fullPath: '/blog'
       preLoaderRoute: typeof BlogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blogs': {
+      id: '/blogs'
+      path: '/blogs'
+      fullPath: '/blogs'
+      preLoaderRoute: typeof BlogsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/portfolio': {
@@ -642,6 +675,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blogs_/$slug': {
+      id: '/blogs_/$slug'
+      path: '/blogs/$slug'
+      fullPath: '/blogs/$slug'
+      preLoaderRoute: typeof BlogsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/client/': {
       id: '/client/'
       path: '/client'
@@ -741,6 +781,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
   BlogRoute: BlogRoute,
+  BlogsRoute: BlogsRoute,
   PortfolioRoute: PortfolioRoute,
   PricingRoute: PricingRoute,
   ProfileRoute: ProfileRoute,
@@ -758,6 +799,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminSiteChatRoute: AdminSiteChatRoute,
   AdminWebPortalRoute: AdminWebPortalRoute,
   BlogSlugRoute: BlogSlugRoute,
+  BlogsSlugRoute: BlogsSlugRoute,
   ClientImportantInfoRoute: ClientImportantInfoRoute,
   ClientInvoicesRoute: ClientInvoicesRoute,
   ClientMessagesRoute: ClientMessagesRoute,
