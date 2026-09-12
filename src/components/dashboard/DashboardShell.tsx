@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "@tanstack/react-router";
-import { LayoutDashboard, Users, Briefcase, Code2, MessagesSquare, LogOut, FileText, UserCircle2, FolderKanban, Menu, Receipt, Settings, Info, Globe, Newspaper, Lock, Star, Heart, UserPlus, Home } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, Code2, MessagesSquare, LogOut, FileText, UserCircle2, FolderKanban, Menu, Receipt, Settings, Info, Globe, Newspaper, Lock, Star, Heart, UserPlus, Home, Bot } from "lucide-react";
 import { ElfoLogo } from "@/components/brand/Logo";
 import { ThemeToggle } from "@/components/brand/ThemeToggle";
 import { LanguageSwitcher } from "@/components/brand/LanguageSwitcher";
@@ -39,6 +39,7 @@ const NAVS: Record<"admin" | "developer" | "client", Nav[]> = {
     { to: "/admin/project-invoices", label: "Project Invoices", icon: FileText },
     { to: "/admin/reviews", label: "Reviews", icon: Star },
     { to: "/admin/web-portal", label: "Web Portal", icon: Globe },
+    { to: "/admin/site-chat", label: "Site Chat (Elsa)", icon: Bot },
     { to: "/admin/blogs", label: "Blogs", icon: Newspaper },
     { to: "/profile", label: "My Profile", icon: Settings },
   ],

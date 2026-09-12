@@ -17,6 +17,10 @@ import { OffersSection } from "@/components/site/OffersSection";
 import { AnnouncementBar } from "@/components/site/AnnouncementBar";
 import { ReviewsScroller } from "@/components/site/ReviewsScroller";
 import { WorkShowcase } from "@/components/site/WorkShowcase";
+import { PromoHeroSlider } from "@/components/site/PromoHeroSlider";
+import { PromoHeroImage } from "@/components/site/PromoHeroImage";
+import { PromoBanner } from "@/components/site/PromoBanner";
+import { CustomPromoSection } from "@/components/site/CustomPromoSection";
 
 const URL = "https://elfoinnovations.com";
 const TITLE = "Custom Software Development Company | Web, Mobile & SaaS — ELFO Innovations";
@@ -56,9 +60,29 @@ const RENDERERS: Record<string, React.ComponentType> = {
 function Home() {
   const { data } = useQuery({
     queryKey: ["website_sections", "public"],
-    queryFn: async () => (await supabase.from("website_sections").select("section_key,sort_order,is_enabled").eq("is_enabled", true).order("sort_order")).data ?? [],
+    queryFn: async () => (await supabase.from("website_sections").select("section_key,title,sort_order,is_enabled").eq("is_enabled", true).order("sort_order")).data ?? [],
   });
-  const rawOrder = (data as any[] | undefined)?.map((s) => s.section_key).filter((k) => RENDERERS[k]) ?? [
+  const { data: promoSettings } = useQuery({
+    queryKey: ["promo_settings", "public"],
+    queryFn: async () => (await supabase.from("promo_settings").select("*").limit(1).maybeSingle()).data,
+  });
+  const { data: heroSlideCount = 0 } = useQuery({
+    queryKey: ["promo_banners", "hero_slider", "count", "public"],
+    enabled: promoSettings?.hero_mode === "slider",
+    queryFn: async () =>
+      (await supabase.from("promo_banners").select("id", { count: "exact", head: true }).eq("position", "hero_slider").eq("is_active", true)).count ?? 0,
+  });
+  const promoTheme = (promoSettings?.theme === "light" ? "light" : "dark") as "light" | "dark";
+  // Only actually replace the normal hero when there's real content ready — a slider
+  // needs 4+ images, an image needs a URL set. Otherwise the normal Hero stays put.
+  const heroReplaced =
+    (promoSettings?.hero_mode === "slider" && heroSlideCount >= 4) ||
+    (promoSettings?.hero_mode === "image" && !!promoSettings?.hero_image_url);
+
+  const sectionTitles = new Map((data as any[] | undefined)?.map((s) => [s.section_key, s.title]) ?? []);
+  // Custom sections (created via Section Manager → "+ New section") aren't in
+  // RENDERERS — keep them in the order so they render via CustomPromoSection below.
+  const rawOrder = (data as any[] | undefined)?.map((s) => s.section_key) ?? [
     "hero","showcase","portfolio","services","work","about","pricing","reviews","offers","testimonials","faq","cta",
   ];
   // Merge about+company into a single toggle section (avoid duplicate render)
@@ -81,10 +105,34 @@ function Home() {
   return (
     <PublicLayout>
       <AnnouncementBar />
+      {heroReplaced && promoSettings?.hero_mode === "slider" && (
+        <>
+          <PromoHeroSlider theme={promoTheme} />
+          <PromoBanner position="after_hero" theme={promoTheme} />
+        </>
+      )}
+      {heroReplaced && promoSettings?.hero_mode === "image" && (
+        <>
+          <PromoHeroImage imageUrl={promoSettings.hero_image_url} theme={promoTheme} />
+          <PromoBanner position="after_hero" theme={promoTheme} />
+        </>
+      )}
       {order.map((k) => {
+        // Promo hero replaces the normal one only when it actually has content ready.
+        if (heroReplaced && k === "hero") return null;
         const C = RENDERERS[k];
-        return C ? <C key={k} /> : null;
+        const el = C ? <C key={k} /> : <CustomPromoSection key={k} sectionKey={k} sectionTitle={sectionTitles.get(k)} theme={promoTheme} />;
+        return (
+          <React.Fragment key={k}>
+            {el}
+            {/* These two run regardless of hero_mode — after_hero/after_services should
+                always show once the admin sets them, whether the promo hero is on or not. */}
+            {k === "hero" && !heroReplaced && <PromoBanner position="after_hero" theme={promoTheme} />}
+            {k === "services" && <PromoBanner position="after_services" theme={promoTheme} />}
+          </React.Fragment>
+        );
       })}
+      <PromoBanner position="footer" theme={promoTheme} />
     </PublicLayout>
   );
 }

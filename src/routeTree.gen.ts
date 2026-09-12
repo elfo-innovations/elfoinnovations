@@ -28,6 +28,7 @@ import { Route as AdminLeadsRouteImport } from './routes/admin.leads'
 import { Route as AdminProjectInvoicesRouteImport } from './routes/admin.project-invoices'
 import { Route as AdminProjectsRouteImport } from './routes/admin.projects'
 import { Route as AdminReviewsRouteImport } from './routes/admin.reviews'
+import { Route as AdminSiteChatRouteImport } from './routes/admin.site-chat'
 import { Route as AdminWebPortalRouteImport } from './routes/admin.web-portal'
 import { Route as BlogSlugRouteImport } from './routes/blog_.$slug'
 import { Route as ClientIndexRouteImport } from './routes/client.index'
@@ -139,6 +140,11 @@ const AdminReviewsRoute = AdminReviewsRouteImport.update({
   path: '/admin/reviews',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminSiteChatRoute = AdminSiteChatRouteImport.update({
+  id: '/admin/site-chat',
+  path: '/admin/site-chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminWebPortalRoute = AdminWebPortalRouteImport.update({
   id: '/admin/web-portal',
   path: '/admin/web-portal',
@@ -235,6 +241,7 @@ export interface FileRoutesByFullPath {
   '/admin/project-invoices': typeof AdminProjectInvoicesRoute
   '/admin/projects': typeof AdminProjectsRoute
   '/admin/reviews': typeof AdminReviewsRoute
+  '/admin/site-chat': typeof AdminSiteChatRoute
   '/admin/web-portal': typeof AdminWebPortalRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/client/important-info': typeof ClientImportantInfoRoute
@@ -271,6 +278,7 @@ export interface FileRoutesByTo {
   '/admin/project-invoices': typeof AdminProjectInvoicesRoute
   '/admin/projects': typeof AdminProjectsRoute
   '/admin/reviews': typeof AdminReviewsRoute
+  '/admin/site-chat': typeof AdminSiteChatRoute
   '/admin/web-portal': typeof AdminWebPortalRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/client/important-info': typeof ClientImportantInfoRoute
@@ -308,6 +316,7 @@ export interface FileRoutesById {
   '/admin/project-invoices': typeof AdminProjectInvoicesRoute
   '/admin/projects': typeof AdminProjectsRoute
   '/admin/reviews': typeof AdminReviewsRoute
+  '/admin/site-chat': typeof AdminSiteChatRoute
   '/admin/web-portal': typeof AdminWebPortalRoute
   '/blog_/$slug': typeof BlogSlugRoute
   '/client/important-info': typeof ClientImportantInfoRoute
@@ -346,6 +355,7 @@ export interface FileRouteTypes {
     | '/admin/project-invoices'
     | '/admin/projects'
     | '/admin/reviews'
+    | '/admin/site-chat'
     | '/admin/web-portal'
     | '/blog/$slug'
     | '/client/important-info'
@@ -382,6 +392,7 @@ export interface FileRouteTypes {
     | '/admin/project-invoices'
     | '/admin/projects'
     | '/admin/reviews'
+    | '/admin/site-chat'
     | '/admin/web-portal'
     | '/blog/$slug'
     | '/client/important-info'
@@ -418,6 +429,7 @@ export interface FileRouteTypes {
     | '/admin/project-invoices'
     | '/admin/projects'
     | '/admin/reviews'
+    | '/admin/site-chat'
     | '/admin/web-portal'
     | '/blog_/$slug'
     | '/client/important-info'
@@ -455,6 +467,7 @@ export interface RootRouteChildren {
   AdminProjectInvoicesRoute: typeof AdminProjectInvoicesRoute
   AdminProjectsRoute: typeof AdminProjectsRoute
   AdminReviewsRoute: typeof AdminReviewsRoute
+  AdminSiteChatRoute: typeof AdminSiteChatRoute
   AdminWebPortalRoute: typeof AdminWebPortalRoute
   BlogSlugRoute: typeof BlogSlugRoute
   ClientImportantInfoRoute: typeof ClientImportantInfoRoute
@@ -608,6 +621,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminReviewsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/site-chat': {
+      id: '/admin/site-chat'
+      path: '/admin/site-chat'
+      fullPath: '/admin/site-chat'
+      preLoaderRoute: typeof AdminSiteChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/web-portal': {
       id: '/admin/web-portal'
       path: '/admin/web-portal'
@@ -735,6 +755,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminProjectInvoicesRoute: AdminProjectInvoicesRoute,
   AdminProjectsRoute: AdminProjectsRoute,
   AdminReviewsRoute: AdminReviewsRoute,
+  AdminSiteChatRoute: AdminSiteChatRoute,
   AdminWebPortalRoute: AdminWebPortalRoute,
   BlogSlugRoute: BlogSlugRoute,
   ClientImportantInfoRoute: ClientImportantInfoRoute,

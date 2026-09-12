@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { MediaPicker, uploadToWebsiteMedia } from "@/components/web-portal/MediaPicker";
+import { DateTimeField } from "@/components/web-portal/DateTimeField";
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent,
 } from "@dnd-kit/core";
@@ -177,6 +178,7 @@ function SectionsManager() {
   });
   const items = data as any[];
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const [newTitle, setNewTitle] = useState("");
 
   const onDragEnd = async (e: DragEndEvent) => {
     if (!e.over || e.active.id === e.over.id) return;
@@ -196,6 +198,25 @@ function SectionsManager() {
     qc.invalidateQueries({ queryKey: ["website_sections"] });
   };
 
+  const addCustomSection = async () => {
+    if (!newTitle.trim()) return toast.error("Give the new section a name first");
+    const key = `custom_${Date.now().toString(36)}`;
+    const maxSort = items.reduce((m, i) => Math.max(m, i.sort_order || 0), 0);
+    const { error } = await supabase.from("website_sections").insert({
+      section_key: key, title: newTitle.trim(), is_enabled: true, sort_order: maxSort + 10,
+    } as any);
+    if (error) return toast.error(error.message);
+    setNewTitle("");
+    qc.invalidateQueries({ queryKey: ["website_sections"] });
+    toast.success(`"${newTitle.trim()}" added — now design it from the Banners tab (position: ${key})`);
+  };
+
+  const deleteCustomSection = async (id: string) => {
+    if (!confirm("Delete this custom section? Its banners in the Banners tab won't be deleted, just unused.")) return;
+    await supabase.from("website_sections").delete().eq("id", id);
+    qc.invalidateQueries({ queryKey: ["website_sections"] });
+  };
+
   return (
     <div className="glass-card rounded-2xl p-4 sm:p-6">
       <div className="mb-4 flex items-center justify-between">
@@ -204,23 +225,47 @@ function SectionsManager() {
           <p className="text-sm text-muted-foreground">Drag to reorder, toggle to hide/show.</p>
         </div>
       </div>
+
+      <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-dashed p-3">
+        <Input
+          placeholder="e.g. Summer Sale, Client Logos, New Feature Spotlight…"
+          value={newTitle}
+          onChange={(e) => setNewTitle(e.target.value)}
+          className="min-w-0 flex-1"
+        />
+        <Button onClick={addCustomSection}><Plus className="mr-1 h-4 w-4" />New section</Button>
+      </div>
+      <p className="-mt-2 mb-4 text-xs text-muted-foreground">
+        Creates an empty section you can drag anywhere in the order below. Then go to the <strong>Banners</strong> tab
+        and design its content (image, title, text, button, layout) by picking this section as the position.
+      </p>
+
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
           <div className="space-y-2">
-            {items.map((s) => (
-              <SortableRow key={s.id} id={s.id}>
-                {(handle) => (
-                  <div className="flex items-center gap-3 rounded-xl border bg-card p-3">
-                    <button {...handle} className="cursor-grab text-muted-foreground"><GripVertical className="h-5 w-5" /></button>
-                    <div className="flex-1">
-                      <div className="font-semibold">{s.title}</div>
-                      <div className="text-xs text-muted-foreground">{s.section_key}</div>
+            {items.map((s) => {
+              const isCustom = s.section_key?.startsWith("custom_");
+              return (
+                <SortableRow key={s.id} id={s.id}>
+                  {(handle) => (
+                    <div className="flex items-center gap-3 rounded-xl border bg-card p-3">
+                      <button {...handle} className="cursor-grab text-muted-foreground"><GripVertical className="h-5 w-5" /></button>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 font-semibold">
+                          {s.title}
+                          {isCustom && <Badge variant="outline" className="text-[10px]">custom</Badge>}
+                        </div>
+                        <div className="text-xs text-muted-foreground">{s.section_key}</div>
+                      </div>
+                      <Switch checked={s.is_enabled} onCheckedChange={(v) => toggle(s.id, v)} />
+                      {isCustom && (
+                        <Button variant="ghost" size="icon" onClick={() => deleteCustomSection(s.id)}><Trash2 className="h-4 w-4" /></Button>
+                      )}
                     </div>
-                    <Switch checked={s.is_enabled} onCheckedChange={(v) => toggle(s.id, v)} />
-                  </div>
-                )}
-              </SortableRow>
-            ))}
+                  )}
+                </SortableRow>
+              );
+            })}
           </div>
         </SortableContext>
       </DndContext>
@@ -386,12 +431,14 @@ function TextField({ label, value, onChange }: { label: string; value?: any; onC
 
 /* ---------- Generic CRUD table ---------- */
 function CrudList<T extends { id: string }>({
-  title, table, orderBy = "sort_order", visibilityCol, columns, renderForm, empty,
+  title, table, orderBy = "sort_order", visibilityCol, columns, renderForm, empty, wide, allowSaveAndNew,
 }: {
   title: string; table: string; orderBy?: string; visibilityCol?: string;
   columns: { label: string; render: (r: any) => React.ReactNode }[];
   renderForm: (state: any, setState: (v: any) => void) => React.ReactNode;
   empty: any;
+  wide?: boolean;
+  allowSaveAndNew?: boolean;
 }) {
   const qc = useQueryClient();
   const { data = [] } = useQuery({
@@ -402,7 +449,7 @@ function CrudList<T extends { id: string }>({
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
 
-  const save = async () => {
+  const save = async (keepOpen?: boolean) => {
     const p = { ...editing };
     delete p.created_at; delete p.updated_at;
     let err;
@@ -410,8 +457,12 @@ function CrudList<T extends { id: string }>({
     else { const { error } = await supabase.from(table as any).insert(p); err = error; }
     if (err) return toast.error(err.message);
     toast.success("Saved");
-    setOpen(false); setEditing(null);
     qc.invalidateQueries({ queryKey: [table] });
+    if (keepOpen) {
+      setEditing({ ...empty });
+    } else {
+      setOpen(false); setEditing(null);
+    }
   };
   const del = async (id: string) => {
     if (!confirm("Delete?")) return;
@@ -430,10 +481,17 @@ function CrudList<T extends { id: string }>({
         <div className="font-display text-base font-bold sm:text-lg">{title}</div>
         <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing(null); }}>
           <DialogTrigger asChild><Button size="sm" onClick={() => setEditing({ ...empty })}><Plus className="mr-1 h-4 w-4" />New</Button></DialogTrigger>
-          <DialogContent className="max-h-[92vh] w-[calc(100vw-1rem)] max-w-2xl overflow-y-auto p-4 sm:w-full sm:p-6">
+          <DialogContent className={`max-h-[94vh] w-[calc(100vw-1rem)] overflow-y-auto p-4 sm:w-full sm:p-6 ${wide ? "sm:max-w-4xl lg:max-w-6xl" : "max-w-2xl"}`}>
             <DialogHeader><DialogTitle>{editing?.id ? "Edit" : "Create"}</DialogTitle></DialogHeader>
             {editing && <div className="space-y-3">{renderForm(editing, setEditing)}</div>}
-            <DialogFooter className="flex-col gap-2 sm:flex-row"><Button onClick={save} className="w-full sm:w-auto"><Save className="mr-2 h-4 w-4" />Save</Button></DialogFooter>
+            <DialogFooter className="flex-col gap-2 sm:flex-row">
+              {allowSaveAndNew && (
+                <Button variant="outline" onClick={() => save(true)} className="w-full sm:w-auto">
+                  <Plus className="mr-2 h-4 w-4" />Save &amp; add another
+                </Button>
+              )}
+              <Button onClick={() => save(false)} className="w-full sm:w-auto"><Save className="mr-2 h-4 w-4" />Save &amp; close</Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
@@ -580,8 +638,10 @@ function OffersEditor() {
           <Field label="Discount label (e.g. 30% OFF)" value={f.discount} onChange={(v) => set({ ...f, discount: v })} />
           <Field label="CTA label" value={f.cta_label} onChange={(v) => set({ ...f, cta_label: v })} />
           <Field label="CTA href" value={f.cta_href} onChange={(v) => set({ ...f, cta_href: v })} />
-          <Field label="Start date" type="datetime-local" value={f.start_date?.slice(0, 16)} onChange={(v) => set({ ...f, start_date: v ? new Date(v).toISOString() : null })} />
-          <Field label="End date" type="datetime-local" value={f.end_date?.slice(0, 16)} onChange={(v) => set({ ...f, end_date: v ? new Date(v).toISOString() : null })} />
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <DateTimeField label="Start date" value={f.start_date} onChange={(v) => set({ ...f, start_date: v })} />
+          <DateTimeField label="End date" value={f.end_date} onChange={(v) => set({ ...f, end_date: v })} />
         </div>
         <MediaPicker label="Banner image" value={f.banner_image_url} onChange={(v) => set({ ...f, banner_image_url: v })} />
       </>)}
@@ -590,31 +650,540 @@ function OffersEditor() {
 }
 
 /* ---------- Banners ---------- */
-function BannersEditor() {
+function PromoSettingsPanel() {
+  const qc = useQueryClient();
+  const { data } = useQuery({
+    queryKey: ["promo_settings"],
+    queryFn: async () => (await supabase.from("promo_settings").select("*").limit(1).maybeSingle()).data,
+  });
+  const { data: heroSlideCount = 0 } = useQuery({
+    queryKey: ["promo_banners", "hero_slider", "count"],
+    queryFn: async () =>
+      (await supabase.from("promo_banners").select("id", { count: "exact", head: true }).eq("position", "hero_slider").eq("is_active", true)).count ?? 0,
+  });
+  const [local, setLocal] = useState<any>(null);
+  const settings = local ?? data;
+  const [saving, setSaving] = useState(false);
+
+  if (!settings) return null;
+
+  const save = async (patch: any) => {
+    const next = { ...settings, ...patch };
+    setLocal(next);
+    setSaving(true);
+    const { error } = settings.id
+      ? await supabase.from("promo_settings").update(patch).eq("id", settings.id)
+      : await supabase.from("promo_settings").insert(patch);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["promo_settings"] });
+  };
+
+  const heroReady = settings.hero_mode !== "slider" || heroSlideCount >= 4;
+
   return (
-    <CrudList
-      title="Promotional banners" table="promo_banners" visibilityCol="is_active"
-      empty={{ position: "announcement", title: "", description: "", cta_label: "", cta_href: "", is_active: true, sort_order: 100 }}
-      columns={[
-        { label: "title", render: (r) => `${r.title}` },
-        { label: "pos", render: (r) => <Badge variant="outline">{r.position}</Badge> },
-      ]}
-      renderForm={(f, set) => (<>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Position (announcement / hero / footer)" value={f.position} onChange={(v) => set({ ...f, position: v })} />
-          <Field label="Background color (hex)" value={f.background_color} onChange={(v) => set({ ...f, background_color: v })} />
+    <div className="glass-card space-y-6 rounded-2xl p-4 sm:p-6">
+      <div>
+        <div className="font-display text-base font-bold sm:text-lg">Promotions</div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Each of these is independent — turn on only what you need. Everything reverts to normal the instant you
+          switch it back off.
+        </p>
+      </div>
+
+      <div className="flex items-center justify-between gap-3 rounded-xl border p-4">
+        <div>
+          <div className="text-sm font-semibold">Promo surface style</div>
+          <p className="text-xs text-muted-foreground">Dark or light background for the marquee, slider, and banners.</p>
         </div>
-        <Field label="Title" value={f.title} onChange={(v) => set({ ...f, title: v })} />
-        <TextField label="Description" value={f.description} onChange={(v) => set({ ...f, description: v })} />
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="CTA label" value={f.cta_label} onChange={(v) => set({ ...f, cta_label: v })} />
-          <Field label="CTA href" value={f.cta_href} onChange={(v) => set({ ...f, cta_href: v })} />
-          <Field label="Start" type="datetime-local" value={f.start_at?.slice(0, 16)} onChange={(v) => set({ ...f, start_at: v ? new Date(v).toISOString() : null })} />
-          <Field label="End" type="datetime-local" value={f.end_at?.slice(0, 16)} onChange={(v) => set({ ...f, end_at: v ? new Date(v).toISOString() : null })} />
+        <select
+          value={settings.theme}
+          onChange={(e) => save({ theme: e.target.value })}
+          className="flex h-9 w-32 rounded-md border border-input bg-background px-3 text-sm"
+        >
+          <option value="dark">Dark</option>
+          <option value="light">Light</option>
+        </select>
+      </div>
+
+      {/* Marquee */}
+      <div className="rounded-xl border p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-sm font-semibold">Scrolling headline (marquee)</div>
+            <p className="text-xs text-muted-foreground">A ticker strip across the very top of the site.</p>
+          </div>
+          <Switch checked={!!settings.marquee_enabled} disabled={saving} onCheckedChange={(v) => save({ marquee_enabled: v })} />
         </div>
-        <MediaPicker label="Image" value={f.image_url} onChange={(v) => set({ ...f, image_url: v })} />
-      </>)}
+        {settings.marquee_enabled && (
+          <div className="mt-3 flex items-center gap-3">
+            <p className="flex-1 truncate text-sm text-muted-foreground">{settings.marquee_text || "(no headline set yet)"}</p>
+            <MarqueeModal value={settings.marquee_text} onSave={(v) => save({ marquee_text: v })} />
+          </div>
+        )}
+      </div>
+
+      {/* Hero mode */}
+      <div className="rounded-xl border p-4">
+        <div className="text-sm font-semibold">Homepage hero</div>
+        <p className="text-xs text-muted-foreground">Replace the normal hero with a slider or a single promo image.</p>
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          {[
+            { v: "off", l: "Normal (off)" },
+            { v: "slider", l: "Slider" },
+            { v: "image", l: "Single image" },
+          ].map((opt) => (
+            <button
+              key={opt.v}
+              type="button"
+              onClick={() => save({ hero_mode: opt.v })}
+              className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${settings.hero_mode === opt.v ? "border-primary bg-primary/10 text-primary" : "hover:bg-accent"}`}
+            >
+              {opt.l}
+            </button>
+          ))}
+        </div>
+
+        {settings.hero_mode === "slider" && (
+          <div className={`mt-3 rounded-lg border p-3 text-xs ${heroReady ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-700 dark:text-emerald-400" : "border-amber-500/30 bg-amber-500/5 text-amber-700 dark:text-amber-400"}`}>
+            {heroReady
+              ? `✓ ${heroSlideCount} slide images added — slider is ready.`
+              : `⚠ Only ${heroSlideCount}/4 slide images added. Add at least 4 images below, or the site will show the normal hero instead.`}
+          </div>
+        )}
+        {settings.hero_mode === "slider" && <BulkHeroUpload />}
+
+        {settings.hero_mode === "image" && (
+          <div className="mt-3">
+            <MediaPicker label="Hero image" value={settings.hero_image_url} onChange={(v) => save({ hero_image_url: v })} />
+          </div>
+        )}
+      </div>
+{/* Site-wide theme color */}
+      <div className="rounded-xl border p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-sm font-semibold">Site-wide accent color</div>
+            <p className="text-xs text-muted-foreground">Overrides the primary color everywhere — buttons, links, glows — to match the deal.</p>
+          </div>
+          <Switch checked={!!settings.theme_color_enabled} disabled={saving} onCheckedChange={(v) => save({ theme_color_enabled: v })} />
+        </div>
+        {settings.theme_color_enabled && (
+          <div className="mt-3 flex items-center gap-3">
+            <input
+              type="color"
+              value={settings.theme_color || "#2a63ff"}
+              onChange={(e) => save({ theme_color: e.target.value })}
+              className="h-10 w-14 cursor-pointer rounded-md border"
+            />
+            <Input
+              value={settings.theme_color}
+              onChange={(e) => setLocal({ ...settings, theme_color: e.target.value })}
+              onBlur={() => save({ theme_color: settings.theme_color })}
+              placeholder="#2a63ff"
+              className="max-w-[140px] font-mono"
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Background & navbar color (independent from the accent color above) */}
+      <div className="rounded-xl border p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-sm font-semibold">Background &amp; navbar color</div>
+            <p className="text-xs text-muted-foreground">A separate color for the page background and navbar — buttons/links stay controlled by the accent color above.</p>
+          </div>
+          <Switch checked={!!settings.bg_color_enabled} disabled={saving} onCheckedChange={(v) => save({ bg_color_enabled: v })} />
+        </div>
+        {settings.bg_color_enabled && (
+          <div className="mt-3 flex items-center gap-3">
+            <input
+              type="color"
+              value={settings.bg_color || "#0a1128"}
+              onChange={(e) => save({ bg_color: e.target.value })}
+              className="h-10 w-14 cursor-pointer rounded-md border"
+            />
+            <Input
+              value={settings.bg_color}
+              onChange={(e) => setLocal({ ...settings, bg_color: e.target.value })}
+              onBlur={() => save({ bg_color: settings.bg_color })}
+              placeholder="#0a1128"
+              className="max-w-[140px] font-mono"
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Logo override */}
+      <div className="rounded-xl border p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-sm font-semibold">Deal-specific logo</div>
+            <p className="text-xs text-muted-foreground">Show a different logo (e.g. with a sale badge) instead of the normal one.</p>
+          </div>
+          <Switch checked={!!settings.logo_enabled} disabled={saving} onCheckedChange={(v) => save({ logo_enabled: v })} />
+        </div>
+        {settings.logo_enabled && (
+          <div className="mt-3">
+            <MediaPicker label="Logo image" value={settings.logo_url} onChange={(v) => save({ logo_url: v })} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function BannerLivePreview({ f, set }: { f: any; set: (v: any) => void }) {
+  const layout = f.layout || "full";
+  const isVideo = f.media_type === "video";
+  const bg = f.background_color || "#0a1128";
+  const [uploading, setUploading] = useState(false);
+
+  const pickImage = async (file: File | undefined) => {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const url = await uploadToWebsiteMedia(file);
+      set({ ...f, image_url: url });
+      toast.success("Image added");
+    } catch (e: any) {
+      toast.error(e.message || "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const media = f.image_url ? (
+    isVideo ? (
+      <video src={f.image_url} className="h-full w-full object-cover" muted loop autoPlay playsInline />
+    ) : (
+      <img src={f.image_url} alt="" className="h-full w-full object-cover" />
+    )
+  ) : (
+    <label className="group flex h-full w-full cursor-pointer flex-col items-center justify-center gap-1.5 bg-muted text-muted-foreground transition hover:bg-muted/70">
+      {uploading ? (
+        <span className="text-xs">Uploading…</span>
+      ) : (
+        <>
+          <ImageIcon className="h-6 w-6 opacity-40 transition group-hover:opacity-70" />
+          <span className="text-xs font-medium group-hover:text-foreground">Click to add image</span>
+        </>
+      )}
+      <input type="file" accept={isVideo ? "video/mp4" : "image/*"} className="hidden" disabled={uploading} onChange={(e) => pickImage(e.target.files?.[0])} />
+    </label>
+  );
+
+  const LAYOUTS = [
+    { v: "full", l: "Full-width" },
+    { v: "split_left", l: "Image left" },
+    { v: "split_right", l: "Image right" },
+  ];
+
+  const TitleInput = ({ className }: { className: string }) => (
+    <input
+      value={f.title || ""}
+      onChange={(e) => set({ ...f, title: e.target.value })}
+      placeholder="Click here to type a banner title…"
+      className={`w-full border-none bg-transparent font-display font-bold text-white outline-none placeholder:text-white/40 ${className}`}
     />
+  );
+  const DescInput = ({ className }: { className: string }) => (
+    <textarea
+      value={f.description || ""}
+      onChange={(e) => set({ ...f, description: e.target.value })}
+      placeholder="Click here to type a description — or one service per line, e.g. For Fashion / For Adventure"
+      rows={2}
+      className={`w-full resize-none border-none bg-transparent text-white outline-none placeholder:text-white/40 ${className}`}
+    />
+  );
+  const CtaInput = () => (
+    <input
+      value={f.cta_label || ""}
+      onChange={(e) => set({ ...f, cta_label: e.target.value })}
+      placeholder="Button text"
+      className="mt-3 w-fit min-w-[90px] rounded-full bg-[var(--gradient-primary,linear-gradient(135deg,#3b6bff,#5fa8ff))] px-4 py-1.5 text-center text-xs font-semibold text-white shadow outline-none placeholder:text-white/70"
+    />
+  );
+
+  const serviceLines = (f.description || "").split("\n").map((s: string) => s.trim()).filter(Boolean);
+  const showAsChips = serviceLines.length > 1;
+
+  const hAlign = f.text_h_align || "left";
+  const vAlign = f.text_v_align || "bottom";
+  const overlayPosClass =
+    `${vAlign === "top" ? "items-start" : vAlign === "center" ? "items-center" : "items-end"} ` +
+    `${hAlign === "left" ? "justify-start text-left" : hAlign === "center" ? "justify-center text-center" : "justify-end text-right"}`;
+  const heightStyle = f.height_px ? { height: `${f.height_px}px` } : {};
+
+  return (
+    <div className="grid gap-1.5">
+      <div className="flex items-center justify-between">
+        <Label>Live preview — click any text or the image to edit it directly</Label>
+      </div>
+      <div className="overflow-hidden rounded-xl border shadow-sm">
+        {/* mini browser chrome + layout switch, right on the canvas */}
+        <div className="flex flex-wrap items-center gap-2 border-b bg-muted/60 px-3 py-2">
+          <span className="h-2 w-2 rounded-full bg-red-400/70" />
+          <span className="h-2 w-2 rounded-full bg-amber-400/70" />
+          <span className="h-2 w-2 rounded-full bg-emerald-400/70" />
+          <span className="truncate rounded bg-background px-2 py-0.5 text-[10px] text-muted-foreground">elfoinnovations.com</span>
+          <div className="ml-auto flex gap-1">
+            {LAYOUTS.map((opt) => (
+              <button
+                key={opt.v}
+                type="button"
+                onClick={() => set({ ...f, layout: opt.v })}
+                className={`rounded-md px-2 py-1 text-[10px] font-medium transition ${layout === opt.v ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-accent"}`}
+              >
+                {opt.l}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {layout === "full" ? (
+          <div className="relative w-full bg-muted" style={{ aspectRatio: f.height_px ? undefined : "21 / 9", ...heightStyle }}>
+            {media}
+            {f.image_url && <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />}
+            <div className={`absolute inset-0 flex flex-col gap-1 p-4 sm:p-6 ${overlayPosClass}`}>
+              <TitleInput className="text-lg leading-tight sm:text-2xl" />
+              {!showAsChips && <DescInput className="max-w-md text-xs sm:text-sm" />}
+              <CtaInput />
+            </div>
+          </div>
+        ) : (
+          <div className={`flex flex-col sm:flex-row ${layout === "split_right" ? "sm:flex-row-reverse" : ""}`} style={f.height_px ? heightStyle : undefined}>
+            <div className={`w-full bg-muted sm:w-1/2 ${f.height_px ? "" : "aspect-[16/10] sm:aspect-auto"}`}>{media}</div>
+            <div
+              className="flex w-full flex-col justify-center gap-1 p-5 sm:w-1/2 sm:p-8"
+              style={{ background: bg }}
+            >
+              <TitleInput className="text-lg leading-tight sm:text-2xl" />
+              {!showAsChips && <DescInput className="text-xs sm:text-sm" />}
+              {showAsChips && (
+                <div className="mt-1 grid grid-cols-2 gap-2">
+                  {serviceLines.slice(0, 4).map((line: string, i: number) => (
+                    <div key={i} className="flex items-center justify-between gap-2 rounded-lg bg-white/10 px-3 py-2 text-xs font-medium text-white">
+                      <span className="truncate">{line}</span>
+                      <span className="shrink-0 rounded-full bg-white/15 px-1.5 py-0.5 text-[10px]">→</span>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => set({ ...f, description: [...serviceLines, ""].join("\n") })}
+                    className="flex items-center justify-center gap-1 rounded-lg border border-dashed border-white/25 px-3 py-2 text-xs text-white/60 hover:border-white/50 hover:text-white"
+                  >
+                    <Plus className="h-3 w-3" />Add
+                  </button>
+                </div>
+              )}
+              <CtaInput />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Size + text placement controls */}
+      <div className="grid gap-3 rounded-xl border p-3 sm:grid-cols-2">
+        <div className="grid gap-1.5">
+          <Label className="text-xs">Height (px) — leave blank for automatic</Label>
+          <Input
+            type="number"
+            placeholder="e.g. 420"
+            value={f.height_px ?? ""}
+            onChange={(e) => set({ ...f, height_px: e.target.value ? Number(e.target.value) : null })}
+          />
+        </div>
+        {layout === "full" && (
+          <div className="grid gap-1.5">
+            <Label className="text-xs">Text position on the image</Label>
+            <div className="grid w-fit grid-cols-3 gap-1 rounded-lg border p-1">
+              {(["top", "center", "bottom"] as const).map((v) =>
+                (["left", "center", "right"] as const).map((h) => (
+                  <button
+                    key={`${v}-${h}`}
+                    type="button"
+                    onClick={() => set({ ...f, text_v_align: v, text_h_align: h })}
+                    className={`flex h-7 w-9 items-center justify-center rounded ${vAlign === v && hAlign === h ? "bg-primary" : "bg-muted hover:bg-accent"}`}
+                  >
+                    <span className={`h-1.5 w-1.5 rounded-full ${vAlign === v && hAlign === h ? "bg-primary-foreground" : "bg-muted-foreground/50"}`} />
+                  </button>
+                )),
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <p className="text-xs text-muted-foreground">
+        Use the layout buttons top-right of the preview to switch between full-width and image-left/right. Set a
+        custom height above, and for full-width banners pick where the text sits with the 3×3 grid. Put each
+        service on its own line in the description to turn it into small cards instead of a paragraph.
+      </p>
+    </div>
+  );
+}
+
+function BulkHeroUpload() {
+  const qc = useQueryClient();
+  const [files, setFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  const onPick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const picked = Array.from(e.target.files || []);
+    setFiles(picked.slice(0, 12));
+    e.target.value = "";
+  };
+
+  const upload = async () => {
+    if (files.length < 4) return toast.error("Pick at least 4 images");
+    if (files.length > 12) return toast.error("Maximum 12 images at once");
+    setUploading(true);
+    setProgress(0);
+    try {
+      const { count } = await supabase.from("promo_banners").select("id", { count: "exact", head: true }).eq("position", "hero_slider");
+      let sort = (count ?? 0) * 10 + 100;
+      for (const file of files) {
+        const url = await uploadToWebsiteMedia(file);
+        await supabase.from("promo_banners").insert({
+          position: "hero_slider", media_type: "image", image_url: url,
+          title: "", description: "", is_active: true, sort_order: sort, layout: "full",
+        });
+        sort += 10;
+        setProgress((p) => p + 1);
+      }
+      toast.success(`${files.length} slides added`);
+      setFiles([]);
+      qc.invalidateQueries({ queryKey: ["promo_banners", "admin"] });
+      qc.invalidateQueries({ queryKey: ["promo_banners", "hero_slider", "count"] });
+    } catch (e: any) {
+      toast.error(e.message || "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="mt-3 rounded-lg border border-dashed p-3">
+      <div className="text-xs font-semibold">Quick add: multiple slide images at once</div>
+      <p className="mt-0.5 text-xs text-muted-foreground">Pick 4–12 images — each becomes its own slide, in the order picked.</p>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-accent">
+          Choose images
+          <input type="file" accept="image/*" multiple className="hidden" onChange={onPick} disabled={uploading} />
+        </label>
+        {files.length > 0 && (
+          <span className={`text-xs font-medium ${files.length < 4 ? "text-amber-600" : "text-emerald-600"}`}>
+            {files.length} selected {files.length < 4 ? "(need 4+)" : ""}
+          </span>
+        )}
+        <Button size="sm" onClick={upload} disabled={uploading || files.length < 4} className="ml-auto">
+          {uploading ? `Uploading ${progress}/${files.length}…` : `Upload ${files.length || ""} slides`}
+        </Button>
+      </div>
+      {files.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {files.map((f, i) => (
+            <span key={i} className="rounded bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">{f.name}</span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MarqueeModal({ value, onSave }: { value: string; onSave: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState(value);
+  return (
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (v) setDraft(value); }}>
+      <DialogTrigger asChild>
+        <Button type="button" size="sm" variant="outline">Edit headline</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Marquee headline</DialogTitle></DialogHeader>
+        <Textarea rows={4} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="AZADI SALE ENDS IN... · LIMITED STOCK LEFT!" />
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button onClick={() => { onSave(draft); setOpen(false); }}>Save</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+const PROMO_POSITIONS = [
+  { value: "hero_slider", label: "Hero slider (top, replaces the normal hero)" },
+  { value: "after_hero", label: "Banner — after the hero slider" },
+  { value: "after_services", label: "Banner — after Services section" },
+  { value: "work_left", label: "Services in action — card on the left (replaces one project card)" },
+  { value: "work_right", label: "Services in action — card on the right (replaces one project card)" },
+  { value: "announcement", label: "Announcement bar (always-on strip)" },
+  { value: "footer", label: "Footer banner" },
+];
+
+function BannersEditor() {
+  const { data: customSections } = useQuery({
+    queryKey: ["website_sections", "custom", "admin"],
+    queryFn: async () =>
+      (await supabase.from("website_sections").select("section_key,title").order("sort_order")).data?.filter((s: any) => s.section_key?.startsWith("custom_")) ?? [],
+  });
+  const positionOptions = [
+    ...PROMO_POSITIONS,
+    ...(customSections ?? []).map((s: any) => ({ value: s.section_key, label: `Section: ${s.title}` })),
+  ];
+
+  return (
+    <div className="space-y-6">
+      <PromoSettingsPanel />
+      <CrudList
+        title="Promotional banners & slides" table="promo_banners" visibilityCol="is_active"
+        wide allowSaveAndNew
+        empty={{ position: "hero_slider", media_type: "image", title: "", description: "", image_url: "", cta_label: "", cta_href: "", is_active: true, sort_order: 100, height_px: null, text_h_align: "left", text_v_align: "bottom" }}
+        columns={[
+          { label: "title", render: (r) => `${r.title || "(untitled)"}` },
+          { label: "pos", render: (r) => (
+            <div className="flex items-center gap-1.5">
+              <Badge variant="outline">{r.position}</Badge>
+              <Badge variant="secondary" className="capitalize">{r.media_type || "image"}</Badge>
+            </div>
+          ) },
+        ]}
+        renderForm={(f, set) => (<>
+          <BannerLivePreview f={f} set={set} />
+
+          <div className="grid gap-3 rounded-xl border p-3 sm:grid-cols-2">
+            <div className="grid gap-1.5">
+              <Label className="text-xs">Position</Label>
+              <select
+                value={f.position}
+                onChange={(e) => set({ ...f, position: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                {positionOptions.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+              </select>
+            </div>
+            <div className="grid gap-1.5">
+              <Label className="text-xs">Media type</Label>
+              <select
+                value={f.media_type || "image"}
+                onChange={(e) => set({ ...f, media_type: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="image">Image</option>
+                <option value="video">Video</option>
+              </select>
+            </div>
+            <Field label="CTA link (where the button goes)" value={f.cta_href} onChange={(v) => set({ ...f, cta_href: v })} />
+            <Field label="Background color (hex, for image left/right panel)" value={f.background_color} onChange={(v) => set({ ...f, background_color: v })} />
+            <DateTimeField label="Start" value={f.start_at} onChange={(v) => set({ ...f, start_at: v })} />
+            <DateTimeField label="End" value={f.end_at} onChange={(v) => set({ ...f, end_at: v })} />
+          </div>
+        </>)}
+      />
+    </div>
   );
 }
 

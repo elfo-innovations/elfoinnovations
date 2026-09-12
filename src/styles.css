@@ -268,3 +268,12 @@ font[style*="background-color"] {
   background: transparent !important;
   box-shadow: none !important;
 }
+
+/* Promotions mode marquee ticker */
+@keyframes promo-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.promo-marquee-track {
+  animation: promo-marquee 22s linear infinite;
+}
