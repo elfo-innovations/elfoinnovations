@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ChevronDown } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -81,12 +83,16 @@ const DEFAULTS = [
 ];
 
 export function FaqSection() {
+  const [showAll, setShowAll] = useState(false);
+  const VISIBLE_COUNT = 6;
   const { data, isPending } = useQuery({
     queryKey: ["faqs"],
     queryFn: async () =>
       (await supabase.from("faqs").select("*").eq("is_active", true).order("sort_order")).data,
   });
   const items = (data && data.length > 0 ? data : DEFAULTS) as any[];
+  const visibleItems = showAll ? items : items.slice(0, VISIBLE_COUNT);
+  const hasMore = items.length > VISIBLE_COUNT;
 
   return (
     <section id="faq" className="border-t bg-muted/20 py-20 sm:py-28">
@@ -106,7 +112,7 @@ export function FaqSection() {
                   <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
                 </div>
               ))
-            : items.map((f, i) => (
+            : visibleItems.map((f, i) => (
             <AccordionItem
               key={f.id ?? i}
               value={`i${i}`}
@@ -119,6 +125,17 @@ export function FaqSection() {
             </AccordionItem>
           ))}
         </Accordion>
+        {!isPending && hasMore && (
+          <div className="mt-6 flex justify-center">
+            <button
+              onClick={() => setShowAll((s) => !s)}
+              className="inline-flex items-center gap-1.5 rounded-full border bg-card px-5 py-2.5 text-sm font-semibold text-primary transition hover:bg-accent/40"
+            >
+              {showAll ? "Show less" : `View all ${items.length} questions`}
+              <ChevronDown className={`h-4 w-4 transition-transform ${showAll ? "rotate-180" : ""}`} />
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );

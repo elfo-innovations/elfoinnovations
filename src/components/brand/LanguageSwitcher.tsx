@@ -5,6 +5,22 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { LANGUAGES, changeLanguage, type LangCode, type LangScope, scopeFromPath, getScopedLang } from "@/i18n";
 import { cn } from "@/lib/utils";
 
+// Flag emoji don't render reliably on Windows (Chrome/Edge fall back to showing the
+// two-letter country code as plain text), so use real flag images instead.
+function FlagImg({ country, label, className }: { country: string; label: string; className?: string }) {
+  return (
+    <img
+      src={`https://flagcdn.com/24x18/${country}.png`}
+      srcSet={`https://flagcdn.com/48x36/${country}.png 2x`}
+      alt=""
+      aria-hidden="true"
+      width={18}
+      height={13}
+      className={cn("inline-block rounded-[2px] object-cover shadow-sm", className)}
+    />
+  );
+}
+
 export function LanguageSwitcher({ compact = false, scope }: { compact?: boolean; scope?: LangScope }) {
   const activeScope: LangScope = scope ?? (typeof window !== "undefined" ? scopeFromPath(window.location.pathname) : "public");
   const { i18n, t } = useTranslation();
@@ -30,7 +46,7 @@ export function LanguageSwitcher({ compact = false, scope }: { compact?: boolean
         >
           <Globe className="h-3.5 w-3.5 text-primary" />
           <span className="notranslate hidden sm:inline" translate="no">{current.native}</span>
-          <span className="sm:hidden">{current.flag}</span>
+          <span className="sm:hidden"><FlagImg country={current.country} label={current.native} /></span>
           <ChevronDown className={cn("h-3 w-3 transition-transform duration-200", open && "rotate-180")} />
         </button>
       </PopoverTrigger>
@@ -56,7 +72,7 @@ export function LanguageSwitcher({ compact = false, scope }: { compact?: boolean
                   )}
                 >
                   <span className="flex min-w-0 items-center gap-2">
-                    <span className="text-base leading-none">{lng.flag}</span>
+                    <FlagImg country={lng.country} label={lng.native} className="h-[13px] w-[18px] shrink-0" />
                     <span className="notranslate truncate font-medium" translate="no">{lng.native}</span>
                     <span className="notranslate hidden text-[10px] text-muted-foreground xs:inline" translate="no">{lng.label}</span>
                   </span>

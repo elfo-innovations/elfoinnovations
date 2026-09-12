@@ -74,18 +74,19 @@ export function AboutSection() {
                 </p>
               </div>
             </div>
-            <div className="grid gap-4 border-t p-6 sm:p-8 sm:grid-cols-3 md:border-l md:border-t-0">
+            <div className="grid gap-4 border-t p-6 sm:p-8 sm:grid-cols-2 lg:grid-cols-4 md:border-l md:border-t-0">
               {[
                 { name: "Aaban Syed", url: "https://aabansyed.netlify.app", role: "Founder & CEO", host: "aabansyed.netlify.app" },
                 { name: "Shehriyal Aziz", url: "https://shehriyalaziz.vercel.app", role: "Founder & CEO & CTO", host: "shehriyalaziz.vercel.app" },
                 { name: "Alishba Anwar", url: "https://buildwithalishba.vercel.app", role: "CMO (Chief Marketing Officer)", host: "buildwithalishba.vercel.app" },
+                { name: "Areesha Shahid", url: "https://areeshah.netlify.app", role: "SEO Specialist", host: "areeshah.netlify.app" },
               ].map((p) => (
 
                 <a key={p.url} href={p.url} target="_blank" rel="noreferrer"
                   className="group relative flex flex-col justify-between rounded-2xl border bg-card p-5 transition-all hover:electric-glow">
                   <div>
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-primary">{p.role}</div>
-                    <div className="mt-2 font-display text-lg font-semibold">{p.name}</div>
+                    <div className="min-h-[2rem] text-[10px] font-bold uppercase leading-tight tracking-widest text-primary">{p.role}</div>
+                    <div className="mt-2 min-h-[3.5rem] font-display text-lg font-semibold leading-tight">{p.name}</div>
                     <div className="mt-1 truncate text-xs text-muted-foreground">{p.host}</div>
                   </div>
                   <div className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-primary">

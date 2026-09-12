@@ -222,20 +222,32 @@ export function SiteChatWidget() {
 
   return (
     <>
-      {/* Floating toggle button — bottom-right, WhatsApp-style */}
+      {/* Floating toggle button — pill-shaped with label + online indicator, matches when open/closed */}
       <button
         onClick={() => setOpen((o) => !o)}
         aria-label={open ? "Close chat" : "Open chat"}
-        className="fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_10px_40px_-10px_rgba(59,130,246,0.8)] transition hover:scale-105 active:scale-95"
+        className={`fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full bg-primary text-primary-foreground shadow-[0_10px_40px_-10px_rgba(59,130,246,0.8)] transition hover:scale-105 active:scale-95 ${
+          open ? "h-14 w-14 justify-center" : "px-5 py-3.5"
+        }`}
       >
-        {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
+        {open ? (
+          <X className="h-6 w-6" />
+        ) : (
+          <>
+            <span className="relative flex h-5 w-5 shrink-0 items-center justify-center">
+              <MessageCircle className="h-5 w-5" />
+              <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-primary bg-emerald-400" />
+            </span>
+            <span className="text-sm font-semibold">Chat with Elsa</span>
+          </>
+        )}
       </button>
 
       {/* Chat window */}
       {open && (
         <div className="fixed bottom-24 right-5 z-50 flex h-[70vh] max-h-[560px] w-[92vw] max-w-sm flex-col overflow-hidden rounded-2xl border bg-background shadow-2xl sm:w-96">
           <div className="flex items-center gap-2 border-b bg-[#0a1128] px-4 py-3 text-white">
-            <img src="/elfo-logo.png" alt="ELFO Innovations" className="h-9 w-9 shrink-0 object-contain" />
+            <img src="/elfo-logo-dark.png" alt="ELFO Innovations" className="h-9 w-9 shrink-0 object-contain" />
             <div className="flex-1">
               <div className="text-sm font-semibold">Elsa</div>
               <div className="text-[11px] text-white/60">Ask us anything</div>

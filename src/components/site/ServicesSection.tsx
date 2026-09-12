@@ -61,8 +61,8 @@ export function ServicesSection() {
                 </div>
                 <h3 className="mt-5 text-base font-semibold">{s.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.description}</p>
-                <div className="mt-5 inline-flex items-center gap-1 text-xs font-semibold text-primary opacity-0 transition-opacity group-hover:opacity-100">
-                  Learn more <ArrowUpRight className="h-3.5 w-3.5" />
+                <div className="mt-5 inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                  Learn more <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 </div>
               </div>
             );

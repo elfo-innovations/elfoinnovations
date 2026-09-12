@@ -12,15 +12,15 @@ import ur from "./locales/ur.json";
 export type LangCode = "en" | "es" | "fr" | "de" | "ar" | "ur" | "ja" | "zh";
 export type LangScope = "public" | "admin" | "developer" | "client";
 
-export const LANGUAGES: { code: LangCode; label: string; native: string; flag: string; dir: "ltr" | "rtl" }[] = [
-  { code: "en", label: "English", native: "English", flag: "🇺🇸", dir: "ltr" },
-  { code: "es", label: "Spanish", native: "Español", flag: "🇪🇸", dir: "ltr" },
-  { code: "fr", label: "French", native: "Français", flag: "🇫🇷", dir: "ltr" },
-  { code: "de", label: "German", native: "Deutsch", flag: "🇩🇪", dir: "ltr" },
-  { code: "ar", label: "Arabic", native: "العربية", flag: "🇸🇦", dir: "rtl" },
-  { code: "ur", label: "Urdu", native: "اردو", flag: "🇵🇰", dir: "rtl" },
-  { code: "ja", label: "Japanese", native: "日本語", flag: "🇯🇵", dir: "ltr" },
-  { code: "zh", label: "Chinese", native: "简体中文", flag: "🇨🇳", dir: "ltr" },
+export const LANGUAGES: { code: LangCode; label: string; native: string; flag: string; country: string; dir: "ltr" | "rtl" }[] = [
+  { code: "en", label: "English", native: "English", flag: "🇺🇸", country: "us", dir: "ltr" },
+  { code: "es", label: "Spanish", native: "Español", flag: "🇪🇸", country: "es", dir: "ltr" },
+  { code: "fr", label: "French", native: "Français", flag: "🇫🇷", country: "fr", dir: "ltr" },
+  { code: "de", label: "German", native: "Deutsch", flag: "🇩🇪", country: "de", dir: "ltr" },
+  { code: "ar", label: "Arabic", native: "العربية", flag: "🇸🇦", country: "sa", dir: "rtl" },
+  { code: "ur", label: "Urdu", native: "اردو", flag: "🇵🇰", country: "pk", dir: "rtl" },
+  { code: "ja", label: "Japanese", native: "日本語", flag: "🇯🇵", country: "jp", dir: "ltr" },
+  { code: "zh", label: "Chinese", native: "简体中文", flag: "🇨🇳", country: "cn", dir: "ltr" },
 ];
 
 const STORAGE_PREFIX = "elfo-lang";
