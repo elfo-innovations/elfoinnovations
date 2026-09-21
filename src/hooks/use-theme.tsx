@@ -9,8 +9,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    const stored = (typeof window !== "undefined" && (localStorage.getItem("elfo-theme") as Theme | null)) || null;
-    const prefersDark = typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+    const stored =
+      (typeof window !== "undefined" && (localStorage.getItem("elfo-theme") as Theme | null)) ||
+      null;
+    const prefersDark =
+      typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)").matches;
     const initial: Theme = stored ?? (prefersDark ? "dark" : "light");
     setThemeState(initial);
     setHydrated(true);

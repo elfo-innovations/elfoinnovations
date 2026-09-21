@@ -31,7 +31,9 @@ function AdminProjectInvoices() {
   return (
     <DashboardShell role="admin">
       <div>
-        <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">Project invoices</h1>
+        <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
+          Project invoices
+        </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Automatically generated whenever a client submits a project with services selected.
         </p>
@@ -40,7 +42,8 @@ function AdminProjectInvoices() {
       <div className="mt-6 space-y-3">
         {invoices.length === 0 && (
           <div className="rounded-2xl border border-dashed p-12 text-center text-sm text-muted-foreground">
-            No invoices yet — one will appear here as soon as a client submits a project with services selected.
+            No invoices yet — one will appear here as soon as a client submits a project with
+            services selected.
           </div>
         )}
         {invoices.map((inv) => (
@@ -70,7 +73,10 @@ function AdminProjectInvoices() {
                   {new Date(inv.created_at).toLocaleDateString()}
                 </div>
               </div>
-              <Badge variant={inv.status === "paid" ? "default" : "secondary"} className="capitalize">
+              <Badge
+                variant={inv.status === "paid" ? "default" : "secondary"}
+                className="capitalize"
+              >
                 {inv.status}
               </Badge>
             </div>
@@ -80,7 +86,9 @@ function AdminProjectInvoices() {
 
       <Dialog open={!!active} onOpenChange={(v) => !v && setActive(null)}>
         <DialogContent hideClose className="max-h-[92vh] max-w-3xl overflow-y-auto p-0">
-          {active && <InvoicePrintView invoice={active} onClose={() => setActive(null)} showSendEmail />}
+          {active && (
+            <InvoicePrintView invoice={active} onClose={() => setActive(null)} showSendEmail />
+          )}
         </DialogContent>
       </Dialog>
     </DashboardShell>

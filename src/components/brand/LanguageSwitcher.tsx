@@ -2,7 +2,14 @@ import { useState } from "react";
 import { Globe, Check, ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { LANGUAGES, changeLanguage, type LangCode, type LangScope, scopeFromPath, getScopedLang } from "@/i18n";
+import {
+  LANGUAGES,
+  changeLanguage,
+  type LangCode,
+  type LangScope,
+  scopeFromPath,
+  getScopedLang,
+} from "@/i18n";
 import { cn } from "@/lib/utils";
 
 // Flag emoji don't render reliably on Windows (Chrome/Edge fall back to showing the
@@ -21,11 +28,19 @@ function FlagImg({ country, className }: { country: string; label: string; class
   );
 }
 
-export function LanguageSwitcher({ compact = false, scope }: { compact?: boolean; scope?: LangScope }) {
-  const activeScope: LangScope = scope ?? (typeof window !== "undefined" ? scopeFromPath(window.location.pathname) : "public");
+export function LanguageSwitcher({
+  compact = false,
+  scope,
+}: {
+  compact?: boolean;
+  scope?: LangScope;
+}) {
+  const activeScope: LangScope =
+    scope ?? (typeof window !== "undefined" ? scopeFromPath(window.location.pathname) : "public");
   const { i18n, t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const currentCode = (typeof window !== "undefined" ? getScopedLang(activeScope) : (i18n.language as LangCode));
+  const currentCode =
+    typeof window !== "undefined" ? getScopedLang(activeScope) : (i18n.language as LangCode);
   const current = LANGUAGES.find((l) => l.code === currentCode) ?? LANGUAGES[0];
 
   const select = async (code: LangCode) => {
@@ -41,13 +56,19 @@ export function LanguageSwitcher({ compact = false, scope }: { compact?: boolean
           aria-label={t("nav.language", "Language")}
           className={cn(
             "inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border/60 bg-background/60 px-2.5 py-1.5 text-xs font-medium transition-all hover:border-primary/60 hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:px-3",
-            compact && "px-2 sm:px-2"
+            compact && "px-2 sm:px-2",
           )}
         >
           <Globe className="h-3.5 w-3.5 text-primary" />
-          <span className="notranslate hidden sm:inline" translate="no">{current.native}</span>
-          <span className="sm:hidden"><FlagImg country={current.country} label={current.native} /></span>
-          <ChevronDown className={cn("h-3 w-3 transition-transform duration-200", open && "rotate-180")} />
+          <span className="notranslate hidden sm:inline" translate="no">
+            {current.native}
+          </span>
+          <span className="sm:hidden">
+            <FlagImg country={current.country} label={current.native} />
+          </span>
+          <ChevronDown
+            className={cn("h-3 w-3 transition-transform duration-200", open && "rotate-180")}
+          />
         </button>
       </PopoverTrigger>
       <PopoverContent
@@ -68,13 +89,24 @@ export function LanguageSwitcher({ compact = false, scope }: { compact?: boolean
                   onClick={() => select(lng.code)}
                   className={cn(
                     "flex w-full items-center justify-between gap-2 px-3 py-2 text-sm transition-colors hover:bg-accent",
-                    active && "bg-primary/10 text-primary"
+                    active && "bg-primary/10 text-primary",
                   )}
                 >
                   <span className="flex min-w-0 items-center gap-2">
-                    <FlagImg country={lng.country} label={lng.native} className="h-[13px] w-[18px] shrink-0" />
-                    <span className="notranslate truncate font-medium" translate="no">{lng.native}</span>
-                    <span className="notranslate hidden text-[10px] text-muted-foreground xs:inline" translate="no">{lng.label}</span>
+                    <FlagImg
+                      country={lng.country}
+                      label={lng.native}
+                      className="h-[13px] w-[18px] shrink-0"
+                    />
+                    <span className="notranslate truncate font-medium" translate="no">
+                      {lng.native}
+                    </span>
+                    <span
+                      className="notranslate hidden text-[10px] text-muted-foreground xs:inline"
+                      translate="no"
+                    >
+                      {lng.label}
+                    </span>
                   </span>
                   {active && <Check className="h-3.5 w-3.5 shrink-0" />}
                 </button>

@@ -23,7 +23,8 @@ import { CustomPromoSection } from "@/components/site/CustomPromoSection";
 
 const URL = "https://elfoinnovations.com";
 const TITLE = "Custom Software Development Company | Web, Mobile & SaaS — ELFO Innovations";
-const DESC = "ELFO Innovations builds custom web, mobile, SaaS, and enterprise software for modern businesses. See your product built before you pay a dime.";
+const DESC =
+  "ELFO Innovations builds custom web, mobile, SaaS, and enterprise software for modern businesses. See your product built before you pay a dime.";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -59,17 +60,31 @@ const RENDERERS: Record<string, React.ComponentType> = {
 function Home() {
   const { data } = useQuery({
     queryKey: ["website_sections", "public"],
-    queryFn: async () => (await supabase.from("website_sections").select("section_key,title,sort_order,is_enabled").eq("is_enabled", true).order("sort_order")).data ?? [],
+    queryFn: async () =>
+      (
+        await supabase
+          .from("website_sections")
+          .select("section_key,title,sort_order,is_enabled")
+          .eq("is_enabled", true)
+          .order("sort_order")
+      ).data ?? [],
   });
   const { data: promoSettings } = useQuery({
     queryKey: ["promo_settings", "public"],
-    queryFn: async () => (await supabase.from("promo_settings").select("*").limit(1).maybeSingle()).data,
+    queryFn: async () =>
+      (await supabase.from("promo_settings").select("*").limit(1).maybeSingle()).data,
   });
   const { data: heroSlideCount = 0 } = useQuery({
     queryKey: ["promo_banners", "hero_slider", "count", "public"],
     enabled: promoSettings?.hero_mode === "slider",
     queryFn: async () =>
-      (await supabase.from("promo_banners").select("id", { count: "exact", head: true }).eq("position", "hero_slider").eq("is_active", true)).count ?? 0,
+      (
+        await supabase
+          .from("promo_banners")
+          .select("id", { count: "exact", head: true })
+          .eq("position", "hero_slider")
+          .eq("is_active", true)
+      ).count ?? 0,
   });
   const promoTheme = (promoSettings?.theme === "light" ? "light" : "dark") as "light" | "dark";
   // Only actually replace the normal hero when there's real content ready — a slider
@@ -78,15 +93,30 @@ function Home() {
     (promoSettings?.hero_mode === "slider" && heroSlideCount >= 4) ||
     (promoSettings?.hero_mode === "image" && !!promoSettings?.hero_image_url);
 
-  const sectionTitles = new Map((data as any[] | undefined)?.map((s) => [s.section_key, s.title]) ?? []);
+  const sectionTitles = new Map(
+    (data as any[] | undefined)?.map((s) => [s.section_key, s.title]) ?? [],
+  );
   // Custom sections (created via Section Manager → "+ New section") aren't in
   // RENDERERS — keep them in the order so they render via CustomPromoSection below.
   const rawOrder = (data as any[] | undefined)?.map((s) => s.section_key) ?? [
-    "hero","showcase","portfolio","services","work","about","pricing","reviews","offers","testimonials","faq","cta",
+    "hero",
+    "showcase",
+    "portfolio",
+    "services",
+    "work",
+    "about",
+    "pricing",
+    "reviews",
+    "offers",
+    "testimonials",
+    "faq",
+    "cta",
   ];
   // Merge about+company into a single toggle section (avoid duplicate render)
   const seen = new Set<string>();
-  let order = rawOrder.map((k) => (k === "company" ? "about" : k)).filter((k) => (seen.has(k) ? false : (seen.add(k), true)));
+  let order = rawOrder
+    .map((k) => (k === "company" ? "about" : k))
+    .filter((k) => (seen.has(k) ? false : (seen.add(k), true)));
   // Always ensure the work showcase shows right after services
   if (!order.includes("work")) {
     const wIdx = order.indexOf("services");
@@ -99,7 +129,6 @@ function Home() {
     if (idx >= 0) order = [...order.slice(0, idx + 1), "reviews", ...order.slice(idx + 1)];
     else order = [...order, "reviews"];
   }
-
 
   return (
     <PublicLayout>
@@ -120,13 +149,24 @@ function Home() {
         // Promo hero replaces the normal one only when it actually has content ready.
         if (heroReplaced && k === "hero") return null;
         const C = RENDERERS[k];
-        const el = C ? <C key={k} /> : <CustomPromoSection key={k} sectionKey={k} sectionTitle={sectionTitles.get(k)} theme={promoTheme} />;
+        const el = C ? (
+          <C key={k} />
+        ) : (
+          <CustomPromoSection
+            key={k}
+            sectionKey={k}
+            sectionTitle={sectionTitles.get(k)}
+            theme={promoTheme}
+          />
+        );
         return (
           <React.Fragment key={k}>
             {el}
             {/* These two run regardless of hero_mode — after_hero/after_services should
                 always show once the admin sets them, whether the promo hero is on or not. */}
-            {k === "hero" && !heroReplaced && <PromoBanner position="after_hero" theme={promoTheme} />}
+            {k === "hero" && !heroReplaced && (
+              <PromoBanner position="after_hero" theme={promoTheme} />
+            )}
             {k === "services" && <PromoBanner position="after_services" theme={promoTheme} />}
           </React.Fragment>
         );

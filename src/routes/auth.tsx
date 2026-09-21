@@ -25,8 +25,14 @@ function AuthPage() {
   const signIn = async () => {
     setBusy(true);
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) { setBusy(false); return toast.error(error.message); }
-    const { data: roleRows } = await supabase.from("user_roles").select("role").eq("user_id", data.user!.id);
+    if (error) {
+      setBusy(false);
+      return toast.error(error.message);
+    }
+    const { data: roleRows } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.user!.id);
     const roles = (roleRows ?? []).map((r) => r.role);
     setBusy(false);
     toast.success("Welcome back");
@@ -39,15 +45,26 @@ function AuthPage() {
     <div className="relative flex min-h-screen items-center justify-center bg-hero-radial px-4">
       <div className="absolute inset-0 -z-10 opacity-30 circuit-pattern" />
       <div className="w-full max-w-md">
-        <Link to="/" className="mb-8 flex justify-center"><ElfoLogo /></Link>
+        <Link to="/" className="mb-8 flex justify-center">
+          <ElfoLogo />
+        </Link>
         <div className="glass-card rounded-3xl p-8">
-          <h1 className="font-display text-2xl font-bold tracking-tight">Access your <span className="electric-text">ELFO</span> portal</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Sign in with the credentials provided by your ELFO account manager.</p>
+          <h1 className="font-display text-2xl font-bold tracking-tight">
+            Access your <span className="electric-text">ELFO</span> portal
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Sign in with the credentials provided by your ELFO account manager.
+          </p>
 
           <div className="mt-6 space-y-4">
             <div>
               <Label>Email</Label>
-              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1.5 rounded-xl" />
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1.5 rounded-xl"
+              />
             </div>
             <div>
               <Label>Password</Label>
@@ -73,12 +90,18 @@ function AuthPage() {
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign in"}
             </Button>
             <p className="text-center text-xs text-muted-foreground">
-              Don't have an account yet? <button type="button" onClick={openInquiry} className="text-primary hover:underline">Start a project inquiry</button> and we'll set one up for you.
+              Don't have an account yet?{" "}
+              <button type="button" onClick={openInquiry} className="text-primary hover:underline">
+                Start a project inquiry
+              </button>{" "}
+              and we'll set one up for you.
             </p>
           </div>
         </div>
         <div className="mt-6 text-center text-xs text-muted-foreground">
-          <Link to="/" className="hover:text-foreground">← Back to home</Link>
+          <Link to="/" className="hover:text-foreground">
+            ← Back to home
+          </Link>
         </div>
       </div>
     </div>

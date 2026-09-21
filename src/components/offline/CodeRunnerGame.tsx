@@ -39,7 +39,12 @@ const LANGS = [
 // Small, single-lane errors — dodge by switching lanes.
 const SMALL_ERRORS = ["404", "TypeError", "NullPointer", "SyntaxError", "Undefined"] as const;
 // Big, all-lane errors — dodge by jumping.
-const BIG_ERRORS = ["500 Server Error", "Build Failed", "Merge Conflict", "Deploy Blocked"] as const;
+const BIG_ERRORS = [
+  "500 Server Error",
+  "Build Failed",
+  "Merge Conflict",
+  "Deploy Blocked",
+] as const;
 
 type ItemType = "none" | "bug" | "barrier" | "token" | "shield";
 
@@ -70,7 +75,13 @@ function makeSound() {
     }
     return ctx;
   };
-  return (freq: number, dur = 0.1, type: OscillatorType = "square", vol = 0.07, slideTo?: number) => {
+  return (
+    freq: number,
+    dur = 0.1,
+    type: OscillatorType = "square",
+    vol = 0.07,
+    slideTo?: number,
+  ) => {
     const a = get();
     if (!a) return;
     try {
@@ -203,7 +214,7 @@ function Scene({
   const shieldRingRef = useRef<THREE.Mesh>(null);
   const trailRefs = useRef<(THREE.Sprite | null)[]>([]);
   const trailPositions = useRef(
-    Array.from({ length: TRAIL_LEN }, () => ({ x: 0, y: 0.55, z: PLAYER_Z }))
+    Array.from({ length: TRAIL_LEN }, () => ({ x: 0, y: 0.55, z: PLAYER_Z })),
   );
   const starGeoRef = useRef<THREE.BufferGeometry>(null);
   const starPositions = useMemo(() => {
@@ -229,8 +240,14 @@ function Scene({
   const pool = useRef<PoolItem[]>([]);
 
   const langTextures = useMemo(() => LANGS.map((l) => makeLangTexture(l.name, l.bg, l.fg)), []);
-  const smallErrorTextures = useMemo(() => SMALL_ERRORS.map((label) => makeErrorTexture(label, false)), []);
-  const bigErrorTextures = useMemo(() => BIG_ERRORS.map((label) => makeErrorTexture(label, true)), []);
+  const smallErrorTextures = useMemo(
+    () => SMALL_ERRORS.map((label) => makeErrorTexture(label, false)),
+    [],
+  );
+  const bigErrorTextures = useMemo(
+    () => BIG_ERRORS.map((label) => makeErrorTexture(label, true)),
+    [],
+  );
 
   const laneRef = useRef(1);
   const targetXRef = useRef(LANE_X[1]);
@@ -268,7 +285,11 @@ function Scene({
     levelRef.current = 1;
     pendingClusterZRef.current = null;
     pendingClusterLaneRef.current = null;
-    trailPositions.current = Array.from({ length: TRAIL_LEN }, () => ({ x: 0, y: 0.55, z: PLAYER_Z }));
+    trailPositions.current = Array.from({ length: TRAIL_LEN }, () => ({
+      x: 0,
+      y: 0.55,
+      z: PLAYER_Z,
+    }));
     onScore(0);
     onCombo(0);
     onShield(false);
@@ -355,7 +376,7 @@ function Scene({
         if (soundRef.current) beep(320, 0.05, "triangle", 0.04);
       }
     },
-    [beep]
+    [beep],
   );
 
   const doJump = useCallback(() => {
@@ -403,7 +424,11 @@ function Scene({
       }
 
       const targetSpeed = Math.min(MAX_SPEED, BASE_SPEED + (levelRef.current - 1) * 2.6);
-      speedRef.current = THREE.MathUtils.lerp(speedRef.current, targetSpeed, Math.min(1, delta * 2.2));
+      speedRef.current = THREE.MathUtils.lerp(
+        speedRef.current,
+        targetSpeed,
+        Math.min(1, delta * 2.2),
+      );
 
       for (let i = 0; i < RING_COUNT; i++) {
         ringZ.current[i] += speedRef.current * delta;
@@ -544,7 +569,7 @@ function Scene({
       playerRef.current.rotation.z = THREE.MathUtils.lerp(
         playerRef.current.rotation.z,
         (targetXRef.current - nx) * -0.35,
-        0.2
+        0.2,
       );
       playerRef.current.rotation.y += delta * (deadRef.current ? 0 : 1.4);
 
@@ -679,7 +704,11 @@ function Scene({
       {/* Ambient drifting starfield for depth */}
       <points>
         <bufferGeometry ref={starGeoRef}>
-          <bufferAttribute attach="attributes-position" args={[starPositions, 3]} count={STAR_COUNT} />
+          <bufferAttribute
+            attach="attributes-position"
+            args={[starPositions, 3]}
+            count={STAR_COUNT}
+          />
         </bufferGeometry>
         <pointsMaterial
           map={glowTexture}
@@ -700,7 +729,12 @@ function Scene({
       {[-1.15, 1.15].map((x) => (
         <mesh key={x} position={[x, -0.53, -TUNNEL_LEN / 2]}>
           <boxGeometry args={[0.04, 0.02, TUNNEL_LEN + 20]} />
-          <meshStandardMaterial color="#4fa8ff" emissive="#4fa8ff" emissiveIntensity={2} toneMapped={false} />
+          <meshStandardMaterial
+            color="#4fa8ff"
+            emissive="#4fa8ff"
+            emissiveIntensity={2}
+            toneMapped={false}
+          />
         </mesh>
       ))}
 
@@ -714,7 +748,12 @@ function Scene({
         >
           <mesh visible={false}>
             <torusGeometry args={[0.32, 0.11, 10, 20]} />
-            <meshStandardMaterial color="#c084fc" emissive="#a855f7" emissiveIntensity={1.6} toneMapped={false} />
+            <meshStandardMaterial
+              color="#c084fc"
+              emissive="#a855f7"
+              emissiveIntensity={1.6}
+              toneMapped={false}
+            />
           </mesh>
           {SMALL_ERRORS.map((_, ei) => (
             <sprite key={`sm-${ei}`} visible={false} scale={[1.15, 0.58, 1]}>
@@ -766,7 +805,12 @@ function Scene({
       </mesh>
       <mesh ref={shieldRingRef} visible={false}>
         <torusGeometry args={[0.62, 0.035, 8, 24]} />
-        <meshStandardMaterial color="#c084fc" emissive="#c084fc" emissiveIntensity={2} toneMapped={false} />
+        <meshStandardMaterial
+          color="#c084fc"
+          emissive="#c084fc"
+          emissiveIntensity={2}
+          toneMapped={false}
+        />
       </mesh>
     </group>
   );
@@ -797,7 +841,8 @@ export default function CodeRunnerGame({ paused = false }: { paused?: boolean })
   });
 
   useEffect(() => {
-    if (typeof window !== "undefined") localStorage.setItem("elfo-runner-sound", soundOn ? "1" : "0");
+    if (typeof window !== "undefined")
+      localStorage.setItem("elfo-runner-sound", soundOn ? "1" : "0");
   }, [soundOn]);
 
   const handleLevelUp = useCallback((n: number) => {
@@ -868,7 +913,8 @@ export default function CodeRunnerGame({ paused = false }: { paused?: boolean })
     const onEnd = (e: TouchEvent) => {
       const dx = e.changedTouches[0].clientX - touchX;
       const dy = e.changedTouches[0].clientY - touchY;
-      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) controlsRef.current?.changeLane(dx > 0 ? 1 : -1);
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy))
+        controlsRef.current?.changeLane(dx > 0 ? 1 : -1);
       else if (dy < -30) controlsRef.current?.jump();
       else if (Math.abs(dx) < 12 && Math.abs(dy) < 12) controlsRef.current?.jump();
     };
@@ -979,8 +1025,12 @@ export default function CodeRunnerGame({ paused = false }: { paused?: boolean })
 
       {dead && (
         <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-2.5 bg-[#050a24]/75 px-4 text-center backdrop-blur-sm">
-          <div className="text-xs uppercase tracking-widest text-red-300 sm:text-sm">Deploy failed</div>
-          <div className="text-2xl font-bold text-white sm:text-3xl">Score {score} · Best {best}</div>
+          <div className="text-xs uppercase tracking-widest text-red-300 sm:text-sm">
+            Deploy failed
+          </div>
+          <div className="text-2xl font-bold text-white sm:text-3xl">
+            Score {score} · Best {best}
+          </div>
           <div className="text-xs text-white/50">Reached Level {level}</div>
           <button
             onTouchEnd={(e) => e.stopPropagation()}

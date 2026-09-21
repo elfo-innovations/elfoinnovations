@@ -12,7 +12,14 @@ import ur from "./locales/ur.json";
 export type LangCode = "en" | "es" | "fr" | "de" | "ar" | "ur" | "ja" | "zh";
 export type LangScope = "public" | "admin" | "developer" | "client";
 
-export const LANGUAGES: { code: LangCode; label: string; native: string; flag: string; country: string; dir: "ltr" | "rtl" }[] = [
+export const LANGUAGES: {
+  code: LangCode;
+  label: string;
+  native: string;
+  flag: string;
+  country: string;
+  dir: "ltr" | "rtl";
+}[] = [
   { code: "en", label: "English", native: "English", flag: "🇺🇸", country: "us", dir: "ltr" },
   { code: "es", label: "Spanish", native: "Español", flag: "🇪🇸", country: "es", dir: "ltr" },
   { code: "fr", label: "French", native: "Français", flag: "🇫🇷", country: "fr", dir: "ltr" },
@@ -144,12 +151,20 @@ function ensureGoogleTranslateWidget() {
   holder.style.display = "none";
   document.body.appendChild(holder);
 
-  (window as typeof window & { googleTranslateElementInit?: () => void }).googleTranslateElementInit = () => {
+  (
+    window as typeof window & { googleTranslateElementInit?: () => void }
+  ).googleTranslateElementInit = () => {
     try {
-      const google = (window as typeof window & { google?: { translate?: { TranslateElement?: any } } }).google;
+      const google = (
+        window as typeof window & { google?: { translate?: { TranslateElement?: any } } }
+      ).google;
       if (!google?.translate?.TranslateElement) return;
       new google.translate.TranslateElement(
-        { pageLanguage: "en", autoDisplay: false, layout: google.translate.TranslateElement.InlineLayout.SIMPLE },
+        {
+          pageLanguage: "en",
+          autoDisplay: false,
+          layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+        },
         "google_translate_element",
       );
     } catch {}
@@ -162,7 +177,9 @@ function ensureGoogleTranslateWidget() {
 }
 
 export async function changeLanguage(scope: LangScope, code: LangCode) {
-  try { window.localStorage.setItem(storageKeyFor(scope), code); } catch {}
+  try {
+    window.localStorage.setItem(storageKeyFor(scope), code);
+  } catch {}
   await i18n.changeLanguage(code);
   applyLangSideEffects(code);
   setGoogTransCookie(code);

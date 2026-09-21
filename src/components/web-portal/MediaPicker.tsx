@@ -2,7 +2,13 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Upload, ImagePlus, Search, Check, Loader2, ImageOff } from "lucide-react";
 import { toast } from "sonner";
@@ -10,18 +16,34 @@ import { toast } from "sonner";
 export async function uploadToWebsiteMedia(file: File): Promise<string> {
   const ext = file.name.split(".").pop() || "png";
   const path = `${crypto.randomUUID()}.${ext}`;
-  const { error } = await supabase.storage.from("website-media").upload(path, file, { upsert: false });
+  const { error } = await supabase.storage
+    .from("website-media")
+    .upload(path, file, { upsert: false });
   if (error) throw error;
-  const { data: signed } = await supabase.storage.from("website-media").createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+  const { data: signed } = await supabase.storage
+    .from("website-media")
+    .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
   const url = signed?.signedUrl || "";
   await supabase.from("media_library").insert({
-    file_name: file.name, storage_path: path, public_url: url,
-    file_type: file.type, file_size: file.size, folder: "website",
+    file_name: file.name,
+    storage_path: path,
+    public_url: url,
+    file_type: file.type,
+    file_size: file.size,
+    folder: "website",
   } as any);
   return url;
 }
 
-export function MediaPicker({ value, onChange, label = "Image" }: { value?: string | null; onChange: (url: string) => void; label?: string }) {
+export function MediaPicker({
+  value,
+  onChange,
+  label = "Image",
+}: {
+  value?: string | null;
+  onChange: (url: string) => void;
+  label?: string;
+}) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -29,10 +51,14 @@ export function MediaPicker({ value, onChange, label = "Image" }: { value?: stri
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["media_library"],
-    queryFn: async () => (await supabase.from("media_library").select("*").order("created_at", { ascending: false })).data ?? [],
+    queryFn: async () =>
+      (await supabase.from("media_library").select("*").order("created_at", { ascending: false }))
+        .data ?? [],
   });
 
-  const filtered = (items as any[]).filter((m) => !search || m.file_name?.toLowerCase().includes(search.toLowerCase()));
+  const filtered = (items as any[]).filter(
+    (m) => !search || m.file_name?.toLowerCase().includes(search.toLowerCase()),
+  );
 
   const handleUpload = async (file: File) => {
     setUploading(true);
@@ -62,7 +88,9 @@ export function MediaPicker({ value, onChange, label = "Image" }: { value?: stri
         )}
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button type="button" variant="outline" size="sm">Choose image</Button>
+            <Button type="button" variant="outline" size="sm">
+              Choose image
+            </Button>
           </DialogTrigger>
 
           <DialogContent className="flex h-[85vh] w-[94vw] max-w-3xl flex-col gap-0 overflow-hidden p-0 sm:h-[80vh]">
@@ -73,10 +101,19 @@ export function MediaPicker({ value, onChange, label = "Image" }: { value?: stri
             <div className="flex flex-col gap-2 border-b px-4 py-3 sm:flex-row sm:items-center sm:gap-3 sm:px-6">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input placeholder="Search…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+                <Input
+                  placeholder="Search…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9"
+                />
               </div>
               <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 sm:py-1.5">
-                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                {uploading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Upload className="h-4 w-4" />
+                )}
                 {uploading ? "Uploading…" : "Upload"}
                 <input
                   type="file"
@@ -99,7 +136,9 @@ export function MediaPicker({ value, onChange, label = "Image" }: { value?: stri
               ) : filtered.length === 0 ? (
                 <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-sm text-muted-foreground">
                   <ImageOff className="h-8 w-8 opacity-40" />
-                  {search ? "No media matches your search." : "No media yet — upload your first image above."}
+                  {search
+                    ? "No media matches your search."
+                    : "No media yet — upload your first image above."}
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
@@ -120,7 +159,10 @@ export function MediaPicker({ value, onChange, label = "Image" }: { value?: stri
                         {/* Fixed, consistent aspect ratio via inline style — guaranteed to
                             render the same on every card regardless of the source image's
                             own dimensions, so the list stays evenly spaced. */}
-                        <div className="relative w-full overflow-hidden" style={{ aspectRatio: "21 / 9" }}>
+                        <div
+                          className="relative w-full overflow-hidden"
+                          style={{ aspectRatio: "21 / 9" }}
+                        >
                           <img
                             src={m.public_url}
                             alt={m.file_name}
@@ -128,7 +170,9 @@ export function MediaPicker({ value, onChange, label = "Image" }: { value?: stri
                             className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105"
                           />
                           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent px-3 py-2">
-                            <div className="truncate text-left text-xs font-medium text-white">{m.file_name}</div>
+                            <div className="truncate text-left text-xs font-medium text-white">
+                              {m.file_name}
+                            </div>
                           </div>
                           {selected && (
                             <div className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow">

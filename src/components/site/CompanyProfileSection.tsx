@@ -22,10 +22,22 @@ import profilePdf from "@/assets/Elfo-Innovations-Company-Profile.pdf";
 import fbrCertificatePdf from "@/assets/Elfo-Innovations-FBR-Registration.pdf";
 
 const PILLARS = [
-  { icon: Layers, title: "Full-Service", desc: "End-to-end development across web, mobile, cloud and enterprise." },
-  { icon: Sparkles, title: "Innovative", desc: "Creative solutions built on modern, proven technologies." },
+  {
+    icon: Layers,
+    title: "Full-Service",
+    desc: "End-to-end development across web, mobile, cloud and enterprise.",
+  },
+  {
+    icon: Sparkles,
+    title: "Innovative",
+    desc: "Creative solutions built on modern, proven technologies.",
+  },
   { icon: Shield, title: "Secure", desc: "Robust, reliable and secure by design at every layer." },
-  { icon: Rocket, title: "Scalable", desc: "Engineered to grow with your ambitions and your users." },
+  {
+    icon: Rocket,
+    title: "Scalable",
+    desc: "Engineered to grow with your ambitions and your users.",
+  },
 ];
 
 export function CompanyProfileSection() {
@@ -46,15 +58,15 @@ export function CompanyProfileSection() {
               Turning ideas into <span className="electric-text">powerful software</span>
             </h2>
             <p className="mt-5 text-muted-foreground">
-              <strong>ELFO Innovations</strong> is a full-service software development company delivering
-              innovative, scalable and secure digital solutions for businesses of all sizes. With a strong
-              foundation in modern technologies and agile delivery, we help organizations turn ideas into
-              products that ship — and scale.
+              <strong>ELFO Innovations</strong> is a full-service software development company
+              delivering innovative, scalable and secure digital solutions for businesses of all
+              sizes. With a strong foundation in modern technologies and agile delivery, we help
+              organizations turn ideas into products that ship — and scale.
             </p>
             <p className="mt-4 text-muted-foreground">
-              Our expertise spans web, mobile, cloud and enterprise software. We work closely with every
-              client to understand their goals and craft solutions that improve efficiency, elevate user
-              experience, and accelerate growth.
+              Our expertise spans web, mobile, cloud and enterprise software. We work closely with
+              every client to understand their goals and craft solutions that improve efficiency,
+              elevate user experience, and accelerate growth.
             </p>
 
             <div className="mt-8 grid gap-3 sm:grid-cols-2">
@@ -127,8 +139,8 @@ export function CompanyProfileSection() {
                 See our full company profile
               </h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                A detailed look at who we are, our mission and vision, services, technology stack and
-                partnership opportunities — packaged as a downloadable PDF.
+                A detailed look at who we are, our mission and vision, services, technology stack
+                and partnership opportunities — packaged as a downloadable PDF.
               </p>
 
               <ul className="mt-5 space-y-2 text-sm">
@@ -149,7 +161,11 @@ export function CompanyProfileSection() {
                 <Button onClick={() => setOpen(true)} className="flex-1 rounded-full electric-glow">
                   <FileText className="mr-2 h-4 w-4" /> See Company Profile
                 </Button>
-                <a href={profilePdf} download="Elfo-Innovations-Company-Profile.pdf" className="flex-1">
+                <a
+                  href={profilePdf}
+                  download="Elfo-Innovations-Company-Profile.pdf"
+                  className="flex-1"
+                >
                   <Button variant="outline" className="w-full rounded-full">
                     <Download className="mr-2 h-4 w-4" /> Download PDF
                   </Button>
@@ -164,7 +180,9 @@ export function CompanyProfileSection() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-5xl h-[90vh] p-0 gap-0 overflow-hidden">
           <DialogHeader className="flex flex-row items-center justify-between border-b px-4 py-3 space-y-0">
-            <DialogTitle className="text-sm sm:text-base">ELFO Innovations — Company Profile</DialogTitle>
+            <DialogTitle className="text-sm sm:text-base">
+              ELFO Innovations — Company Profile
+            </DialogTitle>
             <a href={profilePdf} download="Elfo-Innovations-Company-Profile.pdf">
               <Button size="sm" variant="outline" className="rounded-full">
                 <Download className="mr-2 h-3.5 w-3.5" /> Download
@@ -181,7 +199,9 @@ export function CompanyProfileSection() {
       <Dialog open={fbrOpen} onOpenChange={setFbrOpen}>
         <DialogContent className="max-w-5xl h-[90vh] p-0 gap-0 overflow-hidden">
           <DialogHeader className="flex flex-row items-center justify-between border-b px-4 py-3 space-y-0">
-            <DialogTitle className="text-sm sm:text-base">ELFO Innovations — FBR Registration Certificate</DialogTitle>
+            <DialogTitle className="text-sm sm:text-base">
+              ELFO Innovations — FBR Registration Certificate
+            </DialogTitle>
             <a href={fbrCertificatePdf} download="Elfo-Innovations-FBR-Registration.pdf">
               <Button size="sm" variant="outline" className="rounded-full">
                 <Download className="mr-2 h-3.5 w-3.5" /> Download
@@ -189,7 +209,11 @@ export function CompanyProfileSection() {
             </a>
           </DialogHeader>
           <object data={fbrCertificatePdf} type="application/pdf" className="h-full w-full">
-            <iframe src={fbrCertificatePdf} className="h-full w-full" title="FBR Registration Certificate PDF" />
+            <iframe
+              src={fbrCertificatePdf}
+              className="h-full w-full"
+              title="FBR Registration Certificate PDF"
+            />
           </object>
         </DialogContent>
       </Dialog>

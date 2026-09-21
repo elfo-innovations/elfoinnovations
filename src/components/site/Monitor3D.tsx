@@ -1,11 +1,11 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Preload, useGLTF } from "@react-three/drei";
- 
+
 // Reuses the existing desktop PC 3D model from
 // https://github.com/aabansyed/portfolio1 (public/desktop_pc/scene.gltf)
 // Files are copied into this project's /public/desktop_pc/ directory.
- 
+
 function Computers({ isMobile }: { isMobile: boolean }) {
   const computer = useGLTF("/desktop_pc/scene.gltf");
   return (
@@ -26,17 +26,16 @@ function Computers({ isMobile }: { isMobile: boolean }) {
         position={isMobile ? [0, -3.2, -2.2] : [0, -3.4, -1.5]}
         rotation={[-0.01, -0.2, -0.1]}
       />
- 
     </mesh>
   );
 }
- 
+
 useGLTF.preload("/desktop_pc/scene.gltf");
- 
+
 export function Monitor3D() {
   const [isMobile, setIsMobile] = useState(false);
   const controlsRef = useRef<any>(null);
- 
+
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 640px)");
     setIsMobile(mq.matches);
@@ -44,7 +43,7 @@ export function Monitor3D() {
     mq.addEventListener("change", cb);
     return () => mq.removeEventListener("change", cb);
   }, []);
- 
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.key === "r" || e.key === "R") && controlsRef.current) {
@@ -54,11 +53,9 @@ export function Monitor3D() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
- 
+
   return (
-    <div
-      className="relative mx-auto flex w-full max-w-[820px] flex-col items-center"
-    >
+    <div className="relative mx-auto flex w-full max-w-[820px] flex-col items-center">
       <div
         className="relative w-full"
         style={{
@@ -90,7 +87,7 @@ export function Monitor3D() {
           </Suspense>
           <Preload all />
         </Canvas>
- 
+
         {/* <button
           onClick={() => controlsRef.current?.reset()}
           className="absolute right-3 top-3 rounded-full border border-foreground/10 bg-background/70 px-3 py-1 text-[10px] uppercase tracking-widest text-foreground/70 backdrop-blur transition hover:bg-foreground/10"

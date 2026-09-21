@@ -29,7 +29,9 @@ export function DateTimeField({
 }) {
   const [open, setOpen] = useState(false);
   const date = value ? new Date(value) : undefined;
-  const timeValue = date ? `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}` : "12:00";
+  const timeValue = date
+    ? `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`
+    : "12:00";
 
   const commit = (nextDate: Date | undefined, nextTime: string) => {
     if (!nextDate) return onChange(null);
@@ -56,14 +58,25 @@ export function DateTimeField({
               className="h-10 flex-1 justify-start gap-2 font-normal"
             >
               <CalendarIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
-              {date ? date.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" }) : <span className="text-muted-foreground">Pick a date</span>}
+              {date ? (
+                date.toLocaleDateString(undefined, {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                })
+              ) : (
+                <span className="text-muted-foreground">Pick a date</span>
+              )}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
             <Calendar
               mode="single"
               selected={date}
-              onSelect={(d) => { commit(d, timeValue); setOpen(false); }}
+              onSelect={(d) => {
+                commit(d, timeValue);
+                setOpen(false);
+              }}
               disabled={disablePast ? { before: today } : undefined}
               captionLayout="dropdown"
               startMonth={today}
@@ -80,7 +93,13 @@ export function DateTimeField({
           disabled={!date}
         />
         {date && (
-          <Button type="button" variant="ghost" size="icon" className="h-10 w-10 shrink-0" onClick={() => onChange(null)}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 shrink-0"
+            onClick={() => onChange(null)}
+          >
             <X className="h-4 w-4" />
           </Button>
         )}

@@ -88,7 +88,9 @@ export function PromoHeroSlider({ theme }: { theme: "light" | "dark" }) {
       className="relative w-full overflow-hidden transition-colors duration-500"
       style={{ backgroundColor: slide.accent_color || undefined }}
     >
-      <div className={`relative aspect-[16/9] w-full sm:aspect-[21/9] ${!slide.accent_color ? (isDark ? "bg-[#050914]" : "bg-muted") : ""}`}>
+      <div
+        className={`relative aspect-[16/9] w-full sm:aspect-[21/9] ${!slide.accent_color ? (isDark ? "bg-[#050914]" : "bg-muted") : ""}`}
+      >
         {slide.media_type === "video" ? (
           <video
             key={slide.id}
@@ -100,14 +102,27 @@ export function PromoHeroSlider({ theme }: { theme: "light" | "dark" }) {
             playsInline
           />
         ) : (
-          <img key={slide.id} src={slide.image_url || undefined} alt={slide.title} className="absolute inset-0 h-full w-full object-cover" />
+          <img
+            key={slide.id}
+            src={slide.image_url || undefined}
+            alt={slide.title}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
         )}
 
-        <div className={`absolute inset-0 ${isDark ? "bg-gradient-to-t from-black/70 via-black/10 to-transparent" : "bg-gradient-to-t from-black/40 via-transparent to-transparent"}`} />
+        <div
+          className={`absolute inset-0 ${isDark ? "bg-gradient-to-t from-black/70 via-black/10 to-transparent" : "bg-gradient-to-t from-black/40 via-transparent to-transparent"}`}
+        />
 
         <div className="absolute inset-x-0 bottom-0 p-6 sm:p-10">
-          {slide.title && <h2 className="font-display text-2xl font-bold text-white drop-shadow sm:text-4xl">{slide.title}</h2>}
-          {slide.description && <p className="mt-2 max-w-xl text-sm text-white/85 sm:text-base">{slide.description}</p>}
+          {slide.title && (
+            <h2 className="font-display text-2xl font-bold text-white drop-shadow sm:text-4xl">
+              {slide.title}
+            </h2>
+          )}
+          {slide.description && (
+            <p className="mt-2 max-w-xl text-sm text-white/85 sm:text-base">{slide.description}</p>
+          )}
           {slide.cta_label && slide.cta_href && (
             <Link to={slide.cta_href}>
               <Button className="mt-4 rounded-full">{slide.cta_label}</Button>

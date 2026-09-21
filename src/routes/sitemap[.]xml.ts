@@ -32,7 +32,8 @@ export const Route = createFileRoute("/sitemap.xml")({
           for (const b of data ?? []) {
             entries.push({
               path: `/blogs/${(b as any).slug}`,
-              lastmod: ((b as any).updated_at || (b as any).published_at || "").slice(0, 10) || undefined,
+              lastmod:
+                ((b as any).updated_at || (b as any).published_at || "").slice(0, 10) || undefined,
               changefreq: "monthly",
               priority: "0.6",
             });
@@ -47,7 +48,9 @@ export const Route = createFileRoute("/sitemap.xml")({
             e.changefreq ? `    <changefreq>${e.changefreq}</changefreq>` : null,
             e.priority ? `    <priority>${e.priority}</priority>` : null,
             `  </url>`,
-          ].filter(Boolean).join("\n"),
+          ]
+            .filter(Boolean)
+            .join("\n"),
         );
 
         const xml = [

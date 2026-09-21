@@ -1,5 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { MessageCircle, X, Send, Loader2, Paperclip, Mic, MicOff, Volume2, VolumeX } from "lucide-react";
+import {
+  MessageCircle,
+  X,
+  Send,
+  Loader2,
+  Paperclip,
+  Mic,
+  MicOff,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 type Msg = {
@@ -11,7 +21,8 @@ type Msg = {
 
 const GREETING: Msg = {
   role: "assistant",
-  content: "Hi! I'm Elsa, the ELFO Innovations assistant. Ask me about our services, pricing, or how to get started. 👋",
+  content:
+    "Hi! I'm Elsa, the ELFO Innovations assistant. Ask me about our services, pricing, or how to get started. 👋",
 };
 
 function getSessionId(): string {
@@ -43,7 +54,11 @@ export function SiteChatWidget() {
   const [messages, setMessages] = useState<Msg[]>([GREETING]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [pendingImage, setPendingImage] = useState<{ preview: string; data: string; mimeType: string } | null>(null);
+  const [pendingImage, setPendingImage] = useState<{
+    preview: string;
+    data: string;
+    mimeType: string;
+  } | null>(null);
   const [listening, setListening] = useState(false);
   const [voiceMode, setVoiceMode] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -75,7 +90,8 @@ export function SiteChatWidget() {
   // so we can switch to a Hindi voice (reads romanized Urdu/Hindi far more accurately
   // than an English voice, which mangles the pronunciation).
   const looksHinglish = (text: string) => {
-    const hinglishWords = /\b(hai|hain|nahi|nhi|kya|kaise|kyun|kyu|mein|main|aap|tum|kar|raha|rahi|rahe|ho|hoon|hun|acha|theek|zyada|bhai|yaar|matlab|bata|batao|kahan|kab|kyunki|liye|lena|dena|karo|karna|krna)\b/i;
+    const hinglishWords =
+      /\b(hai|hain|nahi|nhi|kya|kaise|kyun|kyu|mein|main|aap|tum|kar|raha|rahi|rahe|ho|hoon|hun|acha|theek|zyada|bhai|yaar|matlab|bata|batao|kahan|kab|kyunki|liye|lena|dena|karo|karna|krna)\b/i;
     return hinglishWords.test(text);
   };
 
@@ -114,7 +130,8 @@ export function SiteChatWidget() {
 
   // Set up browser speech-to-text (Web Speech API) once, if the browser supports it
   useEffect(() => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) return;
 
     const recognition = new SpeechRecognition();
@@ -180,7 +197,9 @@ export function SiteChatWidget() {
       role: "user",
       content: text,
       imagePreview: pendingImage?.preview,
-      image: pendingImage ? { data: pendingImage.data, mimeType: pendingImage.mimeType } : undefined,
+      image: pendingImage
+        ? { data: pendingImage.data, mimeType: pendingImage.mimeType }
+        : undefined,
     };
     const next = [...messages, userMsg];
     setMessages(next);
@@ -247,7 +266,11 @@ export function SiteChatWidget() {
       {open && (
         <div className="fixed bottom-24 right-5 z-50 flex h-[70vh] max-h-[560px] w-[92vw] max-w-sm flex-col overflow-hidden rounded-2xl border bg-background shadow-2xl sm:w-96">
           <div className="flex items-center gap-2 border-b bg-[#0a1128] px-4 py-3 text-white">
-            <img src="/elfo-logo-dark.png" alt="ELFO Innovations" className="h-9 w-9 shrink-0 object-contain" />
+            <img
+              src="/elfo-logo-dark.png"
+              alt="ELFO Innovations"
+              className="h-9 w-9 shrink-0 object-contain"
+            />
             <div className="flex-1">
               <div className="text-sm font-semibold">Elsa</div>
               <div className="text-[11px] text-white/60">Ask us anything</div>
@@ -266,7 +289,10 @@ export function SiteChatWidget() {
 
           <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-4">
             {messages.map((m, i) => (
-              <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div
+                key={i}
+                className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+              >
                 <div
                   className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-sm ${
                     m.role === "user"
@@ -275,7 +301,11 @@ export function SiteChatWidget() {
                   }`}
                 >
                   {m.imagePreview && (
-                    <img src={m.imagePreview} alt="Attachment" className="mb-1.5 max-h-40 rounded-lg object-cover" />
+                    <img
+                      src={m.imagePreview}
+                      alt="Attachment"
+                      className="mb-1.5 max-h-40 rounded-lg object-cover"
+                    />
                   )}
                   {m.content}
                 </div>
@@ -292,7 +322,11 @@ export function SiteChatWidget() {
 
           {pendingImage && (
             <div className="flex items-center gap-2 border-t px-3 pt-2">
-              <img src={pendingImage.preview} alt="Selected" className="h-12 w-12 rounded-lg object-cover" />
+              <img
+                src={pendingImage.preview}
+                alt="Selected"
+                className="h-12 w-12 rounded-lg object-cover"
+              />
               <button
                 onClick={() => setPendingImage(null)}
                 className="text-xs text-muted-foreground underline"

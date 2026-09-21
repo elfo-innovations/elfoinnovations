@@ -113,17 +113,17 @@ export function FaqSection() {
                 </div>
               ))
             : visibleItems.map((f, i) => (
-            <AccordionItem
-              key={f.id ?? i}
-              value={`i${i}`}
-              className="glass-card rounded-2xl border-0 px-5"
-            >
-              <AccordionTrigger className="text-left text-base font-semibold hover:no-underline">
-                {f.question}
-              </AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">{f.answer}</AccordionContent>
-            </AccordionItem>
-          ))}
+                <AccordionItem
+                  key={f.id ?? i}
+                  value={`i${i}`}
+                  className="glass-card rounded-2xl border-0 px-5"
+                >
+                  <AccordionTrigger className="text-left text-base font-semibold hover:no-underline">
+                    {f.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground">{f.answer}</AccordionContent>
+                </AccordionItem>
+              ))}
         </Accordion>
         {!isPending && hasMore && (
           <div className="mt-6 flex justify-center">
@@ -132,7 +132,9 @@ export function FaqSection() {
               className="inline-flex items-center gap-1.5 rounded-full border bg-card px-5 py-2.5 text-sm font-semibold text-primary transition hover:bg-accent/40"
             >
               {showAll ? "Show less" : `View all ${items.length} questions`}
-              <ChevronDown className={`h-4 w-4 transition-transform ${showAll ? "rotate-180" : ""}`} />
+              <ChevronDown
+                className={`h-4 w-4 transition-transform ${showAll ? "rotate-180" : ""}`}
+              />
             </button>
           </div>
         )}

@@ -6,7 +6,12 @@ import { PublicLayout } from "@/components/site/PublicLayout";
 import { ArrowLeft, Calendar, ListTree } from "lucide-react";
 import type { ReactNode } from "react";
 import { sanitizeHtml } from "@/components/web-portal/RichTextEditor";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const SITE = "https://elfoinnovations.com";
 
@@ -153,7 +158,7 @@ function renderInline(text: string): ReactNode[] {
         className="text-primary underline underline-offset-2 hover:text-primary/80"
       >
         {match[1]}
-      </a>
+      </a>,
     );
     lastIndex = match.index + match[0].length;
   }
@@ -175,7 +180,7 @@ function buildContent(md: string): { blocks: ReactNode[]; headings: Heading[] } 
       blocks.push(
         <h5 key={i} className="mt-6 font-display text-base font-bold">
           {renderInline(trimmed.slice(6))}
-        </h5>
+        </h5>,
       );
       return;
     }
@@ -183,7 +188,7 @@ function buildContent(md: string): { blocks: ReactNode[]; headings: Heading[] } 
       blocks.push(
         <h4 key={i} className="mt-7 font-display text-lg font-bold">
           {renderInline(trimmed.slice(5))}
-        </h4>
+        </h4>,
       );
       return;
     }
@@ -194,7 +199,7 @@ function buildContent(md: string): { blocks: ReactNode[]; headings: Heading[] } 
       blocks.push(
         <h3 key={i} id={id} className="mt-8 scroll-mt-24 font-display text-xl font-bold">
           {renderInline(text)}
-        </h3>
+        </h3>,
       );
       return;
     }
@@ -203,9 +208,13 @@ function buildContent(md: string): { blocks: ReactNode[]; headings: Heading[] } 
       const id = headingSlug(text, headingCounter++);
       headings.push({ id, text, level: 2 });
       blocks.push(
-        <h2 key={i} id={id} className="mt-10 scroll-mt-24 font-display text-2xl font-bold tracking-tight">
+        <h2
+          key={i}
+          id={id}
+          className="mt-10 scroll-mt-24 font-display text-2xl font-bold tracking-tight"
+        >
           {renderInline(text)}
-        </h2>
+        </h2>,
       );
       return;
     }
@@ -213,7 +222,7 @@ function buildContent(md: string): { blocks: ReactNode[]; headings: Heading[] } 
       blocks.push(
         <h2 key={i} className="mt-10 font-display text-3xl font-bold tracking-tight">
           {renderInline(trimmed.slice(2))}
-        </h2>
+        </h2>,
       );
       return;
     }
@@ -223,14 +232,14 @@ function buildContent(md: string): { blocks: ReactNode[]; headings: Heading[] } 
           {trimmed.split("\n").map((l, j) => (
             <li key={j}>{renderInline(l.replace(/^(-|\*) /, ""))}</li>
           ))}
-        </ul>
+        </ul>,
       );
       return;
     }
     blocks.push(
       <p key={i} className="mt-4 leading-relaxed text-muted-foreground">
         {renderInline(trimmed)}
-      </p>
+      </p>,
     );
   });
 
@@ -247,7 +256,10 @@ function TableOfContents({ headings }: { headings: Heading[] }) {
       <ul className="mt-3 space-y-1.5 text-sm">
         {headings.map((h) => (
           <li key={h.id} className={h.level === 3 ? "ml-4" : ""}>
-            <a href={`#${h.id}`} className="text-muted-foreground hover:text-primary hover:underline">
+            <a
+              href={`#${h.id}`}
+              className="text-muted-foreground hover:text-primary hover:underline"
+            >
               {h.text}
             </a>
           </li>
@@ -258,7 +270,13 @@ function TableOfContents({ headings }: { headings: Heading[] }) {
 }
 
 function formatDateTime(d: Date) {
-  return d.toLocaleString(undefined, { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  return d.toLocaleString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 function BlogPost() {
@@ -278,7 +296,9 @@ function BlogPost() {
   });
 
   const hasRichContent = !!b.content_html?.trim();
-  const { blocks, headings: mdHeadings } = hasRichContent ? { blocks: [], headings: [] as Heading[] } : buildContent(b.content_md || "");
+  const { blocks, headings: mdHeadings } = hasRichContent
+    ? { blocks: [], headings: [] as Heading[] }
+    : buildContent(b.content_md || "");
 
   const contentRef = useRef<HTMLDivElement>(null);
   const [htmlHeadings, setHtmlHeadings] = useState<Heading[]>([]);
@@ -344,7 +364,9 @@ function BlogPost() {
 
         {b.tldr && (
           <div className="mt-8 rounded-2xl border-l-4 border-primary bg-primary/5 p-5">
-            <div className="text-xs font-bold uppercase tracking-widest text-primary">Quick Answer</div>
+            <div className="text-xs font-bold uppercase tracking-widest text-primary">
+              Quick Answer
+            </div>
             <p className="mt-1.5 leading-relaxed">{b.tldr}</p>
           </div>
         )}
@@ -376,7 +398,9 @@ function BlogPost() {
 
         {Array.isArray(b.faqs) && b.faqs.length > 0 && (
           <div className="mt-10">
-            <h2 className="font-display text-2xl font-bold tracking-tight">Frequently Asked Questions</h2>
+            <h2 className="font-display text-2xl font-bold tracking-tight">
+              Frequently Asked Questions
+            </h2>
             <Accordion type="single" collapsible className="mt-4">
               {b.faqs.map((f: { question: string; answer: string }, i: number) => (
                 <AccordionItem key={i} value={`faq-${i}`}>
@@ -413,9 +437,7 @@ function BlogPost() {
                   <div className="p-5">
                     <div className="font-semibold group-hover:text-primary">{r.title}</div>
                     {r.excerpt && (
-                      <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
-                        {r.excerpt}
-                      </p>
+                      <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">{r.excerpt}</p>
                     )}
                   </div>
                 </Link>

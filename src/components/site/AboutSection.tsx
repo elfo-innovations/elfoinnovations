@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { useFollowUs } from "@/hooks/use-follow-us";
 import { BecomeDeveloperButton } from "@/components/recruitment/DeveloperApplicationModal";
 
-
 export function AboutSection() {
   const { open: openFollow } = useFollowUs();
   const { data } = useQuery({
@@ -18,8 +17,12 @@ export function AboutSection() {
     <section id="about" className="border-t bg-background py-20 sm:py-28">
       <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:px-8">
         <div>
-          <div className="inline-flex rounded-full border bg-card px-3 py-1.5 text-xs font-medium">{a.eyebrow || "About ELFO"}</div>
-          <h2 className="mt-4 font-display text-4xl font-bold tracking-tight sm:text-5xl">{a.title}</h2>
+          <div className="inline-flex rounded-full border bg-card px-3 py-1.5 text-xs font-medium">
+            {a.eyebrow || "About ELFO"}
+          </div>
+          <h2 className="mt-4 font-display text-4xl font-bold tracking-tight sm:text-5xl">
+            {a.title}
+          </h2>
           <p className="mt-5 text-muted-foreground">{a.description}</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Button onClick={openFollow} variant="outline" className="rounded-full">
@@ -45,7 +48,11 @@ export function AboutSection() {
           {why.map((f, i) => (
             <div key={i} className="glass-card flex items-start gap-4 rounded-2xl p-5">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                {i === why.length - 1 ? <Zap className="h-5 w-5" /> : <CheckCircle2 className="h-5 w-5" />}
+                {i === why.length - 1 ? (
+                  <Zap className="h-5 w-5" />
+                ) : (
+                  <CheckCircle2 className="h-5 w-5" />
+                )}
               </div>
               <div>
                 <div className="font-semibold">{f.title}</div>
@@ -70,23 +77,52 @@ export function AboutSection() {
                   Meet the builder behind <span className="electric-text">ELFO</span>
                 </h3>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  An engineer with a live portfolio. Every project shipped, deployed and open on the web.
+                  An engineer with a live portfolio. Every project shipped, deployed and open on the
+                  web.
                 </p>
               </div>
             </div>
             <div className="grid gap-4 border-t p-6 sm:p-8 sm:grid-cols-2 lg:grid-cols-4 md:border-l md:border-t-0">
               {[
-                { name: "Aaban Syed", url: "https://aabansyed.netlify.app", role: "Founder & CEO", host: "aabansyed.netlify.app" },
-                { name: "Shehriyal Aziz", url: "https://shehriyalaziz.vercel.app", role: "Founder & CEO & CTO", host: "shehriyalaziz.vercel.app" },
-                { name: "Alishba Anwar", url: "https://buildwithalishba.vercel.app", role: "CMO (Chief Marketing Officer)", host: "buildwithalishba.vercel.app" },
-                { name: "Areesha Shahid", url: "https://areeshah.netlify.app", role: "SEO Specialist", host: "areeshah.netlify.app" },
+                {
+                  name: "Aaban Syed",
+                  url: "https://aabansyed.netlify.app",
+                  role: "Founder & CEO",
+                  host: "aabansyed.netlify.app",
+                },
+                {
+                  name: "Shehriyal Aziz",
+                  url: "https://shehriyalaziz.vercel.app",
+                  role: "Founder & CEO & CTO",
+                  host: "shehriyalaziz.vercel.app",
+                },
+                {
+                  name: "Alishba Anwar",
+                  url: "https://buildwithalishba.vercel.app",
+                  role: "CMO (Chief Marketing Officer)",
+                  host: "buildwithalishba.vercel.app",
+                },
+                {
+                  name: "Areesha Shahid",
+                  url: "https://areeshah.netlify.app",
+                  role: "SEO Specialist",
+                  host: "areeshah.netlify.app",
+                },
               ].map((p) => (
-
-                <a key={p.url} href={p.url} target="_blank" rel="noreferrer"
-                  className="group relative flex flex-col justify-between rounded-2xl border bg-card p-5 transition-all hover:electric-glow">
+                <a
+                  key={p.url}
+                  href={p.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group relative flex flex-col justify-between rounded-2xl border bg-card p-5 transition-all hover:electric-glow"
+                >
                   <div>
-                    <div className="min-h-[2rem] text-[10px] font-bold uppercase leading-tight tracking-widest text-primary">{p.role}</div>
-                    <div className="mt-2 min-h-[3.5rem] font-display text-lg font-semibold leading-tight">{p.name}</div>
+                    <div className="min-h-[2rem] text-[10px] font-bold uppercase leading-tight tracking-widest text-primary">
+                      {p.role}
+                    </div>
+                    <div className="mt-2 min-h-[3.5rem] font-display text-lg font-semibold leading-tight">
+                      {p.name}
+                    </div>
                     <div className="mt-1 truncate text-xs text-muted-foreground">{p.host}</div>
                   </div>
                   <div className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-primary">

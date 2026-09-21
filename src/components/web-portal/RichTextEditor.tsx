@@ -1,8 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  Bold, Italic, Underline, List, ListOrdered, Quote, Minus,
-  AlignLeft, AlignCenter, AlignRight, Link2, Unlink, Image as ImageIcon,
-  Undo, Redo,
+  Bold,
+  Italic,
+  Underline,
+  List,
+  ListOrdered,
+  Quote,
+  Minus,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Link2,
+  Unlink,
+  Image as ImageIcon,
+  Undo,
+  Redo,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,7 +35,10 @@ export function sanitizeHtml(html: string): string {
   doc.querySelectorAll("*").forEach((el) => {
     [...el.attributes].forEach((attr) => {
       if (attr.name.toLowerCase().startsWith("on")) el.removeAttribute(attr.name);
-      if (attr.name.toLowerCase() === "href" && attr.value.trim().toLowerCase().startsWith("javascript:")) {
+      if (
+        attr.name.toLowerCase() === "href" &&
+        attr.value.trim().toLowerCase().startsWith("javascript:")
+      ) {
         el.removeAttribute(attr.name);
       }
     });
@@ -31,7 +46,13 @@ export function sanitizeHtml(html: string): string {
   return doc.body.innerHTML;
 }
 
-export function RichTextEditor({ value, onChange }: { value: string; onChange: (html: string) => void }) {
+export function RichTextEditor({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (html: string) => void;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const [uploading, setUploading] = useState(false);
   const lastValue = useRef(value);
@@ -74,7 +95,9 @@ export function RichTextEditor({ value, onChange }: { value: string; onChange: (
       setUploading(true);
       try {
         const path = `blog-content/${Date.now()}-${file.name}`;
-        const { error } = await supabase.storage.from("website-media").upload(path, file, { upsert: false });
+        const { error } = await supabase.storage
+          .from("website-media")
+          .upload(path, file, { upsert: false });
         if (error) throw error;
         const { data: signed } = await supabase.storage
           .from("website-media")
@@ -99,29 +122,61 @@ export function RichTextEditor({ value, onChange }: { value: string; onChange: (
           title="Paragraph / Heading style"
         >
           {FORMAT_OPTIONS.map((f) => (
-            <option key={f.tag} value={f.tag}>{f.label}</option>
+            <option key={f.tag} value={f.tag}>
+              {f.label}
+            </option>
           ))}
         </select>
         <div className="mx-1 h-5 w-px bg-border" />
-        <ToolbarBtn title="Bold" onClick={() => exec("bold")}><Bold className="h-4 w-4" /></ToolbarBtn>
-        <ToolbarBtn title="Italic" onClick={() => exec("italic")}><Italic className="h-4 w-4" /></ToolbarBtn>
-        <ToolbarBtn title="Underline" onClick={() => exec("underline")}><Underline className="h-4 w-4" /></ToolbarBtn>
+        <ToolbarBtn title="Bold" onClick={() => exec("bold")}>
+          <Bold className="h-4 w-4" />
+        </ToolbarBtn>
+        <ToolbarBtn title="Italic" onClick={() => exec("italic")}>
+          <Italic className="h-4 w-4" />
+        </ToolbarBtn>
+        <ToolbarBtn title="Underline" onClick={() => exec("underline")}>
+          <Underline className="h-4 w-4" />
+        </ToolbarBtn>
         <div className="mx-1 h-5 w-px bg-border" />
-        <ToolbarBtn title="Bullet list" onClick={() => exec("insertUnorderedList")}><List className="h-4 w-4" /></ToolbarBtn>
-        <ToolbarBtn title="Numbered list" onClick={() => exec("insertOrderedList")}><ListOrdered className="h-4 w-4" /></ToolbarBtn>
-        <ToolbarBtn title="Quote" onClick={() => setFormat("BLOCKQUOTE")}><Quote className="h-4 w-4" /></ToolbarBtn>
-        <ToolbarBtn title="Horizontal rule" onClick={() => exec("insertHorizontalRule")}><Minus className="h-4 w-4" /></ToolbarBtn>
+        <ToolbarBtn title="Bullet list" onClick={() => exec("insertUnorderedList")}>
+          <List className="h-4 w-4" />
+        </ToolbarBtn>
+        <ToolbarBtn title="Numbered list" onClick={() => exec("insertOrderedList")}>
+          <ListOrdered className="h-4 w-4" />
+        </ToolbarBtn>
+        <ToolbarBtn title="Quote" onClick={() => setFormat("BLOCKQUOTE")}>
+          <Quote className="h-4 w-4" />
+        </ToolbarBtn>
+        <ToolbarBtn title="Horizontal rule" onClick={() => exec("insertHorizontalRule")}>
+          <Minus className="h-4 w-4" />
+        </ToolbarBtn>
         <div className="mx-1 h-5 w-px bg-border" />
-        <ToolbarBtn title="Align left" onClick={() => exec("justifyLeft")}><AlignLeft className="h-4 w-4" /></ToolbarBtn>
-        <ToolbarBtn title="Align center" onClick={() => exec("justifyCenter")}><AlignCenter className="h-4 w-4" /></ToolbarBtn>
-        <ToolbarBtn title="Align right" onClick={() => exec("justifyRight")}><AlignRight className="h-4 w-4" /></ToolbarBtn>
+        <ToolbarBtn title="Align left" onClick={() => exec("justifyLeft")}>
+          <AlignLeft className="h-4 w-4" />
+        </ToolbarBtn>
+        <ToolbarBtn title="Align center" onClick={() => exec("justifyCenter")}>
+          <AlignCenter className="h-4 w-4" />
+        </ToolbarBtn>
+        <ToolbarBtn title="Align right" onClick={() => exec("justifyRight")}>
+          <AlignRight className="h-4 w-4" />
+        </ToolbarBtn>
         <div className="mx-1 h-5 w-px bg-border" />
-        <ToolbarBtn title="Insert link" onClick={addLink}><Link2 className="h-4 w-4" /></ToolbarBtn>
-        <ToolbarBtn title="Remove link" onClick={() => exec("unlink")}><Unlink className="h-4 w-4" /></ToolbarBtn>
-        <ToolbarBtn title="Insert image" onClick={addImage} disabled={uploading}><ImageIcon className="h-4 w-4" /></ToolbarBtn>
+        <ToolbarBtn title="Insert link" onClick={addLink}>
+          <Link2 className="h-4 w-4" />
+        </ToolbarBtn>
+        <ToolbarBtn title="Remove link" onClick={() => exec("unlink")}>
+          <Unlink className="h-4 w-4" />
+        </ToolbarBtn>
+        <ToolbarBtn title="Insert image" onClick={addImage} disabled={uploading}>
+          <ImageIcon className="h-4 w-4" />
+        </ToolbarBtn>
         <div className="mx-1 h-5 w-px bg-border" />
-        <ToolbarBtn title="Undo" onClick={() => exec("undo")}><Undo className="h-4 w-4" /></ToolbarBtn>
-        <ToolbarBtn title="Redo" onClick={() => exec("redo")}><Redo className="h-4 w-4" /></ToolbarBtn>
+        <ToolbarBtn title="Undo" onClick={() => exec("undo")}>
+          <Undo className="h-4 w-4" />
+        </ToolbarBtn>
+        <ToolbarBtn title="Redo" onClick={() => exec("redo")}>
+          <Redo className="h-4 w-4" />
+        </ToolbarBtn>
         {uploading && <span className="ml-2 text-xs text-muted-foreground">Uploading image…</span>}
       </div>
       <div
@@ -136,7 +191,17 @@ export function RichTextEditor({ value, onChange }: { value: string; onChange: (
   );
 }
 
-function ToolbarBtn({ children, onClick, title, disabled }: { children: React.ReactNode; onClick: () => void; title: string; disabled?: boolean }) {
+function ToolbarBtn({
+  children,
+  onClick,
+  title,
+  disabled,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  title: string;
+  disabled?: boolean;
+}) {
   return (
     <Button
       type="button"

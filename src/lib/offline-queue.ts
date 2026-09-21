@@ -29,7 +29,10 @@ function openDB(): Promise<IDBDatabase> {
   });
 }
 
-async function tx<T>(mode: IDBTransactionMode, fn: (s: IDBObjectStore) => Promise<T> | T): Promise<T> {
+async function tx<T>(
+  mode: IDBTransactionMode,
+  fn: (s: IDBObjectStore) => Promise<T> | T,
+): Promise<T> {
   const db = await openDB();
   return new Promise<T>((resolve, reject) => {
     const t = db.transaction(STORE, mode);
@@ -47,55 +50,82 @@ export async function enqueueInquiry(payload: Record<string, unknown>): Promise<
     typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
       : `q_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-  const item: QueuedInquiry = { id, createdAt: Date.now(), payload, status: "pending", attempts: 0 };
-  await tx("readwrite", (s) => new Promise<void>((res, rej) => {
-    const r = s.put(item);
-    r.onsuccess = () => res();
-    r.onerror = () => rej(r.error);
-  }));
+  const item: QueuedInquiry = {
+    id,
+    createdAt: Date.now(),
+    payload,
+    status: "pending",
+    attempts: 0,
+  };
+  await tx(
+    "readwrite",
+    (s) =>
+      new Promise<void>((res, rej) => {
+        const r = s.put(item);
+        r.onsuccess = () => res();
+        r.onerror = () => rej(r.error);
+      }),
+  );
   return item;
 }
 
 export async function listPending(): Promise<QueuedInquiry[]> {
   try {
-    return await tx("readonly", (s) => new Promise<QueuedInquiry[]>((res, rej) => {
-      const r = s.getAll();
-      r.onsuccess = () => res(((r.result as QueuedInquiry[]) || []).filter((i) => i.status === "pending" || i.status === "failed"));
-      r.onerror = () => rej(r.error);
-    }));
+    return await tx(
+      "readonly",
+      (s) =>
+        new Promise<QueuedInquiry[]>((res, rej) => {
+          const r = s.getAll();
+          r.onsuccess = () =>
+            res(
+              ((r.result as QueuedInquiry[]) || []).filter(
+                (i) => i.status === "pending" || i.status === "failed",
+              ),
+            );
+          r.onerror = () => rej(r.error);
+        }),
+    );
   } catch {
     return [];
   }
 }
 
 export async function markDone(id: string): Promise<void> {
-  await tx("readwrite", (s) => new Promise<void>((res, rej) => {
-    const g = s.get(id);
-    g.onsuccess = () => {
-      const item = g.result as QueuedInquiry | undefined;
-      if (!item) return res();
-      item.status = "done";
-      const p = s.put(item);
-      p.onsuccess = () => res();
-      p.onerror = () => rej(p.error);
-    };
-    g.onerror = () => rej(g.error);
-  }));
+  await tx(
+    "readwrite",
+    (s) =>
+      new Promise<void>((res, rej) => {
+        const g = s.get(id);
+        g.onsuccess = () => {
+          const item = g.result as QueuedInquiry | undefined;
+          if (!item) return res();
+          item.status = "done";
+          const p = s.put(item);
+          p.onsuccess = () => res();
+          p.onerror = () => rej(p.error);
+        };
+        g.onerror = () => rej(g.error);
+      }),
+  );
 }
 
 export async function markFailed(id: string, err: string): Promise<void> {
-  await tx("readwrite", (s) => new Promise<void>((res, rej) => {
-    const g = s.get(id);
-    g.onsuccess = () => {
-      const item = g.result as QueuedInquiry | undefined;
-      if (!item) return res();
-      item.status = "failed";
-      item.attempts = (item.attempts || 0) + 1;
-      item.lastError = err.slice(0, 500);
-      const p = s.put(item);
-      p.onsuccess = () => res();
-      p.onerror = () => rej(p.error);
-    };
-    g.onerror = () => rej(g.error);
-  }));
+  await tx(
+    "readwrite",
+    (s) =>
+      new Promise<void>((res, rej) => {
+        const g = s.get(id);
+        g.onsuccess = () => {
+          const item = g.result as QueuedInquiry | undefined;
+          if (!item) return res();
+          item.status = "failed";
+          item.attempts = (item.attempts || 0) + 1;
+          item.lastError = err.slice(0, 500);
+          const p = s.put(item);
+          p.onsuccess = () => res();
+          p.onerror = () => rej(p.error);
+        };
+        g.onerror = () => rej(g.error);
+      }),
+  );
 }

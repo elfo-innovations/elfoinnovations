@@ -8,19 +8,17 @@ export const saveSubscription = createServerFn({ method: "POST" })
   .inputValidator((input: SubInput) => input)
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin
-      .from("push_subscriptions")
-      .upsert(
-        {
-          user_id: context.userId,
-          endpoint: data.endpoint,
-          p256dh: data.p256dh,
-          auth: data.auth,
-          user_agent: data.user_agent ?? null,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id,endpoint" }
-      );
+    const { error } = await supabaseAdmin.from("push_subscriptions").upsert(
+      {
+        user_id: context.userId,
+        endpoint: data.endpoint,
+        p256dh: data.p256dh,
+        auth: data.auth,
+        user_agent: data.user_agent ?? null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,endpoint" },
+    );
     if (error) throw new Error(error.message);
     return { ok: true };
   });

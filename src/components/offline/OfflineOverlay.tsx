@@ -24,7 +24,8 @@ export function OfflineOverlay() {
 
     const onClick = (e: MouseEvent) => {
       if (navigator.onLine) return;
-      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)
+        return;
       const target = e.target as HTMLElement | null;
       if (!target) return;
       const a = target.closest("a") as HTMLAnchorElement | null;
@@ -35,7 +36,11 @@ export function OfflineOverlay() {
       if (a.target === "_blank" || a.hasAttribute("download")) return;
       if (/^(mailto:|tel:|sms:|javascript:)/i.test(href)) return;
       let url: URL;
-      try { url = new URL(a.href, window.location.href); } catch { return; }
+      try {
+        url = new URL(a.href, window.location.href);
+      } catch {
+        return;
+      }
       if (url.origin !== window.location.origin) return;
       // Same page + hash — allow default scroll
       if (url.pathname === window.location.pathname && url.hash) return;
@@ -66,12 +71,18 @@ export function OfflineOverlay() {
   useEffect(() => {
     if (open) document.body.style.overflow = "hidden";
     else document.body.style.overflow = "";
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [open]);
 
   if (!open) return null;
 
-  const close = () => { setOpen(false); setShowGame(false); setPendingHref(null); };
+  const close = () => {
+    setOpen(false);
+    setShowGame(false);
+    setPendingHref(null);
+  };
   const continueNav = () => {
     const href = pendingHref;
     close();
@@ -90,8 +101,14 @@ export function OfflineOverlay() {
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-blue-500/20 blur-3xl" />
         <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-indigo-500/20 blur-3xl" />
-        <div className="absolute inset-0 opacity-[0.07]"
-          style={{ backgroundImage: "linear-gradient(rgba(124,196,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(124,196,255,0.4) 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
+        <div
+          className="absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(124,196,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(124,196,255,0.4) 1px, transparent 1px)",
+            backgroundSize: "40px 40px",
+          }}
+        />
       </div>
 
       <div className="relative flex h-full w-full max-w-5xl flex-col p-4 sm:p-6">
@@ -99,7 +116,9 @@ export function OfflineOverlay() {
         <div className="flex items-center justify-between">
           <ElfoLogo size="sm" />
           <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] uppercase tracking-widest text-white/70">
-            <span className={`h-2 w-2 rounded-full ${restored ? "bg-emerald-400" : "bg-amber-400 animate-pulse"}`} />
+            <span
+              className={`h-2 w-2 rounded-full ${restored ? "bg-emerald-400" : "bg-amber-400 animate-pulse"}`}
+            />
             {restored ? "Online" : "Offline"}
           </div>
         </div>
@@ -110,7 +129,10 @@ export function OfflineOverlay() {
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-widest text-blue-300">
               Elfo Innovations
             </div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', system-ui" }}>
+            <h1
+              className="text-4xl sm:text-5xl md:text-6xl font-bold text-white"
+              style={{ fontFamily: "'Space Grotesk', system-ui" }}
+            >
               {restored ? "Connection Restored" : "You're Offline"}
               <span className="ml-2">{restored ? "✅" : ""}</span>
             </h1>
@@ -165,11 +187,17 @@ export function OfflineOverlay() {
                 <span>✅ You're back online.</span>
                 <div className="flex gap-2">
                   {pendingHref && (
-                    <button onClick={continueNav} className="rounded-full bg-emerald-400 px-3 py-1 text-xs font-semibold text-emerald-950 hover:opacity-90">
+                    <button
+                      onClick={continueNav}
+                      className="rounded-full bg-emerald-400 px-3 py-1 text-xs font-semibold text-emerald-950 hover:opacity-90"
+                    >
                       Continue to requested page
                     </button>
                   )}
-                  <button onClick={close} className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs text-white hover:bg-white/10">
+                  <button
+                    onClick={close}
+                    className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs text-white hover:bg-white/10"
+                  >
                     Close
                   </button>
                 </div>
@@ -179,8 +207,14 @@ export function OfflineOverlay() {
               <CodeRunnerGame paused={restored} />
             </div>
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-white/60">
-              <span>Swipe / ← → to change lanes · Tap / Space to jump. Collect cyan tokens, grab a 🛡 shield. Dodge red bugs & orange barriers.</span>
-              <button onClick={() => setShowGame(false)} className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs text-white hover:bg-white/10">
+              <span>
+                Swipe / ← → to change lanes · Tap / Space to jump. Collect cyan tokens, grab a 🛡
+                shield. Dodge red bugs & orange barriers.
+              </span>
+              <button
+                onClick={() => setShowGame(false)}
+                className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs text-white hover:bg-white/10"
+              >
                 ← Back
               </button>
             </div>

@@ -6,7 +6,8 @@ import { TestimonialsSection } from "@/components/site/TestimonialsSection";
 
 const URL = "https://elfoinnovations.com/portfolio";
 const TITLE = "Software Development Portfolio | ELFO Innovations";
-const DESC = "Selected work from ELFO Innovations — live products, custom software builds, and before/after transformations across web, mobile, and SaaS.";
+const DESC =
+  "Selected work from ELFO Innovations — live products, custom software builds, and before/after transformations across web, mobile, and SaaS.";
 
 export const Route = createFileRoute("/portfolio")({
   head: () => ({
@@ -19,16 +20,31 @@ export const Route = createFileRoute("/portfolio")({
       { property: "og:type", content: "website" },
     ],
     links: [{ rel: "canonical", href: URL }],
-    scripts: [{
-      type: "application/ld+json",
-      children: JSON.stringify({
-        "@context": "https://schema.org", "@type": "BreadcrumbList",
-        itemListElement: [
-          { "@type": "ListItem", position: 1, name: "Home", item: "https://elfoinnovations.com/" },
-          { "@type": "ListItem", position: 2, name: "Portfolio", item: URL },
-        ],
-      }),
-    }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            {
+              "@type": "ListItem",
+              position: 1,
+              name: "Home",
+              item: "https://elfoinnovations.com/",
+            },
+            { "@type": "ListItem", position: 2, name: "Portfolio", item: URL },
+          ],
+        }),
+      },
+    ],
   }),
-  component: () => (<PublicLayout><div className="pt-8" /><PortfolioSection /><BeforeAfterShowcase /><TestimonialsSection /></PublicLayout>),
+  component: () => (
+    <PublicLayout>
+      <div className="pt-8" />
+      <PortfolioSection />
+      <BeforeAfterShowcase />
+      <TestimonialsSection />
+    </PublicLayout>
+  ),
 });

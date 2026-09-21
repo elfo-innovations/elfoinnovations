@@ -33,14 +33,27 @@ export function extractDominantColor(imageUrl: string): Promise<string | null> {
         ctx.drawImage(img, 0, 0, size, size);
         const { data } = ctx.getImageData(0, 0, size, size);
 
-        const buckets = Array.from({ length: 24 }, () => ({ count: 0, r: 0, g: 0, b: 0, weight: 0 }));
-        let grayR = 0, grayG = 0, grayB = 0, grayCount = 0;
+        const buckets = Array.from({ length: 24 }, () => ({
+          count: 0,
+          r: 0,
+          g: 0,
+          b: 0,
+          weight: 0,
+        }));
+        let grayR = 0,
+          grayG = 0,
+          grayB = 0,
+          grayCount = 0;
 
         for (let i = 0; i < data.length; i += 4) {
-          const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
+          const r = data[i],
+            g = data[i + 1],
+            b = data[i + 2],
+            a = data[i + 3];
           if (a < 200) continue; // skip transparent pixels
 
-          const max = Math.max(r, g, b), min = Math.min(r, g, b);
+          const max = Math.max(r, g, b),
+            min = Math.min(r, g, b);
           const l = (max + min) / 2 / 255;
           const d = max - min;
           const s = d === 0 ? 0 : d / (255 - Math.abs(max + min - 255));
@@ -48,7 +61,10 @@ export function extractDominantColor(imageUrl: string): Promise<string | null> {
           if (l > 0.94 || l < 0.06) continue; // skip near-white / near-black padding
 
           if (s < 0.15) {
-            grayR += r; grayG += g; grayB += b; grayCount++;
+            grayR += r;
+            grayG += g;
+            grayB += b;
+            grayCount++;
             continue;
           }
 
@@ -63,11 +79,16 @@ export function extractDominantColor(imageUrl: string): Promise<string | null> {
           const bucket = buckets[idx];
           const weight = s * (1 - Math.abs(l - 0.5)); // prefer saturated, mid-tone pixels
           bucket.count++;
-          bucket.r += r; bucket.g += g; bucket.b += b;
+          bucket.r += r;
+          bucket.g += g;
+          bucket.b += b;
           bucket.weight += weight;
         }
 
-        const winner = buckets.reduce((best, bkt) => (bkt.weight > best.weight ? bkt : best), buckets[0]);
+        const winner = buckets.reduce(
+          (best, bkt) => (bkt.weight > best.weight ? bkt : best),
+          buckets[0],
+        );
 
         let r: number, g: number, b: number;
         if (winner.count > 0 && winner.weight > 0) {

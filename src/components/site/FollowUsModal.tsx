@@ -25,23 +25,93 @@ const ThreadsIcon = () => (
 
 const TikTokIcon = ({ className = "h-5 w-5" }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
-    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5.8 20.1a6.34 6.34 0 0 0 10.86-4.43V8.86a8.16 8.16 0 0 0 4.77 1.52V6.93a4.85 4.85 0 0 1-1.84-.24Z"/>
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5.8 20.1a6.34 6.34 0 0 0 10.86-4.43V8.86a8.16 8.16 0 0 0 4.77 1.52V6.93a4.85 4.85 0 0 1-1.84-.24Z" />
   </svg>
 );
 
 const items: Item[] = [
-  { key: "ig", label: "Instagram", href: "https://www.instagram.com/elfo_innovations/", icon: <Instagram className="h-5 w-5" />, accent: "from-pink-500 to-orange-400" },
-  { key: "tt", label: "TikTok", href: "https://www.tiktok.com/@elfo.innovations", icon: <TikTokIcon />, accent: "from-cyan-400 to-pink-500" },
-  { key: "li", label: "LinkedIn", href: "https://www.linkedin.com/company/elfo-innovations", icon: <Linkedin className="h-5 w-5" />, accent: "from-sky-500 to-blue-600" },
-  { key: "gh", label: "GitHub", href: "https://github.com/elfo-innovations", icon: <Github className="h-5 w-5" />, accent: "from-zinc-400 to-zinc-700" },
-  { key: "fb", label: "Facebook", href: "https://www.facebook.com/people/Elfo-Innovations/61587440560896/", icon: <Facebook className="h-5 w-5" />, accent: "from-blue-500 to-blue-700" },
-  { key: "x", label: "X (Twitter)", href: "https://x.com/elfoInnovations", icon: <XIcon />, accent: "from-zinc-500 to-black" },
-  { key: "th", label: "Threads", href: "https://www.threads.com/@elfo_innovations", icon: <ThreadsIcon />, accent: "from-zinc-500 to-black" },
-  { key: "wa-us", label: "US Office (WhatsApp)", sub: "+1 (605) 902-6927", href: "https://wa.me/16059026927", icon: <span className="text-lg" aria-hidden>🇺🇸</span>, accent: "from-green-500 to-emerald-600" },
-  { key: "wa-pk", label: "Pakistan Office (WhatsApp)", sub: "+92 321 1971669", href: "https://wa.me/923211971669", icon: <span className="text-lg" aria-hidden>🇵🇰</span>, accent: "from-green-500 to-emerald-600" },
+  {
+    key: "ig",
+    label: "Instagram",
+    href: "https://www.instagram.com/elfo_innovations/",
+    icon: <Instagram className="h-5 w-5" />,
+    accent: "from-pink-500 to-orange-400",
+  },
+  {
+    key: "tt",
+    label: "TikTok",
+    href: "https://www.tiktok.com/@elfo.innovations",
+    icon: <TikTokIcon />,
+    accent: "from-cyan-400 to-pink-500",
+  },
+  {
+    key: "li",
+    label: "LinkedIn",
+    href: "https://www.linkedin.com/company/elfo-innovations",
+    icon: <Linkedin className="h-5 w-5" />,
+    accent: "from-sky-500 to-blue-600",
+  },
+  {
+    key: "gh",
+    label: "GitHub",
+    href: "https://github.com/elfo-innovations",
+    icon: <Github className="h-5 w-5" />,
+    accent: "from-zinc-400 to-zinc-700",
+  },
+  {
+    key: "fb",
+    label: "Facebook",
+    href: "https://www.facebook.com/people/Elfo-Innovations/61587440560896/",
+    icon: <Facebook className="h-5 w-5" />,
+    accent: "from-blue-500 to-blue-700",
+  },
+  {
+    key: "x",
+    label: "X (Twitter)",
+    href: "https://x.com/elfoInnovations",
+    icon: <XIcon />,
+    accent: "from-zinc-500 to-black",
+  },
+  {
+    key: "th",
+    label: "Threads",
+    href: "https://www.threads.com/@elfo_innovations",
+    icon: <ThreadsIcon />,
+    accent: "from-zinc-500 to-black",
+  },
+  {
+    key: "wa-us",
+    label: "US Office (WhatsApp)",
+    sub: "+1 (605) 902-6927",
+    href: "https://wa.me/16059026927",
+    icon: (
+      <span className="text-lg" aria-hidden>
+        🇺🇸
+      </span>
+    ),
+    accent: "from-green-500 to-emerald-600",
+  },
+  {
+    key: "wa-pk",
+    label: "Pakistan Office (WhatsApp)",
+    sub: "+92 321 1971669",
+    href: "https://wa.me/923211971669",
+    icon: (
+      <span className="text-lg" aria-hidden>
+        🇵🇰
+      </span>
+    ),
+    accent: "from-green-500 to-emerald-600",
+  },
 ];
 
-export function FollowUsModal({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+export function FollowUsModal({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md gap-0 overflow-hidden border-primary/20 bg-background/80 p-0 backdrop-blur-2xl sm:max-w-lg">
@@ -68,7 +138,9 @@ export function FollowUsModal({ open, onOpenChange }: { open: boolean; onOpenCha
                 aria-label={it.label}
                 className="group flex items-center gap-3 rounded-2xl border border-border/60 bg-card/40 px-4 py-3 backdrop-blur transition-all hover:border-primary/50 hover:bg-card/70 hover:shadow-[0_0_25px_-8px_hsl(var(--primary)/0.5)]"
               >
-                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${it.accent} text-white shadow-sm`}>
+                <span
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${it.accent} text-white shadow-sm`}
+                >
                   {it.icon}
                 </span>
                 <span className="min-w-0 flex-1 text-left">

@@ -21,7 +21,10 @@ export function PhoneInput({
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return COUNTRIES;
-    return COUNTRIES.filter((c) => c.name.toLowerCase().includes(q) || c.dial.includes(q) || c.code.toLowerCase().includes(q));
+    return COUNTRIES.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) || c.dial.includes(q) || c.code.toLowerCase().includes(q),
+    );
   }, [query]);
 
   const setCountry = (c: Country) => {
@@ -33,15 +36,28 @@ export function PhoneInput({
   const setLocal = (raw: string) => {
     const digits = raw.replace(/\D/g, "").slice(0, value.country.maxLen);
     const valid = digits.length >= value.country.minLen && digits.length <= value.country.maxLen;
-    onChange({ country: value.country, local: digits, full: `${value.country.dial}${digits}`, valid });
+    onChange({
+      country: value.country,
+      local: digits,
+      full: `${value.country.dial}${digits}`,
+      valid,
+    });
   };
 
   return (
     <div className="w-full">
-      <div className={cn("flex items-stretch overflow-hidden rounded-xl border bg-background", error && "border-destructive")}>
+      <div
+        className={cn(
+          "flex items-stretch overflow-hidden rounded-xl border bg-background",
+          error && "border-destructive",
+        )}
+      >
         <Popover open={openC} onOpenChange={setOpenC}>
           <PopoverTrigger asChild>
-            <button type="button" className="flex shrink-0 items-center gap-2 border-r px-3 py-3 text-sm font-medium hover:bg-accent">
+            <button
+              type="button"
+              className="flex shrink-0 items-center gap-2 border-r px-3 py-3 text-sm font-medium hover:bg-accent"
+            >
               <span className="text-base leading-none">{value.country.flag}</span>
               <span>{value.country.dial}</span>
               <ChevronDown className="h-3.5 w-3.5 opacity-60" />
@@ -86,11 +102,20 @@ export function PhoneInput({
       {error && <p className="mt-1.5 text-xs text-destructive">{error}</p>}
       {!error && value.local.length > 0 && !value.valid && (
         <p className="mt-1.5 text-xs text-muted-foreground">
-          Enter a valid {value.country.name} number ({value.country.minLen === value.country.maxLen ? value.country.minLen : `${value.country.minLen}–${value.country.maxLen}`} digits after {value.country.dial}).
+          Enter a valid {value.country.name} number (
+          {value.country.minLen === value.country.maxLen
+            ? value.country.minLen
+            : `${value.country.minLen}–${value.country.maxLen}`}{" "}
+          digits after {value.country.dial}).
         </p>
       )}
     </div>
   );
 }
 
-export const defaultPhone = (): PhoneValue => ({ country: COUNTRIES[0], local: "", full: "", valid: false });
+export const defaultPhone = (): PhoneValue => ({
+  country: COUNTRIES[0],
+  local: "",
+  full: "",
+  valid: false,
+});

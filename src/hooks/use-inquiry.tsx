@@ -1,7 +1,10 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { InquiryModal } from "@/components/inquiry/InquiryModal";
 
-const Ctx = createContext<{ open: () => void; close: () => void }>({ open: () => {}, close: () => {} });
+const Ctx = createContext<{ open: () => void; close: () => void }>({
+  open: () => {},
+  close: () => {},
+});
 
 export function InquiryProvider({ children }: { children: ReactNode }) {
   const [isOpen, setOpen] = useState(false);

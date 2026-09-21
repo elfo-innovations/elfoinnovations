@@ -6,7 +6,13 @@ import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,24 +30,40 @@ function ClientInvoices() {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  const [form, setForm] = useState({ title: "", amount: "", currency: "USD", note: "", project_id: "" });
+  const [form, setForm] = useState({
+    title: "",
+    amount: "",
+    currency: "USD",
+    note: "",
+    project_id: "",
+  });
 
   const { data: client } = useQuery({
     queryKey: ["me-client", user?.id],
     enabled: !!user,
-    queryFn: async () => (await supabase.from("clients").select("*").eq("user_id", user!.id).maybeSingle()).data,
+    queryFn: async () =>
+      (await supabase.from("clients").select("*").eq("user_id", user!.id).maybeSingle()).data,
   });
 
   const { data: projects } = useQuery({
     queryKey: ["client-projects-list", client?.id],
     enabled: !!client,
-    queryFn: async () => (await supabase.from("projects").select("id, name, project_code").eq("client_id", client!.id)).data ?? [],
+    queryFn: async () =>
+      (await supabase.from("projects").select("id, name, project_code").eq("client_id", client!.id))
+        .data ?? [],
   });
 
   const { data: invoices } = useQuery({
     queryKey: ["client-invoices", client?.id],
     enabled: !!client,
-    queryFn: async () => (await supabase.from("client_invoices").select("*").eq("client_id", client!.id).order("created_at", { ascending: false })).data ?? [],
+    queryFn: async () =>
+      (
+        await supabase
+          .from("client_invoices")
+          .select("*")
+          .eq("client_id", client!.id)
+          .order("created_at", { ascending: false })
+      ).data ?? [],
   });
 
   const { data: projectInvoices } = useQuery({
@@ -69,7 +91,9 @@ function ClientInvoices() {
         const path = `${client.id}/${Date.now()}-${file.name}`;
         const { error: upErr } = await supabase.storage.from("client-invoices").upload(path, file);
         if (upErr) throw upErr;
-        const { data: signed } = await supabase.storage.from("client-invoices").createSignedUrl(path, 60 * 60 * 24 * 365);
+        const { data: signed } = await supabase.storage
+          .from("client-invoices")
+          .createSignedUrl(path, 60 * 60 * 24 * 365);
         file_url = signed?.signedUrl ?? null;
         file_name = file.name;
       }
@@ -92,19 +116,27 @@ function ClientInvoices() {
       qc.invalidateQueries({ queryKey: ["client-invoices"] });
     } catch (e: any) {
       toast.error(e?.message || "Failed to submit");
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
     <DashboardShell role="client">
       <div>
-        <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">Invoices &amp; receipts</h1>
-        <p className="mt-1 text-sm text-muted-foreground">View your invoices and send payment proof to the admin.</p>
+        <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
+          Invoices &amp; receipts
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          View your invoices and send payment proof to the admin.
+        </p>
       </div>
 
       <div className="mt-8">
         <h2 className="font-display text-xl font-bold tracking-tight">Your invoices</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Generated automatically for the services you requested.</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Generated automatically for the services you requested.
+        </p>
         <div className="mt-4 space-y-3">
           {(projectInvoices ?? []).length === 0 && (
             <div className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
@@ -127,8 +159,15 @@ function ClientInvoices() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <div className="font-display text-lg font-bold">{inv.currency} {Number(inv.total).toLocaleString()}</div>
-                <Badge variant={inv.status === "paid" ? "default" : "secondary"} className="capitalize">{inv.status}</Badge>
+                <div className="font-display text-lg font-bold">
+                  {inv.currency} {Number(inv.total).toLocaleString()}
+                </div>
+                <Badge
+                  variant={inv.status === "paid" ? "default" : "secondary"}
+                  className="capitalize"
+                >
+                  {inv.status}
+                </Badge>
               </div>
             </button>
           ))}
@@ -137,16 +176,25 @@ function ClientInvoices() {
 
       <Dialog open={!!activeInvoice} onOpenChange={(v) => !v && setActiveInvoice(null)}>
         <DialogContent hideClose className="max-h-[92vh] max-w-3xl overflow-y-auto p-0">
-          {activeInvoice && <InvoicePrintView invoice={activeInvoice} onClose={() => setActiveInvoice(null)} />}
+          {activeInvoice && (
+            <InvoicePrintView invoice={activeInvoice} onClose={() => setActiveInvoice(null)} />
+          )}
         </DialogContent>
       </Dialog>
 
       <div className="mt-10 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="font-display text-xl font-bold tracking-tight">Submit a payment receipt</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Send payment proof or your own invoice to the admin.</p>
+          <h2 className="font-display text-xl font-bold tracking-tight">
+            Submit a payment receipt
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Send payment proof or your own invoice to the admin.
+          </p>
         </div>
-        <Button onClick={() => setOpen(true)} className="rounded-full electric-glow"><Plus className="mr-1.5 h-4 w-4" />Submit invoice</Button>
+        <Button onClick={() => setOpen(true)} className="rounded-full electric-glow">
+          <Plus className="mr-1.5 h-4 w-4" />
+          Submit invoice
+        </Button>
       </div>
 
       <div className="mt-6 grid gap-3">
@@ -155,62 +203,110 @@ function ClientInvoices() {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="font-semibold">{inv.title}</div>
-                {inv.amount && <div className="text-xs text-muted-foreground">{inv.currency} {Number(inv.amount).toFixed(2)}</div>}
+                {inv.amount && (
+                  <div className="text-xs text-muted-foreground">
+                    {inv.currency} {Number(inv.amount).toFixed(2)}
+                  </div>
+                )}
                 {inv.note && <div className="mt-1 text-xs text-muted-foreground">{inv.note}</div>}
               </div>
-              <Badge variant="outline" className="capitalize">{inv.status}</Badge>
+              <Badge variant="outline" className="capitalize">
+                {inv.status}
+              </Badge>
             </div>
             {inv.file_url && (
-              <a href={inv.file_url} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 rounded-xl border bg-background px-3 py-1.5 text-xs hover:border-primary">
-                <FileText className="h-3.5 w-3.5 text-primary" />{inv.file_name}<Download className="h-3 w-3" />
+              <a
+                href={inv.file_url}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-3 inline-flex items-center gap-2 rounded-xl border bg-background px-3 py-1.5 text-xs hover:border-primary"
+              >
+                <FileText className="h-3.5 w-3.5 text-primary" />
+                {inv.file_name}
+                <Download className="h-3 w-3" />
               </a>
             )}
           </div>
         ))}
         {(!invoices || invoices.length === 0) && (
-          <div className="rounded-2xl border border-dashed p-10 text-center text-sm text-muted-foreground">No invoices submitted yet.</div>
+          <div className="rounded-2xl border border-dashed p-10 text-center text-sm text-muted-foreground">
+            No invoices submitted yet.
+          </div>
         )}
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-md">
-          <DialogHeader><DialogTitle>Submit invoice / receipt</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Submit invoice / receipt</DialogTitle>
+          </DialogHeader>
           <div className="grid gap-3">
             <div className="grid gap-1.5">
               <Label>Title *</Label>
-              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Milestone 1 payment" />
+              <Input
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                placeholder="e.g. Milestone 1 payment"
+              />
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div className="col-span-2 grid gap-1.5">
                 <Label>Amount</Label>
-                <Input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+                <Input
+                  type="number"
+                  value={form.amount}
+                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                />
               </div>
               <div className="grid gap-1.5">
                 <Label>Currency</Label>
-                <Input value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} />
+                <Input
+                  value={form.currency}
+                  onChange={(e) => setForm({ ...form, currency: e.target.value })}
+                />
               </div>
             </div>
             {(projects ?? []).length > 0 && (
               <div className="grid gap-1.5">
                 <Label>Project (optional)</Label>
-                <select className="rounded-md border bg-background px-3 py-2 text-sm" value={form.project_id} onChange={(e) => setForm({ ...form, project_id: e.target.value })}>
+                <select
+                  className="rounded-md border bg-background px-3 py-2 text-sm"
+                  value={form.project_id}
+                  onChange={(e) => setForm({ ...form, project_id: e.target.value })}
+                >
                   <option value="">— none —</option>
-                  {(projects ?? []).map((p: any) => <option key={p.id} value={p.id}>{p.project_code} · {p.name}</option>)}
+                  {(projects ?? []).map((p: any) => (
+                    <option key={p.id} value={p.id}>
+                      {p.project_code} · {p.name}
+                    </option>
+                  ))}
                 </select>
               </div>
             )}
             <div className="grid gap-1.5">
               <Label>Note</Label>
-              <Textarea rows={3} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
+              <Textarea
+                rows={3}
+                value={form.note}
+                onChange={(e) => setForm({ ...form, note: e.target.value })}
+              />
             </div>
             <div className="grid gap-1.5">
               <Label>Attach file (PDF, image, receipt)</Label>
-              <Input type="file" accept="image/*,application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+              <Input
+                type="file"
+                accept="image/*,application/pdf"
+                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={submit} disabled={busy}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send to admin"}</Button>
+            <Button variant="ghost" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={submit} disabled={busy}>
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send to admin"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

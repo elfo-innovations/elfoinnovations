@@ -7,7 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { submitDeveloperApplication } from "@/lib/developer-applications.functions";
 import {
@@ -51,7 +57,17 @@ const EMPTY: Form = {
   motivation: "",
 };
 
-function Field({ label, error, required, children }: { label: string; error?: string; required?: boolean; children: ReactNode }) {
+function Field({
+  label,
+  error,
+  required,
+  children,
+}: {
+  label: string;
+  error?: string;
+  required?: boolean;
+  children: ReactNode;
+}) {
   return (
     <div className="min-w-0">
       <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -63,7 +79,13 @@ function Field({ label, error, required, children }: { label: string; error?: st
   );
 }
 
-export function DeveloperApplicationModal({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+export function DeveloperApplicationModal({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) {
   const submit = useServerFn(submitDeveloperApplication);
   const [form, setForm] = useState<Form>(EMPTY);
   const [skills, setSkills] = useState<string[]>([]);
@@ -165,8 +187,6 @@ export function DeveloperApplicationModal({ open, onOpenChange }: { open: boolea
   return (
     <Dialog open={open} onOpenChange={close}>
       <DialogContent className="max-h-[92vh] w-[calc(100vw-1.5rem)] max-w-2xl overflow-y-auto rounded-3xl border-primary/20 bg-card/95 p-0 backdrop-blur-xl sm:w-full">
-
-
         {done ? (
           <div className="px-6 py-14 text-center sm:px-10">
             <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
@@ -174,8 +194,9 @@ export function DeveloperApplicationModal({ open, onOpenChange }: { open: boolea
             </div>
             <h2 className="font-display text-2xl font-bold">Application submitted</h2>
             <p className="mx-auto mt-3 max-w-sm text-sm text-muted-foreground">
-              Thank you for applying to ELFO Innovations. Our engineering team reviews every application — we'll email you
-              with a decision at <span className="font-semibold text-foreground">{form.email}</span>.
+              Thank you for applying to ELFO Innovations. Our engineering team reviews every
+              application — we'll email you with a decision at{" "}
+              <span className="font-semibold text-foreground">{form.email}</span>.
             </p>
             <Button className="mt-7 rounded-full electric-glow" onClick={() => close(false)}>
               Done
@@ -198,45 +219,116 @@ export function DeveloperApplicationModal({ open, onOpenChange }: { open: boolea
             <div className="space-y-5" onKeyDown={onKeyDown}>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Full name" required error={errors.full_name}>
-                  <Input className="rounded-xl" value={form.full_name} onChange={(e) => set("full_name", e.target.value)} placeholder="Jane Doe" />
+                  <Input
+                    className="rounded-xl"
+                    value={form.full_name}
+                    onChange={(e) => set("full_name", e.target.value)}
+                    placeholder="Jane Doe"
+                  />
                 </Field>
                 <Field label="Email address" required error={errors.email}>
-                  <Input className="rounded-xl" type="email" value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="you@example.com" />
+                  <Input
+                    className="rounded-xl"
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => set("email", e.target.value)}
+                    placeholder="you@example.com"
+                  />
                 </Field>
                 <Field label="Phone number" required error={errors.phone}>
-                  <Input className="rounded-xl" value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="+1 555 000 1234" />
+                  <Input
+                    className="rounded-xl"
+                    value={form.phone}
+                    onChange={(e) => set("phone", e.target.value)}
+                    placeholder="+1 555 000 1234"
+                  />
                 </Field>
                 <Field label="Country" required error={errors.country}>
-                  <Input className="rounded-xl" value={form.country} onChange={(e) => set("country", e.target.value)} placeholder="Pakistan" />
+                  <Input
+                    className="rounded-xl"
+                    value={form.country}
+                    onChange={(e) => set("country", e.target.value)}
+                    placeholder="Pakistan"
+                  />
                 </Field>
                 <Field label="City" required error={errors.city}>
-                  <Input className="rounded-xl" value={form.city} onChange={(e) => set("city", e.target.value)} placeholder="Karachi" />
+                  <Input
+                    className="rounded-xl"
+                    value={form.city}
+                    onChange={(e) => set("city", e.target.value)}
+                    placeholder="Karachi"
+                  />
                 </Field>
                 <Field label="GitHub profile" required error={errors.github_url}>
-                  <Input className="rounded-xl" value={form.github_url} onChange={(e) => set("github_url", e.target.value)} placeholder="github.com/username" />
+                  <Input
+                    className="rounded-xl"
+                    value={form.github_url}
+                    onChange={(e) => set("github_url", e.target.value)}
+                    placeholder="github.com/username"
+                  />
                 </Field>
                 <Field label="LinkedIn (optional)" error={errors.linkedin_url}>
-                  <Input className="rounded-xl" value={form.linkedin_url} onChange={(e) => set("linkedin_url", e.target.value)} placeholder="linkedin.com/in/username" />
+                  <Input
+                    className="rounded-xl"
+                    value={form.linkedin_url}
+                    onChange={(e) => set("linkedin_url", e.target.value)}
+                    placeholder="linkedin.com/in/username"
+                  />
                 </Field>
                 <Field label="Portfolio (optional)" error={errors.portfolio_url}>
-                  <Input className="rounded-xl" value={form.portfolio_url} onChange={(e) => set("portfolio_url", e.target.value)} placeholder="yourdomain.com" />
+                  <Input
+                    className="rounded-xl"
+                    value={form.portfolio_url}
+                    onChange={(e) => set("portfolio_url", e.target.value)}
+                    placeholder="yourdomain.com"
+                  />
                 </Field>
                 <Field label="Primary role" required error={errors.primary_role}>
                   <Select value={form.primary_role} onValueChange={(v) => set("primary_role", v)}>
-                    <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select role" /></SelectTrigger>
-                    <SelectContent>{PRIMARY_ROLES.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PRIMARY_ROLES.map((r) => (
+                        <SelectItem key={r} value={r}>
+                          {r}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </Field>
                 <Field label="Years of experience" required error={errors.years_experience}>
-                  <Select value={form.years_experience} onValueChange={(v) => set("years_experience", v)}>
-                    <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select experience" /></SelectTrigger>
-                    <SelectContent>{EXPERIENCE_OPTIONS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
+                  <Select
+                    value={form.years_experience}
+                    onValueChange={(v) => set("years_experience", v)}
+                  >
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue placeholder="Select experience" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EXPERIENCE_OPTIONS.map((r) => (
+                        <SelectItem key={r} value={r}>
+                          {r}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </Field>
                 <Field label="Current status" required error={errors.current_status}>
-                  <Select value={form.current_status} onValueChange={(v) => set("current_status", v)}>
-                    <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select status" /></SelectTrigger>
-                    <SelectContent>{CURRENT_STATUS_OPTIONS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
+                  <Select
+                    value={form.current_status}
+                    onValueChange={(v) => set("current_status", v)}
+                  >
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CURRENT_STATUS_OPTIONS.map((r) => (
+                        <SelectItem key={r} value={r}>
+                          {r}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </Field>
               </div>
@@ -248,20 +340,34 @@ export function DeveloperApplicationModal({ open, onOpenChange }: { open: boolea
                     value={skillInput}
                     onChange={(e) => setSkillInput(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addSkill(); }
+                      if (e.key === "Enter" || e.key === ",") {
+                        e.preventDefault();
+                        addSkill();
+                      }
                     }}
                     placeholder="React, Node.js, PostgreSQL…"
                   />
-                  <Button type="button" variant="outline" className="shrink-0 rounded-xl" onClick={addSkill}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="shrink-0 rounded-xl"
+                    onClick={addSkill}
+                  >
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
                 {skills.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {skills.map((s) => (
-                      <span key={s} className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+                      <span
+                        key={s}
+                        className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"
+                      >
                         {s}
-                        <button onClick={() => setSkills((v) => v.filter((x) => x !== s))} aria-label={`Remove ${s}`}>
+                        <button
+                          onClick={() => setSkills((v) => v.filter((x) => x !== s))}
+                          aria-label={`Remove ${s}`}
+                        >
                           <X className="h-3 w-3" />
                         </button>
                       </span>
@@ -271,24 +377,50 @@ export function DeveloperApplicationModal({ open, onOpenChange }: { open: boolea
               </Field>
 
               <Field label="Short bio" required error={errors.bio}>
-                <Textarea className="min-h-[90px] rounded-xl" value={form.bio} onChange={(e) => set("bio", e.target.value)} placeholder="Tell us about your background and what you build best." />
+                <Textarea
+                  className="min-h-[90px] rounded-xl"
+                  value={form.bio}
+                  onChange={(e) => set("bio", e.target.value)}
+                  placeholder="Tell us about your background and what you build best."
+                />
               </Field>
 
-              <Field label="Why do you want to join ELFO Innovations?" required error={errors.motivation}>
-                <Textarea className="min-h-[90px] rounded-xl" value={form.motivation} onChange={(e) => set("motivation", e.target.value)} placeholder="What excites you about working with our team?" />
+              <Field
+                label="Why do you want to join ELFO Innovations?"
+                required
+                error={errors.motivation}
+              >
+                <Textarea
+                  className="min-h-[90px] rounded-xl"
+                  value={form.motivation}
+                  onChange={(e) => set("motivation", e.target.value)}
+                  placeholder="What excites you about working with our team?"
+                />
               </Field>
 
               <Field label="Resume (PDF, max 5MB)" required error={errors.resume}>
                 <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-primary/30 bg-primary/5 px-4 py-4 transition hover:border-primary/60">
-                  <input type="file" accept="application/pdf,.pdf" className="hidden" onChange={(e) => pickFile(e.target.files?.[0] ?? null)} />
-                  {file ? <FileText className="h-5 w-5 shrink-0 text-primary" /> : <UploadCloud className="h-5 w-5 shrink-0 text-primary" />}
+                  <input
+                    type="file"
+                    accept="application/pdf,.pdf"
+                    className="hidden"
+                    onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
+                  />
+                  {file ? (
+                    <FileText className="h-5 w-5 shrink-0 text-primary" />
+                  ) : (
+                    <UploadCloud className="h-5 w-5 shrink-0 text-primary" />
+                  )}
                   <span className="min-w-0 flex-1 truncate text-sm">
                     {file ? file.name : "Click to upload your resume"}
                   </span>
                   {file && (
                     <button
                       type="button"
-                      onClick={(e) => { e.preventDefault(); setFile(null); }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setFile(null);
+                      }}
                       className="text-muted-foreground hover:text-foreground"
                       aria-label="Remove file"
                     >
@@ -299,16 +431,40 @@ export function DeveloperApplicationModal({ open, onOpenChange }: { open: boolea
               </Field>
 
               <div className="flex items-start gap-3 rounded-xl border bg-muted/30 p-4">
-                <Checkbox id="dev-agree" checked={agreed} onCheckedChange={(v) => { setAgreed(!!v); setErrors((e) => ({ ...e, agreed: "" })); }} className="mt-0.5" />
-                <label htmlFor="dev-agree" className="text-xs leading-relaxed text-muted-foreground">
-                  I confirm the information provided is accurate and I agree to ELFO Innovations' confidentiality and
-                  professional conduct expectations while my application is reviewed.
-                  {errors.agreed && <span className="mt-1 block font-medium text-destructive">{errors.agreed}</span>}
+                <Checkbox
+                  id="dev-agree"
+                  checked={agreed}
+                  onCheckedChange={(v) => {
+                    setAgreed(!!v);
+                    setErrors((e) => ({ ...e, agreed: "" }));
+                  }}
+                  className="mt-0.5"
+                />
+                <label
+                  htmlFor="dev-agree"
+                  className="text-xs leading-relaxed text-muted-foreground"
+                >
+                  I confirm the information provided is accurate and I agree to ELFO Innovations'
+                  confidentiality and professional conduct expectations while my application is
+                  reviewed.
+                  {errors.agreed && (
+                    <span className="mt-1 block font-medium text-destructive">{errors.agreed}</span>
+                  )}
                 </label>
               </div>
 
-              <Button onClick={onSubmit} disabled={busy} className="w-full rounded-full electric-glow">
-                {busy ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting…</> : "Submit application"}
+              <Button
+                onClick={onSubmit}
+                disabled={busy}
+                className="w-full rounded-full electric-glow"
+              >
+                {busy ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting…
+                  </>
+                ) : (
+                  "Submit application"
+                )}
               </Button>
             </div>
           </div>
@@ -318,11 +474,21 @@ export function DeveloperApplicationModal({ open, onOpenChange }: { open: boolea
   );
 }
 
-export function BecomeDeveloperButton({ className, variant = "outline" }: { className?: string; variant?: "outline" | "default" | "ghost" }) {
+export function BecomeDeveloperButton({
+  className,
+  variant = "outline",
+}: {
+  className?: string;
+  variant?: "outline" | "default" | "ghost";
+}) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <Button variant={variant} className={className ?? "rounded-full"} onClick={() => setOpen(true)}>
+      <Button
+        variant={variant}
+        className={className ?? "rounded-full"}
+        onClick={() => setOpen(true)}
+      >
         <Rocket className="mr-2 h-4 w-4" /> Become a Developer
       </Button>
       <DeveloperApplicationModal open={open} onOpenChange={setOpen} />

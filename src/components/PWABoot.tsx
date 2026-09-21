@@ -14,10 +14,14 @@ export function PWABoot() {
     if (typeof window === "undefined") return;
     const host = window.location.hostname;
     const url = new URL(window.location.href);
-    const inIframe = (() => { try { return window.self !== window.top; } catch { return true; } })();
-    const isPreview =
-      host.startsWith("id-preview--") ||
-      host.startsWith("preview--");
+    const inIframe = (() => {
+      try {
+        return window.self !== window.top;
+      } catch {
+        return true;
+      }
+    })();
+    const isPreview = host.startsWith("id-preview--") || host.startsWith("preview--");
     const killSwitch = url.searchParams.get("sw") === "off";
     const canRegister =
       "serviceWorker" in navigator &&
@@ -51,7 +55,9 @@ export function PWABoot() {
       setIsOffline(false);
       const res = await syncOfflineInquiries();
       if (res.synced > 0) {
-        toast.success(`${res.synced} queued inquiry${res.synced > 1 ? "ies" : ""} sent successfully.`);
+        toast.success(
+          `${res.synced} queued inquiry${res.synced > 1 ? "ies" : ""} sent successfully.`,
+        );
       }
     };
     const goOffline = () => {
@@ -60,9 +66,13 @@ export function PWABoot() {
     window.addEventListener("online", goOnline);
     window.addEventListener("offline", goOffline);
     // Attempt initial sync in case there's a leftover queue.
-    if (navigator.onLine) syncOfflineInquiries().then((r) => {
-      if (r.synced > 0) toast.success(`${r.synced} queued inquiry${r.synced > 1 ? "ies" : ""} sent successfully.`);
-    });
+    if (navigator.onLine)
+      syncOfflineInquiries().then((r) => {
+        if (r.synced > 0)
+          toast.success(
+            `${r.synced} queued inquiry${r.synced > 1 ? "ies" : ""} sent successfully.`,
+          );
+      });
     return () => {
       window.removeEventListener("online", goOnline);
       window.removeEventListener("offline", goOffline);

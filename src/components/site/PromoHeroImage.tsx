@@ -1,4 +1,10 @@
-export function PromoHeroImage({ imageUrl, theme }: { imageUrl: string | null; theme: "light" | "dark" }) {
+export function PromoHeroImage({
+  imageUrl,
+  theme,
+}: {
+  imageUrl: string | null;
+  theme: "light" | "dark";
+}) {
   if (!imageUrl) return null;
   const isDark = theme === "dark";
 

@@ -18,7 +18,12 @@ export type ProjectInvoiceRow = {
   total: number;
   status: string;
   created_at: string;
-  clients: { full_name: string; email: string; company: string | null; phone: string | null } | null;
+  clients: {
+    full_name: string;
+    email: string;
+    company: string | null;
+    phone: string | null;
+  } | null;
   projects: { name: string; project_code: string } | null;
 };
 
@@ -69,14 +74,20 @@ export function InvoicePrintView({
         <div className="flex items-center gap-2">
           {showSendEmail && (
             <Button size="sm" variant="outline" disabled={sending} onClick={handleSendEmail}>
-              {sending ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Mail className="mr-1.5 h-4 w-4" />}
+              {sending ? (
+                <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+              ) : (
+                <Mail className="mr-1.5 h-4 w-4" />
+              )}
               Send on client email
             </Button>
           )}
           <Button size="sm" variant="outline" onClick={() => window.print()}>
             <Printer className="mr-1.5 h-4 w-4" /> Print / Save as PDF
           </Button>
-          <Button size="sm" variant="ghost" onClick={onClose}><X className="h-4 w-4" /></Button>
+          <Button size="sm" variant="ghost" onClick={onClose}>
+            <X className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
@@ -91,11 +102,17 @@ export function InvoicePrintView({
 
         <div className="mt-6 grid gap-6 sm:grid-cols-2">
           <div>
-            <div className="text-xs font-bold uppercase tracking-widest text-blue-600">Billed To</div>
+            <div className="text-xs font-bold uppercase tracking-widest text-blue-600">
+              Billed To
+            </div>
             <div className="mt-1 font-semibold">{invoice.clients?.full_name}</div>
-            {invoice.clients?.company && <div className="text-sm text-gray-600">{invoice.clients.company}</div>}
+            {invoice.clients?.company && (
+              <div className="text-sm text-gray-600">{invoice.clients.company}</div>
+            )}
             <div className="text-sm text-gray-600">{invoice.clients?.email}</div>
-            {invoice.clients?.phone && <div className="text-sm text-gray-600">{invoice.clients.phone}</div>}
+            {invoice.clients?.phone && (
+              <div className="text-sm text-gray-600">{invoice.clients.phone}</div>
+            )}
           </div>
           <div className="sm:text-right">
             <div className="text-xs font-bold uppercase tracking-widest text-blue-600">From</div>
@@ -140,7 +157,9 @@ export function InvoicePrintView({
                 <td className="px-3 py-2 font-medium">{item.description}</td>
                 <td className="px-3 py-2 text-right">{item.qty}</td>
                 <td className="px-3 py-2 text-right">{Number(item.unit_price).toLocaleString()}</td>
-                <td className="px-3 py-2 text-right font-semibold">{Number(item.amount).toLocaleString()}</td>
+                <td className="px-3 py-2 text-right font-semibold">
+                  {Number(item.amount).toLocaleString()}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -148,21 +167,34 @@ export function InvoicePrintView({
 
         <div className="mt-6 flex justify-end">
           <div className="w-full max-w-xs space-y-1 text-sm">
-            <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span>{Number(invoice.subtotal).toLocaleString()}</span></div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">Subtotal</span>
+              <span>{Number(invoice.subtotal).toLocaleString()}</span>
+            </div>
             {invoice.discount > 0 && (
-              <div className="flex justify-between"><span className="text-gray-500">Discount</span><span>- {Number(invoice.discount).toLocaleString()}</span></div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Discount</span>
+                <span>- {Number(invoice.discount).toLocaleString()}</span>
+              </div>
             )}
             {invoice.tax_amount > 0 && (
-              <div className="flex justify-between"><span className="text-gray-500">Tax ({invoice.tax_rate}%)</span><span>{Number(invoice.tax_amount).toLocaleString()}</span></div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Tax ({invoice.tax_rate}%)</span>
+                <span>{Number(invoice.tax_amount).toLocaleString()}</span>
+              </div>
             )}
             <div className="mt-2 flex justify-between rounded-lg bg-[#0a1128] px-3 py-2 font-bold text-white">
-              <span>Total Due</span><span>{invoice.currency} {Number(invoice.total).toLocaleString()}</span>
+              <span>Total Due</span>
+              <span>
+                {invoice.currency} {Number(invoice.total).toLocaleString()}
+              </span>
             </div>
           </div>
         </div>
 
         <div className="mt-8 text-xs text-gray-500">
-          Thank you for choosing Elfo Innovations. If you have any questions, feel free to contact us.
+          Thank you for choosing Elfo Innovations. If you have any questions, feel free to contact
+          us.
         </div>
       </div>
     </div>

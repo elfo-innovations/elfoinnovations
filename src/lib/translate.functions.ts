@@ -38,11 +38,18 @@ export const translateMessage = createServerFn({ method: "POST" })
         const json: any = await res.json();
         // Shape: [ [ [translatedChunk, originalChunk, ...], ... ], null, "detectedSourceLang", ... ]
         const chunks = Array.isArray(json?.[0]) ? json[0] : [];
-        const translated = chunks.map((c: any) => c?.[0] ?? "").join("").trim();
+        const translated = chunks
+          .map((c: any) => c?.[0] ?? "")
+          .join("")
+          .trim();
         const detected = typeof json?.[2] === "string" ? json[2] : target;
 
         if (translated) {
-          return { translated, detectedLang: detected.toLowerCase().slice(0, 5), skipped: false as const };
+          return {
+            translated,
+            detectedLang: detected.toLowerCase().slice(0, 5),
+            skipped: false as const,
+          };
         }
       }
     } catch {
@@ -59,7 +66,8 @@ export const translateMessage = createServerFn({ method: "POST" })
       if (res.ok) {
         const json: any = await res.json();
         const translated: string | undefined = json?.responseData?.translatedText;
-        const detected: string | undefined = json?.responseData?.detectedLanguage || json?.matches?.[0]?.source;
+        const detected: string | undefined =
+          json?.responseData?.detectedLanguage || json?.matches?.[0]?.source;
 
         if (translated && translated.trim()) {
           return {

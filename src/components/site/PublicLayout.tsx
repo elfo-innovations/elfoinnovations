@@ -30,7 +30,8 @@ function contrastText(hex: string): string {
 function usePromoSettings() {
   return useQuery({
     queryKey: ["promo_settings", "layout"],
-    queryFn: async () => (await supabase.from("promo_settings").select("*").limit(1).maybeSingle()).data,
+    queryFn: async () =>
+      (await supabase.from("promo_settings").select("*").limit(1).maybeSingle()).data,
   });
 }
 
@@ -82,7 +83,11 @@ export function PublicLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col bg-background bg-hero-radial bg-no-repeat">
       {!!promoSettings?.marquee_enabled && (
-        <PromoMarquee text={promoSettings.marquee_text} theme={promoTheme} enabled={!!promoSettings.marquee_enabled} />
+        <PromoMarquee
+          text={promoSettings.marquee_text}
+          theme={promoTheme}
+          enabled={!!promoSettings.marquee_enabled}
+        />
       )}
       <Navbar />
       <main className="flex-1">{children}</main>
@@ -90,4 +95,4 @@ export function PublicLayout({ children }: { children: ReactNode }) {
       <SiteChatWidget />
     </div>
   );
-} 
+}

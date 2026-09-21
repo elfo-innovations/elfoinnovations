@@ -31,11 +31,17 @@ export function Navbar() {
 
   const { user, roles } = useAuth();
   const { t } = useTranslation();
-  const dashHref = roles.includes("admin") ? "/admin" : roles.includes("developer") ? "/developer" : "/client";
+  const dashHref = roles.includes("admin")
+    ? "/admin"
+    : roles.includes("developer")
+      ? "/developer"
+      : "/client";
 
   const { data } = useQuery({
     queryKey: ["nav_links"],
-    queryFn: async () => (await supabase.from("nav_links").select("*").eq("is_enabled", true).order("sort_order")).data,
+    queryFn: async () =>
+      (await supabase.from("nav_links").select("*").eq("is_enabled", true).order("sort_order"))
+        .data,
   });
 
   const FALLBACK = [
@@ -54,14 +60,19 @@ export function Navbar() {
   return (
     <header className="sticky top-5 z-40 px-4 sm:px-6">
       <div
-        style={{ transition: "background-color 500ms ease, border-color 500ms ease", ...(tinted ? { backgroundColor: slideColor as string } : {}) }}
+        style={{
+          transition: "background-color 500ms ease, border-color 500ms ease",
+          ...(tinted ? { backgroundColor: slideColor as string } : {}),
+        }}
         className={`mx-auto flex h-[72px] max-w-6xl items-center justify-between rounded-[28px] px-4 shadow-[0_8px_30px_-4px_rgba(0,0,0,0.12)] backdrop-blur-xl sm:px-6 ${
           tinted
             ? "border border-white/20 shadow-lg"
             : "border border-border/60 bg-background/85 dark:border-white/10 dark:bg-background/70 dark:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.6)] dark:ring-1 dark:ring-white/5"
         }`}
       >
-        <Link to="/" className="flex shrink-0 items-center pl-1"><ElfoLogo /></Link>
+        <Link to="/" className="flex shrink-0 items-center pl-1">
+          <ElfoLogo />
+        </Link>
         <nav className="hidden items-center gap-8 md:flex">
           {links.map((l) => (
             <Link
@@ -78,11 +89,30 @@ export function Navbar() {
           <LanguageSwitcher />
 
           {user ? (
-            <Link to={dashHref}><Button variant="ghost" className={`rounded-full px-5 ${tinted ? "text-white hover:bg-white/15 hover:text-white" : ""}`}>{t("nav.dashboard")}</Button></Link>
+            <Link to={dashHref}>
+              <Button
+                variant="ghost"
+                className={`rounded-full px-5 ${tinted ? "text-white hover:bg-white/15 hover:text-white" : ""}`}
+              >
+                {t("nav.dashboard")}
+              </Button>
+            </Link>
           ) : (
-            <Link to="/auth"><Button variant="ghost" className={`rounded-full px-5 ${tinted ? "text-white hover:bg-white/15 hover:text-white" : ""}`}>{t("nav.signin")}</Button></Link>
+            <Link to="/auth">
+              <Button
+                variant="ghost"
+                className={`rounded-full px-5 ${tinted ? "text-white hover:bg-white/15 hover:text-white" : ""}`}
+              >
+                {t("nav.signin")}
+              </Button>
+            </Link>
           )}
-          <Button onClick={openInquiry} className={`rounded-full px-6 ${tinted ? "bg-white text-foreground shadow-lg hover:bg-white/90" : "electric-glow"}`}>{t("nav.getStarted")}</Button>
+          <Button
+            onClick={openInquiry}
+            className={`rounded-full px-6 ${tinted ? "bg-white text-foreground shadow-lg hover:bg-white/90" : "electric-glow"}`}
+          >
+            {t("nav.getStarted")}
+          </Button>
         </div>
         <div className="flex items-center gap-1.5 md:hidden">
           <LanguageSwitcher compact />
@@ -103,15 +133,42 @@ export function Navbar() {
         <div className="mx-auto mt-3 max-w-6xl rounded-[28px] border border-border/60 bg-background/95 shadow-[0_8px_30px_-4px_rgba(0,0,0,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-background/90 dark:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.6)] dark:ring-1 dark:ring-white/5 md:hidden">
           <div className="space-y-1.5 px-5 py-5">
             {links.map((l) => (
-              <Link key={l.id} to={l.href} onClick={() => setOpen(false)} className="block rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-accent">{labelFor(l)}</Link>
+              <Link
+                key={l.id}
+                to={l.href}
+                onClick={() => setOpen(false)}
+                className="block rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-accent"
+              >
+                {labelFor(l)}
+              </Link>
             ))}
 
             {user ? (
-              <Link to={dashHref} onClick={() => setOpen(false)} className="block rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-accent">{t("nav.dashboard")}</Link>
+              <Link
+                to={dashHref}
+                onClick={() => setOpen(false)}
+                className="block rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-accent"
+              >
+                {t("nav.dashboard")}
+              </Link>
             ) : (
-              <Link to="/auth" onClick={() => setOpen(false)} className="block rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-accent">{t("nav.signin")}</Link>
+              <Link
+                to="/auth"
+                onClick={() => setOpen(false)}
+                className="block rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-accent"
+              >
+                {t("nav.signin")}
+              </Link>
             )}
-            <Button onClick={() => { setOpen(false); openInquiry(); }} className="mt-3 w-full rounded-full">{t("nav.getStarted")}</Button>
+            <Button
+              onClick={() => {
+                setOpen(false);
+                openInquiry();
+              }}
+              className="mt-3 w-full rounded-full"
+            >
+              {t("nav.getStarted")}
+            </Button>
           </div>
         </div>
       )}

@@ -18,12 +18,17 @@ export function AnnouncementBar() {
   const banner = (data as any[] | undefined)?.[0];
   if (!banner) return null;
   return (
-    <div style={{ backgroundColor: banner.background_color || undefined }} className="relative z-50 w-full bg-primary text-primary-foreground">
+    <div
+      style={{ backgroundColor: banner.background_color || undefined }}
+      className="relative z-50 w-full bg-primary text-primary-foreground"
+    >
       <div className="mx-auto flex max-w-7xl items-center justify-center gap-3 px-4 py-2 text-center text-xs font-medium">
         <span>{banner.title}</span>
         {banner.description && <span className="opacity-80">— {banner.description}</span>}
         {banner.cta_label && banner.cta_href && (
-          <Link to={banner.cta_href} className="underline underline-offset-2">{banner.cta_label} →</Link>
+          <Link to={banner.cta_href} className="underline underline-offset-2">
+            {banner.cta_label} →
+          </Link>
         )}
       </div>
     </div>

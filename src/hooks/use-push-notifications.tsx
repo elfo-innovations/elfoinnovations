@@ -11,7 +11,12 @@ export function usePushNotifications() {
   useEffect(() => {
     if (!user) return;
     if (typeof window === "undefined") return;
-    if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return;
+    if (
+      !("serviceWorker" in navigator) ||
+      !("PushManager" in window) ||
+      !("Notification" in window)
+    )
+      return;
 
     let cancelled = false;
     (async () => {
@@ -31,7 +36,10 @@ export function usePushNotifications() {
           });
         }
         if (cancelled) return;
-        const json = sub.toJSON() as { endpoint?: string; keys?: { p256dh?: string; auth?: string } };
+        const json = sub.toJSON() as {
+          endpoint?: string;
+          keys?: { p256dh?: string; auth?: string };
+        };
         if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) return;
         await save({
           data: {
@@ -46,7 +54,9 @@ export function usePushNotifications() {
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [user?.id, save]);
 }
 

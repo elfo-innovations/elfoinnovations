@@ -10,7 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { MediaPicker } from "@/components/web-portal/MediaPicker";
 import { RichTextEditor } from "@/components/web-portal/RichTextEditor";
 import { CoverImageSuggestions } from "@/components/web-portal/CoverImageSuggestions";
@@ -21,7 +27,13 @@ export const Route = createFileRoute("/admin/blogs")({
 });
 
 function slugify(s: string) {
-  return s.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").slice(0, 80);
+  return s
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .slice(0, 80);
 }
 
 const CATEGORIES = [
@@ -64,20 +76,35 @@ function AdminBlogs() {
 
   const { data } = useQuery({
     queryKey: ["admin-blogs"],
-    queryFn: async () => (await supabase.from("blogs").select("*").order("created_at", { ascending: false })).data ?? [],
+    queryFn: async () =>
+      (await supabase.from("blogs").select("*").order("created_at", { ascending: false })).data ??
+      [],
   });
 
-  const startNew = () => { setForm({ ...EMPTY }); setOpen(true); };
+  const startNew = () => {
+    setForm({ ...EMPTY });
+    setOpen(true);
+  };
   const edit = (b: any) => {
     setForm({
-      id: b.id, slug: b.slug, title: b.title, excerpt: b.excerpt ?? "",
-      content_md: b.content_md ?? "", content_html: b.content_html ?? "", cover_image: b.cover_image ?? "",
-      tags: (b.tags ?? []).join(", "), category: b.category ?? "", tldr: b.tldr ?? "",
+      id: b.id,
+      slug: b.slug,
+      title: b.title,
+      excerpt: b.excerpt ?? "",
+      content_md: b.content_md ?? "",
+      content_html: b.content_html ?? "",
+      cover_image: b.cover_image ?? "",
+      tags: (b.tags ?? []).join(", "),
+      category: b.category ?? "",
+      tldr: b.tldr ?? "",
       faqs: Array.isArray(b.faqs) ? b.faqs : [],
       author_name: b.author_name ?? "ELFO INNOVATIONS",
-      meta_title: b.meta_title ?? "", meta_description: b.meta_description ?? "",
-      is_published: !!b.is_published, reading_minutes: b.reading_minutes ?? null,
-      original_is_published: !!b.is_published, original_published_at: b.published_at ?? null,
+      meta_title: b.meta_title ?? "",
+      meta_description: b.meta_description ?? "",
+      is_published: !!b.is_published,
+      reading_minutes: b.reading_minutes ?? null,
+      original_is_published: !!b.is_published,
+      original_published_at: b.published_at ?? null,
     });
     setOpen(true);
   };
@@ -95,9 +122,10 @@ function AdminBlogs() {
     // must NOT reset its original publish date.
     let published_at: string | null;
     if (form.is_published) {
-      published_at = form.original_is_published && form.original_published_at
-        ? form.original_published_at
-        : new Date().toISOString();
+      published_at =
+        form.original_is_published && form.original_published_at
+          ? form.original_published_at
+          : new Date().toISOString();
     } else {
       published_at = null;
     }
@@ -108,7 +136,10 @@ function AdminBlogs() {
       content_md: form.content_md,
       content_html: form.content_html || null,
       cover_image: form.cover_image || null,
-      tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
+      tags: form.tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean),
       faqs: form.faqs,
       category: form.category || null,
       tldr: form.tldr.trim() || null,
@@ -139,9 +170,13 @@ function AdminBlogs() {
 
   const togglePublish = async (b: any) => {
     const next = !b.is_published;
-    const { error } = await supabase.from("blogs").update({
-      is_published: next, published_at: next ? new Date().toISOString() : null,
-    }).eq("id", b.id);
+    const { error } = await supabase
+      .from("blogs")
+      .update({
+        is_published: next,
+        published_at: next ? new Date().toISOString() : null,
+      })
+      .eq("id", b.id);
     if (error) return toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["admin-blogs"] });
   };
@@ -151,42 +186,102 @@ function AdminBlogs() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">Blogs</h1>
-          <p className="mt-1 text-sm text-muted-foreground">SEO articles that rank your site. Publish long-form to grow organic traffic.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            SEO articles that rank your site. Publish long-form to grow organic traffic.
+          </p>
         </div>
         <div className="flex gap-2">
-          <a href="/blogs" target="_blank" rel="noreferrer"><Button variant="outline" className="rounded-full"><ExternalLink className="mr-1.5 h-4 w-4" /> View blog</Button></a>
-          <Button onClick={startNew} className="rounded-full electric-glow"><Plus className="mr-1.5 h-4 w-4" /> New Article</Button>
+          <a href="/blogs" target="_blank" rel="noreferrer">
+            <Button variant="outline" className="rounded-full">
+              <ExternalLink className="mr-1.5 h-4 w-4" /> View blog
+            </Button>
+          </a>
+          <Button onClick={startNew} className="rounded-full electric-glow">
+            <Plus className="mr-1.5 h-4 w-4" /> New Article
+          </Button>
         </div>
       </div>
 
       <div className="mt-6 grid gap-4 md:grid-cols-2">
         {(data ?? []).map((b: any) => (
           <div key={b.id} className="glass-card overflow-hidden rounded-2xl">
-            {b.cover_image && <div className="aspect-[16/7] overflow-hidden bg-muted"><img src={b.cover_image} alt="" className="h-full w-full object-cover" /></div>}
+            {b.cover_image && (
+              <div className="aspect-[16/7] overflow-hidden bg-muted">
+                <img src={b.cover_image} alt="" className="h-full w-full object-cover" />
+              </div>
+            )}
             <div className="p-5">
               <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-widest">
-                <span className={b.is_published ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}>
+                <span
+                  className={
+                    b.is_published
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-amber-600 dark:text-amber-400"
+                  }
+                >
                   {b.is_published ? "Published" : "Draft"}
                 </span>
                 <span className="text-muted-foreground">/{b.slug}</span>
-                {b.category && <span className="ml-auto rounded-full bg-primary/10 px-2 py-0.5 normal-case tracking-normal text-primary">{b.category}</span>}
+                {b.category && (
+                  <span className="ml-auto rounded-full bg-primary/10 px-2 py-0.5 normal-case tracking-normal text-primary">
+                    {b.category}
+                  </span>
+                )}
               </div>
               <h3 className="mt-2 font-display text-lg font-bold">{b.title}</h3>
-              {b.excerpt && <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{b.excerpt}</p>}
+              {b.excerpt && (
+                <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{b.excerpt}</p>
+              )}
               <div className="mt-2 text-[11px] text-muted-foreground">
                 {b.published_at && (
-                  <>Published {new Date(b.published_at).toLocaleString(undefined, { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</>
+                  <>
+                    Published{" "}
+                    {new Date(b.published_at).toLocaleString(undefined, {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                  </>
                 )}
-                {b.updated_at && b.published_at && new Date(b.updated_at).getTime() - new Date(b.published_at).getTime() > 60000 && (
-                  <> · Updated {new Date(b.updated_at).toLocaleString(undefined, { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</>
-                )}
+                {b.updated_at &&
+                  b.published_at &&
+                  new Date(b.updated_at).getTime() - new Date(b.published_at).getTime() > 60000 && (
+                    <>
+                      {" "}
+                      · Updated{" "}
+                      {new Date(b.updated_at).toLocaleString(undefined, {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
+                    </>
+                  )}
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" onClick={() => edit(b)}>Edit</Button>
-                <Button size="sm" variant="ghost" onClick={() => togglePublish(b)}>
-                  {b.is_published ? <><EyeOff className="mr-1 h-3.5 w-3.5" /> Unpublish</> : <><Eye className="mr-1 h-3.5 w-3.5" /> Publish</>}
+                <Button size="sm" variant="outline" onClick={() => edit(b)}>
+                  Edit
                 </Button>
-                <Button size="sm" variant="ghost" className="ml-auto text-destructive hover:bg-destructive/10" onClick={() => del(b.id)}>
+                <Button size="sm" variant="ghost" onClick={() => togglePublish(b)}>
+                  {b.is_published ? (
+                    <>
+                      <EyeOff className="mr-1 h-3.5 w-3.5" /> Unpublish
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="mr-1 h-3.5 w-3.5" /> Publish
+                    </>
+                  )}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="ml-auto text-destructive hover:bg-destructive/10"
+                  onClick={() => del(b.id)}
+                >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -208,12 +303,22 @@ function AdminBlogs() {
           <div className="grid gap-4">
             <div className="grid gap-1.5">
               <Label>Title *</Label>
-              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="How we ship enterprise software in 4 stages" />
+              <Input
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                placeholder="How we ship enterprise software in 4 stages"
+              />
             </div>
             <div className="grid gap-1.5">
               <Label>Slug * (URL)</Label>
-              <Input value={form.slug} onChange={(e) => setForm({ ...form, slug: slugify(e.target.value) })} placeholder="how-we-ship-enterprise-software" />
-              <p className="text-xs text-muted-foreground">Will appear at /blogs/{form.slug || "your-slug"}</p>
+              <Input
+                value={form.slug}
+                onChange={(e) => setForm({ ...form, slug: slugify(e.target.value) })}
+                placeholder="how-we-ship-enterprise-software"
+              />
+              <p className="text-xs text-muted-foreground">
+                Will appear at /blogs/{form.slug || "your-slug"}
+              </p>
             </div>
             <div className="grid gap-1.5">
               <Label>Category</Label>
@@ -223,11 +328,21 @@ function AdminBlogs() {
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
                 <option value="">— No category —</option>
-                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
               </select>
-              <p className="text-xs text-muted-foreground">One category per article. Use Tags below for finer-grained topics.</p>
+              <p className="text-xs text-muted-foreground">
+                One category per article. Use Tags below for finer-grained topics.
+              </p>
             </div>
-            <MediaPicker label="Cover image" value={form.cover_image} onChange={(v) => setForm({ ...form, cover_image: v })} />
+            <MediaPicker
+              label="Cover image"
+              value={form.cover_image}
+              onChange={(v) => setForm({ ...form, cover_image: v })}
+            />
             <CoverImageSuggestions
               coverImage={form.cover_image}
               onApply={(s) =>
@@ -248,35 +363,70 @@ function AdminBlogs() {
             />
             <div className="grid gap-1.5">
               <Label>Excerpt (1–2 sentence summary)</Label>
-              <Textarea rows={2} value={form.excerpt} onChange={(e) => setForm({ ...form, excerpt: e.target.value })} />
+              <Textarea
+                rows={2}
+                value={form.excerpt}
+                onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
+              />
             </div>
             <div className="grid gap-1.5">
-              <Label>Quick Answer / TL;DR (shown in a highlighted box at the top of the article)</Label>
-              <Textarea rows={2} value={form.tldr} onChange={(e) => setForm({ ...form, tldr: e.target.value })} placeholder="Quick Answer: Enterprise software can be delivered through four major stages: frontend, backend, database, and deployment." />
+              <Label>
+                Quick Answer / TL;DR (shown in a highlighted box at the top of the article)
+              </Label>
+              <Textarea
+                rows={2}
+                value={form.tldr}
+                onChange={(e) => setForm({ ...form, tldr: e.target.value })}
+                placeholder="Quick Answer: Enterprise software can be delivered through four major stages: frontend, backend, database, and deployment."
+              />
             </div>
             <div className="grid gap-1.5">
               <Label>Content</Label>
-              <RichTextEditor value={form.content_html} onChange={(html) => setForm({ ...form, content_html: html })} />
+              <RichTextEditor
+                value={form.content_html}
+                onChange={(html) => setForm({ ...form, content_html: html })}
+              />
               <p className="text-xs text-muted-foreground">
-                Use the "Paragraph" dropdown to pick H1–H5 for a heading, then type — no markdown needed. Articles
-                with 3+ H2/H3 headings automatically get a Table of Contents on the live page.
+                Use the "Paragraph" dropdown to pick H1–H5 for a heading, then type — no markdown
+                needed. Articles with 3+ H2/H3 headings automatically get a Table of Contents on the
+                live page.
               </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-1.5">
                 <Label>Tags (comma separated)</Label>
-                <Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="engineering, cloud" />
+                <Input
+                  value={form.tags}
+                  onChange={(e) => setForm({ ...form, tags: e.target.value })}
+                  placeholder="engineering, cloud"
+                />
               </div>
               <div className="grid gap-1.5">
                 <Label>Author</Label>
-                <Input value={form.author_name} onChange={(e) => setForm({ ...form, author_name: e.target.value })} />
+                <Input
+                  value={form.author_name}
+                  onChange={(e) => setForm({ ...form, author_name: e.target.value })}
+                />
               </div>
               <div className="grid gap-1.5">
                 <Label>Reading minutes</Label>
-                <Input type="number" min={1} value={form.reading_minutes ?? ""} onChange={(e) => setForm({ ...form, reading_minutes: e.target.value ? Number(e.target.value) : null })} />
+                <Input
+                  type="number"
+                  min={1}
+                  value={form.reading_minutes ?? ""}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      reading_minutes: e.target.value ? Number(e.target.value) : null,
+                    })
+                  }
+                />
               </div>
               <div className="flex items-end gap-3">
-                <Switch checked={form.is_published} onCheckedChange={(v) => setForm({ ...form, is_published: v })} />
+                <Switch
+                  checked={form.is_published}
+                  onCheckedChange={(v) => setForm({ ...form, is_published: v })}
+                />
                 <span className="text-sm">{form.is_published ? "Published" : "Draft"}</span>
               </div>
             </div>
@@ -298,7 +448,9 @@ function AdminBlogs() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => setForm({ ...form, faqs: form.faqs.filter((_, k) => k !== i) })}
+                        onClick={() =>
+                          setForm({ ...form, faqs: form.faqs.filter((_, k) => k !== i) })
+                        }
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -318,27 +470,44 @@ function AdminBlogs() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setForm({ ...form, faqs: [...form.faqs, { question: "", answer: "" }] })}
+                  onClick={() =>
+                    setForm({ ...form, faqs: [...form.faqs, { question: "", answer: "" }] })
+                  }
                 >
-                  <Plus className="mr-1 h-4 w-4" />Add FAQ
+                  <Plus className="mr-1 h-4 w-4" />
+                  Add FAQ
                 </Button>
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-1.5">
                 <Label>SEO title (optional override)</Label>
-                <Input value={form.meta_title} onChange={(e) => setForm({ ...form, meta_title: e.target.value })} />
+                <Input
+                  value={form.meta_title}
+                  onChange={(e) => setForm({ ...form, meta_title: e.target.value })}
+                />
               </div>
               <div className="grid gap-1.5">
                 <Label>SEO description</Label>
-                <Input value={form.meta_description} onChange={(e) => setForm({ ...form, meta_description: e.target.value })} />
+                <Input
+                  value={form.meta_description}
+                  onChange={(e) => setForm({ ...form, meta_description: e.target.value })}
+                />
               </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
             <Button onClick={save} disabled={busy} className="electric-glow">
-              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Save className="mr-2 h-4 w-4" /> Save Article</>}
+              {busy ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" /> Save Article
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

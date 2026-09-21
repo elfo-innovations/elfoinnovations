@@ -1,5 +1,14 @@
 import { useEffect, useRef } from "react";
-import { ArrowRight, Github, Bot, Code2, Smartphone, Palette, Sparkles, Megaphone } from "lucide-react";
+import {
+  ArrowRight,
+  Github,
+  Bot,
+  Code2,
+  Smartphone,
+  Palette,
+  Sparkles,
+  Megaphone,
+} from "lucide-react";
 import { useInquiry } from "@/hooks/use-inquiry";
 import { cn } from "@/lib/utils";
 
@@ -18,12 +27,54 @@ type Card = {
 };
 
 const CARDS: Card[] = [
-  { n: "01", title: "AI Automation", description: "Agents, copilots and workflow automation that remove busywork and compound your team's output.", icon: Bot, image: null },
-  { n: "02", title: "Web Development", description: "Blazing-fast, accessible web platforms engineered on modern stacks and built to scale.", icon: Code2, image: null },
-  { n: "03", title: "Mobile Apps", description: "Native-feeling iOS and Android products with offline-first architecture and buttery motion.", icon: Smartphone, image: null },
-  { n: "04", title: "UI/UX Design", description: "Interface systems with luxury typography, deliberate spacing and conversion-first flows.", icon: Palette, image: null },
-  { n: "05", title: "Branding", description: "Identity, tone and visual language that makes your product feel inevitable in its market.", icon: Sparkles, image: null },
-  { n: "06", title: "Digital Marketing", description: "Performance campaigns, SEO and content engineered around measurable pipeline growth.", icon: Megaphone, image: null },
+  {
+    n: "01",
+    title: "AI Automation",
+    description:
+      "Agents, copilots and workflow automation that remove busywork and compound your team's output.",
+    icon: Bot,
+    image: null,
+  },
+  {
+    n: "02",
+    title: "Web Development",
+    description:
+      "Blazing-fast, accessible web platforms engineered on modern stacks and built to scale.",
+    icon: Code2,
+    image: null,
+  },
+  {
+    n: "03",
+    title: "Mobile Apps",
+    description:
+      "Native-feeling iOS and Android products with offline-first architecture and buttery motion.",
+    icon: Smartphone,
+    image: null,
+  },
+  {
+    n: "04",
+    title: "UI/UX Design",
+    description:
+      "Interface systems with luxury typography, deliberate spacing and conversion-first flows.",
+    icon: Palette,
+    image: null,
+  },
+  {
+    n: "05",
+    title: "Branding",
+    description:
+      "Identity, tone and visual language that makes your product feel inevitable in its market.",
+    icon: Sparkles,
+    image: null,
+  },
+  {
+    n: "06",
+    title: "Digital Marketing",
+    description:
+      "Performance campaigns, SEO and content engineered around measurable pipeline growth.",
+    icon: Megaphone,
+    image: null,
+  },
 ];
 
 /** Magnetic, glowing CTA used across the story cards. */
@@ -128,7 +179,12 @@ export function ServicesScrollStory() {
   }, []);
 
   return (
-    <section ref={rootRef} id="services-story" aria-labelledby="services-story-heading" className="relative overflow-hidden border-t bg-background">
+    <section
+      ref={rootRef}
+      id="services-story"
+      aria-labelledby="services-story-heading"
+      className="relative overflow-hidden border-t bg-background"
+    >
       {/* Ambient background: grid + floating glow orbs */}
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute inset-0 opacity-40 circuit-pattern" />
@@ -140,14 +196,22 @@ export function ServicesScrollStory() {
       <div className="mx-auto max-w-7xl px-4 pt-20 sm:px-6 sm:pt-28 lg:px-8">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div className="max-w-2xl">
-            <div data-story-reveal className="inline-flex items-center gap-2 rounded-full border bg-card/60 px-3 py-1.5 text-xs font-medium backdrop-blur">
+            <div
+              data-story-reveal
+              className="inline-flex items-center gap-2 rounded-full border bg-card/60 px-3 py-1.5 text-xs font-medium backdrop-blur"
+            >
               <Sparkles className="h-3.5 w-3.5 text-primary" /> What we do
             </div>
-            <h2 id="services-story-heading" data-story-reveal className="mt-5 font-display text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl">
+            <h2
+              id="services-story-heading"
+              data-story-reveal
+              className="mt-5 font-display text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl"
+            >
               Six disciplines. <span className="electric-text">One studio.</span>
             </h2>
             <p data-story-reveal className="mt-5 max-w-xl text-lg text-muted-foreground">
-              Scroll through the work we do — each capability engineered end to end, shipped with the polish of a product team, not an outsourcing shop.
+              Scroll through the work we do — each capability engineered end to end, shipped with
+              the polish of a product team, not an outsourcing shop.
             </p>
           </div>
 
@@ -166,7 +230,10 @@ export function ServicesScrollStory() {
       </div>
 
       {/* Pinned stacked-card stage */}
-      <div data-story-stage className="relative mt-14 flex h-screen items-center justify-center px-4 sm:px-6 lg:px-8">
+      <div
+        data-story-stage
+        className="relative mt-14 flex h-screen items-center justify-center px-4 sm:px-6 lg:px-8"
+      >
         <div className="relative mx-auto h-[74vh] w-full max-w-6xl overflow-hidden rounded-[32px]">
           {CARDS.map((c, i) => {
             const Icon = c.icon;
@@ -185,8 +252,12 @@ export function ServicesScrollStory() {
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                     <Icon className="h-5 w-5" />
                   </div>
-                  <h3 className="font-display text-3xl font-bold tracking-tight sm:text-5xl">{c.title}</h3>
-                  <p className="max-w-md text-base leading-relaxed text-muted-foreground sm:text-lg">{c.description}</p>
+                  <h3 className="font-display text-3xl font-bold tracking-tight sm:text-5xl">
+                    {c.title}
+                  </h3>
+                  <p className="max-w-md text-base leading-relaxed text-muted-foreground sm:text-lg">
+                    {c.description}
+                  </p>
                   <div className="pt-1">
                     <MagneticCta label="Start a project" onClick={open} />
                   </div>
@@ -203,7 +274,10 @@ export function ServicesScrollStory() {
                       className="h-full w-full object-cover transition-transform duration-700 hover:scale-[1.04]"
                     />
                   ) : (
-                    <div aria-hidden className="relative h-full w-full bg-gradient-to-br from-primary/20 via-transparent to-primary/35">
+                    <div
+                      aria-hidden
+                      className="relative h-full w-full bg-gradient-to-br from-primary/20 via-transparent to-primary/35"
+                    >
                       <div className="absolute inset-0 opacity-50 circuit-pattern" />
                       <div className="absolute -right-10 top-1/3 h-56 w-56 rounded-full bg-primary/40 blur-3xl" />
                       <div className="absolute bottom-8 left-8 text-[11px] uppercase tracking-[0.3em] text-foreground/40">

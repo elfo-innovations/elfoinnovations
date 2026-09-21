@@ -13,7 +13,8 @@ export const Route = createFileRoute("/api/public/hooks/dispatch-push")({
           const publicKey = process.env.VAPID_PUBLIC_KEY!;
           const privateKey = process.env.VAPID_PRIVATE_KEY!;
           const subject = process.env.VAPID_SUBJECT || "mailto:elfoinnovations@gmail.com";
-          if (!publicKey || !privateKey) return new Response("vapid not configured", { status: 500 });
+          if (!publicKey || !privateKey)
+            return new Response("vapid not configured", { status: 500 });
           webpush.setVapidDetails(subject, publicKey, privateKey);
 
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -45,14 +46,14 @@ export const Route = createFileRoute("/api/public/hooks/dispatch-push")({
               try {
                 await webpush.sendNotification(
                   { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-                  payload
+                  payload,
                 );
                 sent++;
               } catch (err: any) {
                 const status = err?.statusCode;
                 if (status === 404 || status === 410) stale.push(s.id);
               }
-            })
+            }),
           );
           if (stale.length) {
             await supabaseAdmin.from("push_subscriptions").delete().in("id", stale);
