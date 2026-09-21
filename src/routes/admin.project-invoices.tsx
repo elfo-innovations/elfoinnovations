@@ -79,8 +79,8 @@ function AdminProjectInvoices() {
       </div>
 
       <Dialog open={!!active} onOpenChange={(v) => !v && setActive(null)}>
-        <DialogContent className="max-h-[92vh] max-w-3xl overflow-y-auto p-0">
-          {active && <InvoicePrintView invoice={active} onClose={() => setActive(null)} />}
+        <DialogContent hideClose className="max-h-[92vh] max-w-3xl overflow-y-auto p-0">
+          {active && <InvoicePrintView invoice={active} onClose={() => setActive(null)} showSendEmail />}
         </DialogContent>
       </Dialog>
     </DashboardShell>

@@ -1,6 +1,10 @@
+import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
-import { Printer, X } from "lucide-react";
+import { Loader2, Mail, Printer, X } from "lucide-react";
 import { ElfoLogo } from "@/components/brand/Logo";
+import { sendInvoiceEmail } from "@/lib/invoice-email.functions";
+import { toast } from "sonner";
 
 export type ProjectInvoiceRow = {
   id: string;
@@ -18,15 +22,57 @@ export type ProjectInvoiceRow = {
   projects: { name: string; project_code: string } | null;
 };
 
-export function InvoicePrintView({ invoice, onClose }: { invoice: ProjectInvoiceRow; onClose: () => void }) {
+export function InvoicePrintView({
+  invoice,
+  onClose,
+  showSendEmail,
+}: {
+  invoice: ProjectInvoiceRow;
+  onClose: () => void;
+  showSendEmail?: boolean;
+}) {
   const dueDate = new Date(invoice.created_at);
   dueDate.setDate(dueDate.getDate() + 14);
+  const [sending, setSending] = useState(false);
+  const sendInvoice = useServerFn(sendInvoiceEmail);
+
+  const handleSendEmail = async () => {
+    if (!invoice.clients?.email) return toast.error("Client has no email on file");
+    setSending(true);
+    try {
+      const result = await sendInvoice({
+        data: {
+          to: invoice.clients.email,
+          name: invoice.clients.full_name || "there",
+          invoiceNumber: invoice.invoice_number,
+          projectName: invoice.projects?.name || "your project",
+          currency: invoice.currency,
+          items: invoice.items,
+          subtotal: invoice.subtotal,
+          total: invoice.total,
+          dueDate: dueDate.toLocaleDateString(),
+        },
+      });
+      if (result.ok) toast.success(`Invoice emailed to ${invoice.clients.email}`);
+      else toast.error(result.error || "Failed to send invoice email");
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to send invoice email");
+    } finally {
+      setSending(false);
+    }
+  };
 
   return (
     <div>
       <div className="flex items-center justify-between border-b p-4 print:hidden">
         <div className="text-sm font-semibold">{invoice.invoice_number}</div>
         <div className="flex items-center gap-2">
+          {showSendEmail && (
+            <Button size="sm" variant="outline" disabled={sending} onClick={handleSendEmail}>
+              {sending ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Mail className="mr-1.5 h-4 w-4" />}
+              Send on client email
+            </Button>
+          )}
           <Button size="sm" variant="outline" onClick={() => window.print()}>
             <Printer className="mr-1.5 h-4 w-4" /> Print / Save as PDF
           </Button>
@@ -54,7 +100,6 @@ export function InvoicePrintView({ invoice, onClose }: { invoice: ProjectInvoice
           <div className="sm:text-right">
             <div className="text-xs font-bold uppercase tracking-widest text-blue-600">From</div>
             <div className="mt-1 font-semibold">Elfo Innovations</div>
-            <div className="text-sm text-gray-600">hello@elfoinnovations.com</div>
             <div className="text-sm text-gray-600">www.elfoinnovations.com</div>
           </div>
         </div>

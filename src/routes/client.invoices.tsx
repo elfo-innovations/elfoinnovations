@@ -136,7 +136,7 @@ function ClientInvoices() {
       </div>
 
       <Dialog open={!!activeInvoice} onOpenChange={(v) => !v && setActiveInvoice(null)}>
-        <DialogContent className="max-h-[92vh] max-w-3xl overflow-y-auto p-0">
+        <DialogContent hideClose className="max-h-[92vh] max-w-3xl overflow-y-auto p-0">
           {activeInvoice && <InvoicePrintView invoice={activeInvoice} onClose={() => setActiveInvoice(null)} />}
         </DialogContent>
       </Dialog>

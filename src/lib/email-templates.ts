@@ -108,6 +108,48 @@ export function acceptanceEmail(p: {
   );
 }
 
+export function invoiceEmail(p: {
+  name: string;
+  invoiceNumber: string;
+  projectName: string;
+  currency: string;
+  items: { description: string; qty: number; unit_price: number; amount: number }[];
+  subtotal: number;
+  total: number;
+  dueDate: string;
+}) {
+  const money = (n: number) => Number(n).toLocaleString();
+  const rows = p.items
+    .map(
+      (it) => `<tr>
+        <td style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.08);color:${BRAND.text};">${esc(it.description)}</td>
+        <td style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.08);color:${BRAND.muted};text-align:center;">${it.qty}</td>
+        <td style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.08);color:${BRAND.text};text-align:right;">${p.currency} ${money(it.amount)}</td>
+      </tr>`,
+    )
+    .join("");
+
+  return shell(
+    `Invoice ${p.invoiceNumber}`,
+    `<h1 style="margin:0 0 12px;font-size:22px;color:${BRAND.text};">Invoice ${esc(p.invoiceNumber)}</h1>
+     <p style="margin:0 0 14px;">Hi ${esc(p.name)},</p>
+     <p style="margin:0 0 18px;color:${BRAND.muted};">Here's the invoice for <strong style="color:${BRAND.text};">${esc(p.projectName)}</strong>. Due date: <strong style="color:${BRAND.electric};">${esc(p.dueDate)}</strong>.</p>
+     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;">
+       <thead><tr>
+         <th style="text-align:left;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.15);color:${BRAND.muted};font-size:12px;text-transform:uppercase;">Description</th>
+         <th style="text-align:center;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.15);color:${BRAND.muted};font-size:12px;text-transform:uppercase;">Qty</th>
+         <th style="text-align:right;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.15);color:${BRAND.muted};font-size:12px;text-transform:uppercase;">Amount</th>
+       </tr></thead>
+       <tbody>${rows}</tbody>
+     </table>
+     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+       <tr><td style="padding:4px 0;color:${BRAND.muted};">Subtotal</td><td style="padding:4px 0;text-align:right;color:${BRAND.text};">${p.currency} ${money(p.subtotal)}</td></tr>
+       <tr><td style="padding:10px 0 0;font-weight:700;color:${BRAND.text};">Total due</td><td style="padding:10px 0 0;text-align:right;font-weight:700;color:${BRAND.electric};">${p.currency} ${money(p.total)}</td></tr>
+     </table>
+     <p style="margin:18px 0 0;color:${BRAND.muted};">If you have any questions about this invoice, just reply to this email.</p>`,
+  );
+}
+
 export function rejectionEmail(p: { name: string; message: string }) {
   return shell(
     "Update on your application",
