@@ -111,7 +111,7 @@ export function InquiryModal({ open, onClose }: { open: boolean; onClose: () => 
         toast.success("You are offline. Your inquiry has been saved on this device and will be sent automatically when your connection returns.");
         setDone({ code: offlineCode });
         return;
-      } catch (e: any) {
+      } catch {
         setSubmitting(false);
         toast.error("Could not save inquiry offline. Please try again when online.");
         return;

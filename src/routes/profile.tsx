@@ -21,7 +21,7 @@ function ProfilePage() {
   const navigate = useNavigate();
   const changePw = useServerFn(updateMyPassword);
   const fileRef = useRef<HTMLInputElement>(null);
-  const [profile, setProfile] = useState<any>(null);
+  const [, setProfile] = useState<any>(null);
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [company, setCompany] = useState("");

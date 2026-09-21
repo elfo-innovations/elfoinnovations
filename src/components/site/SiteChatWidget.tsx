@@ -170,7 +170,7 @@ export function SiteChatWidget() {
 
   // sendMessageRef lets the speech-recognition callback (set up once on mount) always
   // call the latest version of sendMessage, without stale-closure issues.
-  const sendMessageRef = useRef((overrideText?: string) => {});
+  const sendMessageRef = useRef<(overrideText?: string) => void>(() => {});
 
   const sendMessage = async (overrideText?: string) => {
     const text = (overrideText ?? input).trim();
@@ -205,7 +205,7 @@ export function SiteChatWidget() {
       setMessages((m) => [...m, assistantMsg]);
       logMessage(assistantMsg);
       if (voiceModeRef.current) speak(data.reply);
-    } catch (e: any) {
+    } catch {
       const errMsg = "Sorry, something went wrong. Please try again in a moment.";
       setMessages((m) => [...m, { role: "assistant", content: errMsg }]);
       if (voiceModeRef.current) speak(errMsg);

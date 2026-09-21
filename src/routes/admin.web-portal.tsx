@@ -430,7 +430,7 @@ function TextField({ label, value, onChange }: { label: string; value?: any; onC
 }
 
 /* ---------- Generic CRUD table ---------- */
-function CrudList<T extends { id: string }>({
+function CrudList({
   title, table, orderBy = "sort_order", visibilityCol, columns, renderForm, empty, wide, allowSaveAndNew,
 }: {
   title: string; table: string; orderBy?: string; visibilityCol?: string;

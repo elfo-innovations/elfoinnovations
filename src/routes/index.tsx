@@ -11,7 +11,6 @@ import { ServicesSection } from "@/components/site/ServicesSection";
 import { PricingSection } from "@/components/site/PricingSection";
 import { TestimonialsSection } from "@/components/site/TestimonialsSection";
 import { FaqSection } from "@/components/site/FaqSection";
-import { AboutSection } from "@/components/site/AboutSection";
 import { CtaBanner } from "@/components/site/CtaBanner";
 import { OffersSection } from "@/components/site/OffersSection";
 import { AnnouncementBar } from "@/components/site/AnnouncementBar";

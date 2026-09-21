@@ -81,16 +81,6 @@ const placeholderShot = (label: string, tint: "muted" | "bright" = "muted") => (
   </div>
 );
 
-const FALLBACK: { title: string; cat: string }[] = [
-  { title: "Fintech Dashboard", cat: "Web Platform" },
-  { title: "E-Commerce Redesign", cat: "E-Commerce" },
-  { title: "SaaS Analytics Suite", cat: "Data & AI" },
-  { title: "Healthcare Portal", cat: "Enterprise" },
-  { title: "Real Estate Marketplace", cat: "Marketplace" },
-  { title: "Travel Booking App", cat: "Mobile" },
-  { title: "Restaurant Ordering", cat: "Hospitality" },
-];
-
 export function BeforeAfterShowcase() {
   const { data } = useQuery({
     queryKey: ["before_after_items"],

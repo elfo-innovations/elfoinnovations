@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Bot, HelpCircle, MessageCircle, RefreshCw, Trash2, User } from "lucide-react";
+import { Bot, HelpCircle, RefreshCw, Trash2, User } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";

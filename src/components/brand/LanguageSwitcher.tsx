@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 // Flag emoji don't render reliably on Windows (Chrome/Edge fall back to showing the
 // two-letter country code as plain text), so use real flag images instead.
-function FlagImg({ country, label, className }: { country: string; label: string; className?: string }) {
+function FlagImg({ country, className }: { country: string; label: string; className?: string }) {
   return (
     <img
       src={`https://flagcdn.com/24x18/${country}.png`}
