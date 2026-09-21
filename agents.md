@@ -10,6 +10,9 @@ Before making changes:
 * Inspect the current Git status and recent commit history.
 * Do not assume that your previous state is still the current state.
 * Other AI agents may have made commits or changes since your last session.
+* Remind the project owner to keep the local repository up to date before starting work. 
+* Check/sync with the latest remote changes first, because starting from an outdated local
+* branch has previously caused avoidable merge conflicts.
 
 ## 2. Preserve Existing Work
 
