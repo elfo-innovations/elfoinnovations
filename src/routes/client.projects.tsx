@@ -61,7 +61,7 @@ function ClientProjects() {
       const project_code = `PRJ-${Date.now().toString(36).toUpperCase()}`;
       const selected_services = (services ?? [])
         .filter((s: any) => selectedServiceIds.includes(s.id))
-        .map((s: any) => ({ service_id: s.id, title: s.title, price: s.price }));
+        .map((s: any) => ({ service_id: s.id }));
 
       const { error } = await supabase.from("projects").insert({
         project_code,
