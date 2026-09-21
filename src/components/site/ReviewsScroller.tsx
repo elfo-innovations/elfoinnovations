@@ -85,7 +85,7 @@ export function ReviewsScroller() {
           .limit(20)
       ).data ?? [],
   });
-  const dbMapped: Review[] = (dbReviews ?? []).map((r: any) => ({
+  const dbMapped: Review[] = (dbReviews ?? []).map((r) => ({
     name: r.client_name,
     role: "Client",
     company: r.company || "Elfo Innovations",

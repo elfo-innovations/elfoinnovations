@@ -37,7 +37,7 @@ export const sendInvoiceEmail = createServerFn({ method: "POST" })
       return { sent: false, provider: "error", error: String(e) };
     });
 
-    if (!result.sent) console.error("[invoice email] not sent:", (result as any).error);
+    if (!result.sent) console.error("[invoice email] not sent:", result.error);
 
-    return { ok: result.sent, error: (result as any).error as string | undefined };
+    return { ok: result.sent, error: result.error as string | undefined };
   });

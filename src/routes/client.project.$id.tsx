@@ -50,7 +50,7 @@ function ClientProjectDetail() {
   const approveStage = async (stageId: string) => {
     const { error } = await supabase
       .from("project_stages")
-      .update({ status: "client_approved" as any, client_approved_at: new Date().toISOString() })
+      .update({ status: "client_approved", client_approved_at: new Date().toISOString() })
       .eq("id", stageId);
     if (error) return toast.error(error.message);
     toast.success("Stage approved");
@@ -61,7 +61,7 @@ function ClientProjectDetail() {
     if (!rejectNote.trim()) return toast.error("Please add a note explaining what to change");
     const { error } = await supabase
       .from("project_stages")
-      .update({ status: "revision_requested" as any, client_comment: rejectNote.trim() })
+      .update({ status: "revision_requested", client_comment: rejectNote.trim() })
       .eq("id", stageId);
     if (error) return toast.error(error.message);
     toast.success("Revision requested");
@@ -79,9 +79,9 @@ function ClientProjectDetail() {
   }
 
   const stages = [...(project.project_stages ?? [])].sort(
-    (a: any, b: any) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage),
+    (a, b) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage),
   );
-  const files = (project.project_files ?? []).filter((f: any) => f.visible_to_client);
+  const files = (project.project_files ?? []).filter((f) => f.visible_to_client);
 
   return (
     <DashboardShell role="client">
@@ -121,9 +121,9 @@ function ClientProjectDetail() {
 
       <div className="mt-4 grid gap-3">
         {STAGE_ORDER.map((stageName) => {
-          const s = stages.find((x: any) => x.stage === stageName);
+          const s = stages.find((x) => x.stage === stageName);
           const v = stageVisual(s?.status ?? "pending");
-          const stageFiles = files.filter((f: any) => f.stage === stageName);
+          const stageFiles = files.filter((f) => f.stage === stageName);
           const canApprove = s?.status === "sent_to_client";
           const Icon = v.icon;
           return (
@@ -196,7 +196,7 @@ function ClientProjectDetail() {
 
               {stageFiles.length > 0 && (
                 <div className="mt-3 space-y-1.5">
-                  {stageFiles.map((f: any) => (
+                  {stageFiles.map((f) => (
                     <a
                       key={f.id}
                       href={f.storage_path}

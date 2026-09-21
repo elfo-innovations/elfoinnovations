@@ -28,6 +28,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/utils";
+import type { Enums, TablesUpdate } from "@/integrations/supabase/types";
 
 const STAGE_ORDER = ["frontend", "backend", "database", "hosting"] as const;
 const STAGE_STATUSES = [
@@ -114,16 +116,13 @@ function AdminProjectDetail() {
     qc.invalidateQueries({ queryKey: ["admin-project", id] });
   };
 
-  const updateStage = async (stageId: string, patch: Record<string, any>) => {
-    const { error } = await supabase
-      .from("project_stages")
-      .update(patch as any)
-      .eq("id", stageId);
+  const updateStage = async (stageId: string, patch: TablesUpdate<"project_stages">) => {
+    const { error } = await supabase.from("project_stages").update(patch).eq("id", stageId);
     if (error) return toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["admin-project", id] });
   };
 
-  const upload = async (stage: string, file: File, visible_to_client: boolean) => {
+  const upload = async (stage: Enums<"stage_key">, file: File, visible_to_client: boolean) => {
     setUploadingStage(stage);
     try {
       const path = `${id}/${stage}/${Date.now()}-${file.name}`;
@@ -134,7 +133,7 @@ function AdminProjectDetail() {
         .createSignedUrl(path, 60 * 60 * 24 * 365);
       const { error } = await supabase.from("project_files").insert({
         project_id: id,
-        stage: stage as any,
+        stage: stage,
         file_name: file.name,
         storage_path: signed?.signedUrl ?? path,
         file_type: file.type,
@@ -145,8 +144,8 @@ function AdminProjectDetail() {
       if (error) throw error;
       toast.success("File uploaded");
       qc.invalidateQueries({ queryKey: ["admin-project", id] });
-    } catch (e: any) {
-      toast.error(e?.message || "Upload failed");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Upload failed"));
     } finally {
       setUploadingStage(null);
     }
@@ -165,13 +164,13 @@ function AdminProjectDetail() {
       const now = new Date().toISOString();
       const { error: pErr } = await supabase
         .from("projects")
-        .update({ status: "completed" as any, closed_at: now, progress_percent: 100 } as any)
+        .update({ status: "completed", closed_at: now, progress_percent: 100 })
         .eq("id", id);
       if (pErr) throw pErr;
       if (project.client_id) {
         const { error: cErr } = await supabase
           .from("clients")
-          .update({ closed_at: now } as any)
+          .update({ closed_at: now })
           .eq("id", project.client_id);
         if (cErr) throw cErr;
         const { data: cli } = await supabase
@@ -180,16 +179,13 @@ function AdminProjectDetail() {
           .eq("id", project.client_id)
           .maybeSingle();
         if (cli?.source_lead_id) {
-          await supabase
-            .from("leads")
-            .update({ status: "converted" as any })
-            .eq("id", cli.source_lead_id);
+          await supabase.from("leads").update({ status: "converted" }).eq("id", cli.source_lead_id);
         }
       }
       toast.success("Project closed. Client portal access revoked.");
       qc.invalidateQueries({ queryKey: ["admin-project", id] });
-    } catch (e: any) {
-      toast.error(e?.message || "Failed to close project");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Failed to close project"));
     } finally {
       setClosing(false);
     }
@@ -203,7 +199,7 @@ function AdminProjectDetail() {
     );
 
   const stages = [...(project.project_stages ?? [])].sort(
-    (a: any, b: any) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage),
+    (a, b) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage),
   );
 
   return (
@@ -249,7 +245,7 @@ function AdminProjectDetail() {
                 <SelectValue placeholder="Select developer" />
               </SelectTrigger>
               <SelectContent>
-                {(devs ?? []).map((d: any) => (
+                {(devs ?? []).map((d) => (
                   <SelectItem key={d.id} value={d.id}>
                     {d.full_name} · {d.status}
                   </SelectItem>
@@ -266,7 +262,7 @@ function AdminProjectDetail() {
 
         {(() => {
           const allApproved =
-            stages.length > 0 && stages.every((x: any) => x.status === "client_approved");
+            stages.length > 0 && stages.every((x) => x.status === "client_approved");
           if (project.closed_at) {
             return (
               <div className="mt-5 rounded-xl border border-emerald-500/40 bg-emerald-500/5 p-3 text-xs text-emerald-700 dark:text-emerald-400">
@@ -304,12 +300,10 @@ function AdminProjectDetail() {
 
       <div className="mt-4 space-y-4">
         {STAGE_ORDER.map((stageName) => {
-          const s = stages.find((x: any) => x.stage === stageName);
+          const s = stages.find((x) => x.stage === stageName);
           if (!s) return null;
           const v = stageVisual(s.status);
-          const stageFiles = (project.project_files ?? []).filter(
-            (f: any) => f.stage === stageName,
-          );
+          const stageFiles = (project.project_files ?? []).filter((f) => f.stage === stageName);
           const Icon = v.icon;
           return (
             <div key={s.id} className="glass-card rounded-2xl p-5">
@@ -327,8 +321,9 @@ function AdminProjectDetail() {
                 </div>
                 <Select
                   value={s.status}
-                  onValueChange={(status) =>
-                    updateStage(s.id, {
+                  onValueChange={(value) => {
+                    const status = value as Enums<"stage_status">;
+                    return updateStage(s.id, {
                       status,
                       ...(status === "admin_approved"
                         ? { admin_approved_at: new Date().toISOString() }
@@ -336,8 +331,8 @@ function AdminProjectDetail() {
                       ...(status === "sent_to_client"
                         ? { sent_to_client_at: new Date().toISOString() }
                         : {}),
-                    })
-                  }
+                    });
+                  }}
                 >
                   <SelectTrigger className="h-8 w-[180px] text-xs">
                     <SelectValue />
@@ -406,7 +401,7 @@ function AdminProjectDetail() {
 
               {stageFiles.length > 0 && (
                 <div className="mt-3 space-y-1.5">
-                  {stageFiles.map((f: any) => (
+                  {stageFiles.map((f) => (
                     <a
                       key={f.id}
                       href={f.storage_path}

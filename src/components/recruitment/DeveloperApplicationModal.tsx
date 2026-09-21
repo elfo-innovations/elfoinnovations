@@ -24,6 +24,7 @@ import {
   validateApplication,
 } from "@/lib/application-validation";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/utils";
 
 type Form = {
   full_name: string;
@@ -140,7 +141,7 @@ export function DeveloperApplicationModal({
 
   const onSubmit = async () => {
     const payload = { ...form, skills, agreed, resume_name: file?.name ?? null };
-    const errs = validateApplication(payload as any);
+    const errs = validateApplication(payload);
     setErrors(errs);
     if (Object.keys(errs).length) {
       toast.error("Please fix the highlighted fields");
@@ -157,14 +158,14 @@ export function DeveloperApplicationModal({
         if (upErr) throw new Error(`Resume upload failed: ${upErr.message}`);
         resume_path = path;
       }
-      const res: any = await submit({ data: { ...payload, resume_path } as any });
+      const res = await submit({ data: { ...payload, resume_path } });
       setDone(true);
       if (!res?.emailSent) {
         // Application is stored; email delivery just isn't configured yet.
         console.warn("Confirmation email not sent:", res?.emailError);
       }
-    } catch (e: any) {
-      toast.error(e?.message || "Could not submit your application");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Could not submit your application"));
     } finally {
       setBusy(false);
     }

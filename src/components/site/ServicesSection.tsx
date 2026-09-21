@@ -12,10 +12,11 @@ import {
   Server,
   LifeBuoy,
   ArrowUpRight,
+  type LucideIcon,
 } from "lucide-react";
 import { useInquiry } from "@/hooks/use-inquiry";
 
-const DEFAULTS = [
+const DEFAULTS: { id?: string; title: string; description: string; icon: string | null }[] = [
   {
     title: "Web Development",
     description: "High-performance websites and platforms built with modern stacks.",
@@ -68,7 +69,7 @@ const DEFAULTS = [
   },
 ];
 
-const ICONS: Record<string, any> = {
+const ICONS: Record<string, LucideIcon> = {
   Code2,
   Smartphone,
   Cloud,
@@ -88,7 +89,7 @@ export function ServicesSection() {
     queryFn: async () =>
       (await supabase.from("services").select("*").eq("is_active", true).order("sort_order")).data,
   });
-  const items = (data && data.length > 0 ? data : DEFAULTS) as any[];
+  const items = data && data.length > 0 ? data : DEFAULTS;
 
   return (
     <section id="services" className="border-t bg-muted/20 py-20 sm:py-28">
@@ -120,7 +121,7 @@ export function ServicesSection() {
                 </div>
               ))
             : items.map((s, i) => {
-                const Icon = ICONS[s.icon] || Code2;
+                const Icon = (s.icon && ICONS[s.icon]) || Code2;
                 return (
                   <div
                     key={s.id ?? i}

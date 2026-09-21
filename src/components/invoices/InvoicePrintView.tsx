@@ -5,6 +5,7 @@ import { Loader2, Mail, Printer, X } from "lucide-react";
 import { ElfoLogo } from "@/components/brand/Logo";
 import { sendInvoiceEmail } from "@/lib/invoice-email.functions";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/utils";
 
 export type ProjectInvoiceRow = {
   id: string;
@@ -60,8 +61,8 @@ export function InvoicePrintView({
       });
       if (result.ok) toast.success(`Invoice emailed to ${invoice.clients.email}`);
       else toast.error(result.error || "Failed to send invoice email");
-    } catch (e: any) {
-      toast.error(e?.message || "Failed to send invoice email");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Failed to send invoice email"));
     } finally {
       setSending(false);
     }

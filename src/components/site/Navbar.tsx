@@ -51,8 +51,8 @@ export function Navbar() {
     { id: "b", label: t("nav.blog"), href: "/blogs" },
     { id: "a", label: t("nav.about"), href: "/about" },
   ];
-  const links = (data && data.length > 0 ? data : FALLBACK) as any[];
-  const labelFor = (l: any) => {
+  const links = data && data.length > 0 ? data : FALLBACK;
+  const labelFor = (l: { href: string; label: string }) => {
     const key = NAV_KEY_BY_HREF[l.href];
     return key ? t(key, { defaultValue: l.label }) : l.label;
   };

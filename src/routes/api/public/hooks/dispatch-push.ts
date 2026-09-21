@@ -125,8 +125,8 @@ export const Route = createFileRoute("/api/public/hooks/dispatch-push")({
                   payload,
                 );
                 sent++;
-              } catch (err: any) {
-                const status = err?.statusCode;
+              } catch (err) {
+                const status = (err as { statusCode?: number } | null)?.statusCode;
                 if (status === 404 || status === 410) stale.push(s.id);
               }
             }),
@@ -135,9 +135,11 @@ export const Route = createFileRoute("/api/public/hooks/dispatch-push")({
             await supabaseAdmin.from("push_subscriptions").delete().in("id", stale);
           }
           return Response.json({ sent, pruned: stale.length });
-        } catch (err: any) {
+        } catch (err) {
           console.error("[dispatch-push]", err);
-          return new Response(err?.message || "error", { status: 500 });
+          return new Response(err instanceof Error && err.message ? err.message : "error", {
+            status: 500,
+          });
         }
       },
     },

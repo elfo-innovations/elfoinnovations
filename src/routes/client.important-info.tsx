@@ -1,6 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { FileText, Download, Database, FolderKey, Receipt, Briefcase } from "lucide-react";
+import {
+  FileText,
+  Download,
+  Database,
+  FolderKey,
+  Receipt,
+  Briefcase,
+  type LucideIcon,
+} from "lucide-react";
+import type { ReactNode } from "react";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -11,7 +20,17 @@ export const Route = createFileRoute("/client/important-info")({
   component: ImportantInfo,
 });
 
-function Section({ icon: Icon, title, subtitle, children }: any) {
+function Section({
+  icon: Icon,
+  title,
+  subtitle,
+  children,
+}: {
+  icon: LucideIcon;
+  title: string;
+  subtitle?: string;
+  children: ReactNode;
+}) {
   return (
     <div className="glass-card rounded-2xl p-5 sm:p-6">
       <div className="flex items-start gap-3">
@@ -68,7 +87,7 @@ function ImportantInfo() {
     queryKey: ["client-info-files", client?.id],
     enabled: !!client && !!projects?.length,
     queryFn: async () => {
-      const ids = projects!.map((p: any) => p.id);
+      const ids = projects!.map((p) => p.id);
       if (!ids.length) return [];
       return (
         (
@@ -83,11 +102,7 @@ function ImportantInfo() {
   });
 
   const activeProject = projects?.[0];
-  const contracts = (files ?? []).filter(
-    (f: any) =>
-      /contract|agreement|nda|proposal|doc/i.test(f.category ?? "") ||
-      /\.(pdf|docx?)$/i.test(f.file_name ?? ""),
-  );
+  const contracts = (files ?? []).filter((f) => /\.(pdf|docx?)$/i.test(f.file_name ?? ""));
 
   return (
     <DashboardShell role="client">
@@ -102,7 +117,7 @@ function ImportantInfo() {
           title="Project"
           subtitle={
             activeProject
-              ? `${(activeProject as any).project_code} · ${activeProject.name}`
+              ? `${activeProject.project_code} · ${activeProject.name}`
               : "Awaiting kickoff"
           }
         >
@@ -111,15 +126,10 @@ function ImportantInfo() {
               <Badge variant="outline" className="capitalize">
                 {activeProject.status?.replace(/_/g, " ")}
               </Badge>
-              {(activeProject as any).start_date && (
+              {activeProject.start_date && (
                 <span className="text-xs text-muted-foreground">
-                  Started {new Date((activeProject as any).start_date).toLocaleDateString()}
+                  Started {new Date(activeProject.start_date).toLocaleDateString()}
                 </span>
-              )}
-              {(activeProject as any).summary && (
-                <p className="mt-2 w-full text-sm text-muted-foreground">
-                  {(activeProject as any).summary}
-                </p>
               )}
             </div>
           ) : (
@@ -134,9 +144,9 @@ function ImportantInfo() {
           title="Database & credentials"
           subtitle="Shared securely by your admin"
         >
-          {(activeProject as any)?.internal_notes ? (
+          {activeProject?.internal_notes ? (
             <pre className="whitespace-pre-wrap rounded-xl border bg-background/60 p-3 font-mono text-xs">
-              {(activeProject as any).internal_notes}
+              {activeProject.internal_notes}
             </pre>
           ) : (
             <p className="text-sm text-muted-foreground">
@@ -165,7 +175,7 @@ function ImportantInfo() {
                   </tr>
                 </thead>
                 <tbody>
-                  {invoices!.map((inv: any) => (
+                  {invoices!.map((inv) => (
                     <tr key={inv.id} className="border-b last:border-0">
                       <td className="py-2 pr-4">{inv.title}</td>
                       <td className="py-2 pr-4 font-mono text-xs">
@@ -211,10 +221,10 @@ function ImportantInfo() {
             <p className="text-sm text-muted-foreground">No documents shared yet.</p>
           ) : (
             <ul className="grid gap-2">
-              {contracts.map((f: any) => (
+              {contracts.map((f) => (
                 <li key={f.id}>
                   <a
-                    href={f.file_url}
+                    href={f.storage_path}
                     target="_blank"
                     rel="noreferrer"
                     className="flex items-center gap-3 rounded-xl border bg-background/60 p-3 text-sm hover:border-primary"

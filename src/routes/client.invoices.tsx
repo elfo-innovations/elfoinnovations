@@ -19,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { InvoicePrintView, type ProjectInvoiceRow } from "@/components/invoices/InvoicePrintView";
+import { getErrorMessage } from "@/lib/utils";
 
 export const Route = createFileRoute("/client/invoices")({
   component: ClientInvoices,
@@ -114,8 +115,8 @@ function ClientInvoices() {
       setForm({ title: "", amount: "", currency: "USD", note: "", project_id: "" });
       setFile(null);
       qc.invalidateQueries({ queryKey: ["client-invoices"] });
-    } catch (e: any) {
-      toast.error(e?.message || "Failed to submit");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Failed to submit"));
     } finally {
       setBusy(false);
     }
@@ -198,7 +199,7 @@ function ClientInvoices() {
       </div>
 
       <div className="mt-6 grid gap-3">
-        {(invoices ?? []).map((inv: any) => (
+        {(invoices ?? []).map((inv) => (
           <div key={inv.id} className="glass-card rounded-2xl p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
@@ -275,7 +276,7 @@ function ClientInvoices() {
                   onChange={(e) => setForm({ ...form, project_id: e.target.value })}
                 >
                   <option value="">— none —</option>
-                  {(projects ?? []).map((p: any) => (
+                  {(projects ?? []).map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.project_code} · {p.name}
                     </option>

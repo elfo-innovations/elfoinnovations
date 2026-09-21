@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { translateMessage } from "@/lib/translate.functions";
 import { getScopedLang, LANGUAGES, type LangCode } from "@/i18n";
+import { getErrorMessage } from "@/lib/utils";
 
 type Role = "admin" | "developer" | "client";
 
@@ -22,8 +23,8 @@ type Conv = {
   id: string;
   subject: string | null;
   project_id: string | null;
-  client_id: string;
-  kind?: "client_admin" | "developer_admin";
+  client_id: string | null;
+  kind?: string;
   peer_name?: string;
   peer_role?: "client" | "developer";
   project_name?: string;
@@ -142,7 +143,7 @@ export function ChatWidget({ role }: { role: Role }) {
       .in("conversation_id", convIds)
       .order("created_at", { ascending: false })
       .limit(50);
-    const rows = (data ?? []) as any[];
+    const rows = data ?? [];
     const latest = rows[0];
     const unreadCount = rows.filter((m) => m.sender_id !== user.id && !m.read_at).length;
     if (!latest) {
@@ -169,7 +170,7 @@ export function ChatWidget({ role }: { role: Role }) {
     if (role === "client") q = q.eq("kind", "client_admin");
     else if (role === "developer") q = q.eq("kind", "developer_admin");
     const { data: raw } = await q;
-    const list: Conv[] = (raw ?? []).map((c: any) => ({
+    const list: Conv[] = (raw ?? []).map((c) => ({
       id: c.id,
       subject: c.subject,
       project_id: c.project_id,
@@ -198,7 +199,7 @@ export function ChatWidget({ role }: { role: Role }) {
         .from("profiles")
         .select("id, full_name, email")
         .in("id", ids);
-      const nameById = new Map((profs ?? []).map((p: any) => [p.id, p.full_name || p.email]));
+      const nameById = new Map((profs ?? []).map((p) => [p.id, p.full_name || p.email]));
       msgs.forEach((m) => (m.sender_name = nameById.get(m.sender_id) || m.sender_role));
     }
     setMessages(msgs);
@@ -250,7 +251,7 @@ export function ChatWidget({ role }: { role: Role }) {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "messages" },
-        (payload: any) => {
+        (payload) => {
           const m = payload.new;
           if (m.sender_id !== user.id) {
             setUnread((u) => u + 1);
@@ -293,7 +294,9 @@ export function ChatWidget({ role }: { role: Role }) {
           setTranslations((t) => ({ ...t, [key]: parsed }));
           continue;
         }
-      } catch {}
+      } catch {
+        // Cache read failed (storage blocked or invalid JSON); translate fresh instead.
+      }
       translatingRef.current.add(key);
       translateMessage({ data: { text: m.body!, target: myLang } })
         .then((res) => {
@@ -301,7 +304,9 @@ export function ChatWidget({ role }: { role: Role }) {
           setTranslations((t) => ({ ...t, [key]: entry }));
           try {
             window.localStorage.setItem(`elfo-trans:${key}`, JSON.stringify(entry));
-          } catch {}
+          } catch {
+            // Cache write failed (storage full or blocked); the translation still displays.
+          }
         })
         .catch(() => {})
         .finally(() => {
@@ -323,8 +328,8 @@ export function ChatWidget({ role }: { role: Role }) {
       });
       if (error) throw error;
       setInput("");
-    } catch (e: any) {
-      toast.error(e?.message || "Failed to send");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Failed to send"));
     } finally {
       setSending(false);
     }
@@ -350,8 +355,8 @@ export function ChatWidget({ role }: { role: Role }) {
         attachment_type: file.type,
       });
       if (error) throw error;
-    } catch (e: any) {
-      toast.error(e?.message || "Failed to attach");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Failed to attach"));
     } finally {
       setSending(false);
     }

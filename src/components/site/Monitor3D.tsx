@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState, type ComponentRef } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Preload, useGLTF } from "@react-three/drei";
 
@@ -34,7 +34,7 @@ useGLTF.preload("/desktop_pc/scene.gltf");
 
 export function Monitor3D() {
   const [isMobile, setIsMobile] = useState(false);
-  const controlsRef = useRef<any>(null);
+  const controlsRef = useRef<ComponentRef<typeof OrbitControls>>(null);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 640px)");

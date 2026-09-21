@@ -5,6 +5,7 @@ import { Footer } from "@/components/site/Footer";
 import { PromoMarquee } from "@/components/site/PromoMarquee";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteChatWidget } from "@/components/site/SiteChatWidget";
+import type { Tables } from "@/integrations/supabase/types";
 /** Lightens a #rrggbb hex color toward white by the given 0–1 amount. */
 function lighten(hex: string, amount: number): string {
   const m = hex.replace("#", "");
@@ -35,7 +36,7 @@ function usePromoSettings() {
   });
 }
 
-function usePromoThemeColors(data: any) {
+function usePromoThemeColors(data: Tables<"promo_settings"> | null | undefined) {
   useEffect(() => {
     const root = document.documentElement;
 

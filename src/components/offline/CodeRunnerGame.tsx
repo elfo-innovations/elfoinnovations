@@ -67,7 +67,9 @@ function makeSound() {
   const get = () => {
     if (ctx) return ctx;
     try {
-      const AC = window.AudioContext || (window as any).webkitAudioContext;
+      const AC =
+        window.AudioContext ||
+        (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!AC) return null;
       ctx = new AC();
     } catch {

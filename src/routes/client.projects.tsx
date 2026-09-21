@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/utils";
 
 const STAGE_ORDER = ["frontend", "backend", "database", "hosting"] as const;
 const COMPLETED = new Set(["admin_approved", "sent_to_client", "client_approved"]);
@@ -82,8 +83,8 @@ function ClientProjects() {
     try {
       const project_code = `PRJ-${Date.now().toString(36).toUpperCase()}`;
       const selected_services = (services ?? [])
-        .filter((s: any) => selectedServiceIds.includes(s.id))
-        .map((s: any) => ({ service_id: s.id }));
+        .filter((s) => selectedServiceIds.includes(s.id))
+        .map((s) => ({ service_id: s.id }));
 
       const { error } = await supabase.from("projects").insert({
         project_code,
@@ -92,7 +93,7 @@ function ClientProjects() {
         client_id: client.id,
         budget: form.budget ? Number(form.budget) : null,
         deadline: form.deadline || null,
-        status: "planning" as any,
+        status: "planning",
         selected_services,
       });
       if (error) throw error;
@@ -105,8 +106,8 @@ function ClientProjects() {
       setForm({ name: "", requirements: "", budget: "", deadline: "" });
       setSelectedServiceIds([]);
       qc.invalidateQueries({ queryKey: ["client-projects"] });
-    } catch (e: any) {
-      toast.error(e?.message || "Failed to submit");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Failed to submit"));
     } finally {
       setBusy(false);
     }
@@ -130,11 +131,11 @@ function ClientProjects() {
       </div>
 
       <div className="mt-6 space-y-4">
-        {(data ?? []).map((p: any) => {
+        {(data ?? []).map((p) => {
           const stages = [...(p.project_stages ?? [])].sort(
-            (a: any, b: any) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage),
+            (a, b) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage),
           );
-          const done = stages.filter((s: any) => COMPLETED.has(s.status)).length;
+          const done = stages.filter((s) => COMPLETED.has(s.status)).length;
           const total = stages.length || 4;
           return (
             <Link
@@ -231,7 +232,7 @@ function ClientProjects() {
                 {(services ?? []).length === 0 && (
                   <div className="text-xs text-muted-foreground">No services configured yet.</div>
                 )}
-                {(services ?? []).map((s: any) => (
+                {(services ?? []).map((s) => (
                   <label
                     key={s.id}
                     className="flex cursor-pointer items-center justify-between gap-3 rounded-lg px-2 py-1.5 hover:bg-accent"

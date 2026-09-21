@@ -38,6 +38,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/utils";
+import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/admin/clients")({
   head: () => ({ meta: [{ title: "Clients — Admin" }] }),
@@ -90,14 +92,14 @@ function AdminClients() {
   });
 
   // Build lookup maps for the referral network: who referred whom.
-  const clientsById = new Map((data ?? []).map((c: any) => [c.id, c]));
+  const clientsById = new Map((data ?? []).map((c) => [c.id, c]));
   const referrerIds = new Set(
     (data ?? [])
-      .filter((c: any) => c.referred_by_client_id)
-      .map((c: any) => c.referred_by_client_id),
+      .filter((c) => c.referred_by_client_id)
+      .map((c) => c.referred_by_client_id),
   );
   const referredCountByReferrer = new Map<string, number>();
-  (data ?? []).forEach((c: any) => {
+  (data ?? []).forEach((c) => {
     if (c.referred_by_client_id) {
       referredCountByReferrer.set(
         c.referred_by_client_id,
@@ -105,7 +107,7 @@ function AdminClients() {
       );
     }
   });
-  const isConnected = (c: any) => !!c.referred_by_client_id || referrerIds.has(c.id);
+  const isConnected = (c: Tables<"clients">) => !!c.referred_by_client_id || referrerIds.has(c.id);
 
   const reset = () => {
     setForm({
@@ -146,8 +148,8 @@ function AdminClients() {
       setOpen(false);
       reset();
       qc.invalidateQueries({ queryKey: ["admin-clients"] });
-    } catch (e: any) {
-      toast.error(e?.message || "Failed to create client");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Failed to create client"));
     } finally {
       setBusy(false);
     }
@@ -173,8 +175,8 @@ function AdminClients() {
       });
       toast.success("Credentials emailed to " + credentials.email);
       setCredentials(null);
-    } catch (e: any) {
-      toast.error(e?.message || "Failed to send email");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Failed to send email"));
     } finally {
       setActionBusy(null);
     }
@@ -190,8 +192,8 @@ function AdminClients() {
       });
       toast.success("Password reset");
       setResetDraft(null);
-    } catch (e: any) {
-      toast.error(e?.message || "Reset failed");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Reset failed"));
     } finally {
       setActionBusy(null);
     }
@@ -208,8 +210,8 @@ function AdminClients() {
       });
       toast.success("Password reset & credentials emailed to " + resetDraft.email);
       setResetDraft(null);
-    } catch (e: any) {
-      toast.error(e?.message || "Reset/email failed");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Reset/email failed"));
     } finally {
       setActionBusy(null);
     }
@@ -263,7 +265,7 @@ function AdminClients() {
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {(data ?? [])
-          .filter((c: any) => {
+          .filter((c) => {
             const q = search.trim().toLowerCase();
             if (
               q &&
@@ -275,7 +277,7 @@ function AdminClients() {
             if (view === "connected" && !isConnected(c)) return false;
             return true;
           })
-          .map((c: any) => {
+          .map((c) => {
             const referrer = c.referred_by_client_id
               ? clientsById.get(c.referred_by_client_id)
               : null;
@@ -318,7 +320,7 @@ function AdminClients() {
                       className="text-primary hover:bg-primary/10"
                       onClick={() =>
                         setResetDraft({
-                          user_id: c.user_id,
+                          user_id: c.user_id!,
                           name: c.full_name,
                           email: c.email,
                           password: generateBrandedPassword(),
@@ -339,8 +341,8 @@ function AdminClients() {
                         await deleteClient({ data: { client_id: c.id } });
                         toast.success("Client deleted");
                         qc.invalidateQueries({ queryKey: ["admin-clients"] });
-                      } catch (e: any) {
-                        toast.error(e?.message || "Delete failed");
+                      } catch (e) {
+                        toast.error(getErrorMessage(e, "Delete failed"));
                       }
                     }}
                   >
@@ -358,7 +360,7 @@ function AdminClients() {
         {data &&
           data.length > 0 &&
           view === "connected" &&
-          !data.some((c: any) => isConnected(c)) && (
+          !data.some((c) => isConnected(c)) && (
             <div className="col-span-full rounded-2xl border border-dashed p-10 text-center text-sm text-muted-foreground">
               No connected clients yet — no one has used a referral code so far.
             </div>

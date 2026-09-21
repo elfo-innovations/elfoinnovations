@@ -26,6 +26,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/utils";
+import type { Enums, TablesUpdate } from "@/integrations/supabase/types";
 
 const STAGE_ORDER = ["frontend", "backend", "database", "hosting"] as const;
 const DEV_STATUSES = ["pending", "delivered", "admin_review", "revision_requested"];
@@ -71,17 +73,14 @@ function DevProjectDetail() {
       ).data,
   });
 
-  const updateStage = async (stageId: string, patch: Record<string, any>) => {
-    const { error } = await supabase
-      .from("project_stages")
-      .update(patch as any)
-      .eq("id", stageId);
+  const updateStage = async (stageId: string, patch: TablesUpdate<"project_stages">) => {
+    const { error } = await supabase.from("project_stages").update(patch).eq("id", stageId);
     if (error) return toast.error(error.message);
     toast.success("Updated");
     qc.invalidateQueries({ queryKey: ["dev-project", id] });
   };
 
-  const upload = async (stage: string, file: File) => {
+  const upload = async (stage: Enums<"stage_key">, file: File) => {
     setUploadingStage(stage);
     try {
       const path = `${id}/${stage}/${Date.now()}-${file.name}`;
@@ -92,7 +91,7 @@ function DevProjectDetail() {
         .createSignedUrl(path, 60 * 60 * 24 * 365);
       const { error } = await supabase.from("project_files").insert({
         project_id: id,
-        stage: stage as any,
+        stage: stage,
         file_name: file.name,
         storage_path: signed?.signedUrl ?? path,
         file_type: file.type,
@@ -103,8 +102,8 @@ function DevProjectDetail() {
       if (error) throw error;
       toast.success("File uploaded to admin");
       qc.invalidateQueries({ queryKey: ["dev-project", id] });
-    } catch (e: any) {
-      toast.error(e?.message || "Upload failed");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Upload failed"));
     } finally {
       setUploadingStage(null);
     }
@@ -118,7 +117,7 @@ function DevProjectDetail() {
     );
 
   const stages = [...(project.project_stages ?? [])].sort(
-    (a: any, b: any) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage),
+    (a, b) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage),
   );
 
   return (
@@ -160,12 +159,10 @@ function DevProjectDetail() {
 
       <div className="mt-4 space-y-4">
         {STAGE_ORDER.map((stageName) => {
-          const s = stages.find((x: any) => x.stage === stageName);
+          const s = stages.find((x) => x.stage === stageName);
           if (!s) return null;
           const v = stageVisual(s.status);
-          const stageFiles = (project.project_files ?? []).filter(
-            (f: any) => f.stage === stageName,
-          );
+          const stageFiles = (project.project_files ?? []).filter((f) => f.stage === stageName);
           const Icon = v.icon;
           const locked = ["admin_approved", "sent_to_client", "client_approved"].includes(s.status);
           return (
@@ -185,12 +182,13 @@ function DevProjectDetail() {
                 <Select
                   value={s.status}
                   disabled={locked}
-                  onValueChange={(status) =>
-                    updateStage(s.id, {
+                  onValueChange={(value) => {
+                    const status = value as Enums<"stage_status">;
+                    return updateStage(s.id, {
                       status,
                       ...(status === "delivered" ? { submitted_at: new Date().toISOString() } : {}),
-                    })
-                  }
+                    });
+                  }}
                 >
                   <SelectTrigger className="h-8 w-[180px] text-xs">
                     <SelectValue />
@@ -247,7 +245,7 @@ function DevProjectDetail() {
 
               {stageFiles.length > 0 && (
                 <div className="mt-3 space-y-1.5">
-                  {stageFiles.map((f: any) => (
+                  {stageFiles.map((f) => (
                     <a
                       key={f.id}
                       href={f.storage_path}

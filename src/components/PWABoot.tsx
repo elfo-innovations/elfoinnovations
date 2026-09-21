@@ -43,7 +43,7 @@ export function PWABoot() {
         .catch((err) => console.warn("[pwa] sw register failed", err));
     };
     if ("requestIdleCallback" in window) {
-      (window as any).requestIdleCallback(onIdle, { timeout: 3000 });
+      window.requestIdleCallback(onIdle, { timeout: 3000 });
     } else {
       setTimeout(onIdle, 1500);
     }

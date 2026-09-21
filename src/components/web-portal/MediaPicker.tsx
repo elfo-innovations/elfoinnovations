@@ -12,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Upload, ImagePlus, Search, Check, Loader2, ImageOff } from "lucide-react";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/utils";
 
 export async function uploadToWebsiteMedia(file: File): Promise<string> {
   const ext = file.name.split(".").pop() || "png";
@@ -31,7 +32,7 @@ export async function uploadToWebsiteMedia(file: File): Promise<string> {
     file_type: file.type,
     file_size: file.size,
     folder: "website",
-  } as any);
+  });
   return url;
 }
 
@@ -56,7 +57,7 @@ export function MediaPicker({
         .data ?? [],
   });
 
-  const filtered = (items as any[]).filter(
+  const filtered = items.filter(
     (m) => !search || m.file_name?.toLowerCase().includes(search.toLowerCase()),
   );
 
@@ -68,8 +69,8 @@ export function MediaPicker({
       qc.invalidateQueries({ queryKey: ["media_library"] });
       toast.success("Uploaded");
       setOpen(false);
-    } catch (e: any) {
-      toast.error(e.message || "Upload failed");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Upload failed"));
     } finally {
       setUploading(false);
     }
@@ -142,14 +143,14 @@ export function MediaPicker({
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
-                  {filtered.map((m: any) => {
+                  {filtered.map((m) => {
                     const selected = value === m.public_url;
                     return (
                       <button
                         key={m.id}
                         type="button"
                         onClick={() => {
-                          onChange(m.public_url);
+                          onChange(m.public_url ?? "");
                           setOpen(false);
                         }}
                         className={`group relative w-full overflow-hidden rounded-xl border bg-muted transition ${
@@ -164,7 +165,7 @@ export function MediaPicker({
                           style={{ aspectRatio: "21 / 9" }}
                         >
                           <img
-                            src={m.public_url}
+                            src={m.public_url ?? undefined}
                             alt={m.file_name}
                             loading="lazy"
                             className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105"

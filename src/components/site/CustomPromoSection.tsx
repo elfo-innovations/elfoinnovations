@@ -133,7 +133,8 @@ export function CustomPromoSection({
     queryKey: ["promo_banners", "custom", sectionKey],
     queryFn: async () =>
       ((
-        await (supabase.from("promo_banners") as any)
+        await supabase
+          .from("promo_banners")
           .select("*")
           .eq("position", sectionKey)
           .eq("is_active", true)

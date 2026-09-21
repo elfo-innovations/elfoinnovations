@@ -31,14 +31,16 @@ export const Route = createFileRoute("/sitemap.xml")({
             .eq("is_published", true);
           for (const b of data ?? []) {
             entries.push({
-              path: `/blogs/${(b as any).slug}`,
+              path: `/blogs/${(b).slug}`,
               lastmod:
-                ((b as any).updated_at || (b as any).published_at || "").slice(0, 10) || undefined,
+                ((b).updated_at || (b).published_at || "").slice(0, 10) || undefined,
               changefreq: "monthly",
               priority: "0.6",
             });
           }
-        } catch {}
+        } catch {
+          // Blog lookup failed; still serve the sitemap with the static routes.
+        }
 
         const urls = entries.map((e) =>
           [

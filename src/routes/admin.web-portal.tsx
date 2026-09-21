@@ -56,6 +56,8 @@ import {
   GripVertical,
   ExternalLink,
 } from "lucide-react";
+import { getErrorMessage } from "@/lib/utils";
+import type { Database, Tables, TablesUpdate } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/admin/web-portal")({
   validateSearch: (s: Record<string, unknown>) => ({ tab: (s.tab as string) || "overview" }),
@@ -237,7 +239,16 @@ function Overview() {
 }
 
 /* ---------- Sections Manager (drag reorder + enable) ---------- */
-function SortableRow({ id, children }: { id: string; children: (h: any) => React.ReactNode }) {
+type DragHandleProps = ReturnType<typeof useSortable>["attributes"] &
+  ReturnType<typeof useSortable>["listeners"];
+
+function SortableRow({
+  id,
+  children,
+}: {
+  id: string;
+  children: (h: DragHandleProps) => React.ReactNode;
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
   });
@@ -262,7 +273,7 @@ function SectionsManager() {
     queryFn: async () =>
       (await supabase.from("website_sections").select("*").order("sort_order")).data ?? [],
   });
-  const items = data as any[];
+  const items = data;
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const [newTitle, setNewTitle] = useState("");
 
@@ -296,7 +307,7 @@ function SectionsManager() {
       title: newTitle.trim(),
       is_enabled: true,
       sort_order: maxSort + 10,
-    } as any);
+    });
     if (error) return toast.error(error.message);
     setNewTitle("");
     qc.invalidateQueries({ queryKey: ["website_sections"] });
@@ -548,7 +559,7 @@ function NavbarEditor() {
     queryFn: async () =>
       (await supabase.from("nav_links").select("*").order("sort_order")).data ?? [],
   });
-  const links = data as any[];
+  const links = data;
   const [label, setLabel] = useState("");
   const [href, setHref] = useState("");
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -570,14 +581,12 @@ function NavbarEditor() {
   };
   const add = async () => {
     if (!label || !href) return;
-    await supabase
-      .from("nav_links")
-      .insert({ label, href, sort_order: (links.length + 1) * 10 } as any);
+    await supabase.from("nav_links").insert({ label, href, sort_order: (links.length + 1) * 10 });
     setLabel("");
     setHref("");
     qc.invalidateQueries({ queryKey: ["nav_links"] });
   };
-  const update = async (id: string, patch: any) => {
+  const update = async (id: string, patch: TablesUpdate<"nav_links">) => {
     await supabase.from("nav_links").update(patch).eq("id", id);
     qc.invalidateQueries({ queryKey: ["nav_links"] });
   };
@@ -653,7 +662,7 @@ function Field({
   type = "text",
 }: {
   label: string;
-  value?: any;
+  value?: string | number | null;
   onChange: (v: string) => void;
   type?: string;
 }) {
@@ -675,7 +684,7 @@ function TextField({
   onChange,
 }: {
   label: string;
-  value?: any;
+  value?: string | null;
   onChange: (v: string) => void;
 }) {
   return (
@@ -691,8 +700,26 @@ function TextField({
   );
 }
 
+/* ---------- Table-agnostic CRUD plumbing ---------- */
+// CrudList works on whichever table its caller names, so the per-table generics of the
+// Supabase client can't apply. This is the minimal structural view of the query builder
+// that it actually uses; each call site still declares its row type via `CrudList<Row>`.
+type CrudError = { message: string } | null;
+type CrudTable = {
+  select: (cols: string) => {
+    order: (col: string, opts: { ascending: boolean }) => PromiseLike<{ data: unknown[] | null }>;
+  };
+  update: (v: Record<string, unknown>) => {
+    eq: (col: string, v: string) => PromiseLike<{ error: CrudError }>;
+  };
+  insert: (v: Record<string, unknown>) => PromiseLike<{ error: CrudError }>;
+  delete: () => { eq: (col: string, v: string) => PromiseLike<{ error: CrudError }> };
+};
+const crudTable = (table: keyof Database["public"]["Tables"]) =>
+  supabase.from(table) as unknown as CrudTable;
+
 /* ---------- Generic CRUD table ---------- */
-function CrudList({
+function CrudList<T extends { id?: string }>({
   title,
   table,
   orderBy = "sort_order",
@@ -704,12 +731,12 @@ function CrudList({
   allowSaveAndNew,
 }: {
   title: string;
-  table: string;
+  table: keyof Database["public"]["Tables"];
   orderBy?: string;
   visibilityCol?: string;
-  columns: { label: string; render: (r: any) => React.ReactNode }[];
-  renderForm: (state: any, setState: (v: any) => void) => React.ReactNode;
-  empty: any;
+  columns: { label: string; render: (r: T) => React.ReactNode }[];
+  renderForm: (state: Partial<T>, setState: (v: Partial<T>) => void) => React.ReactNode;
+  empty: Partial<T>;
   wide?: boolean;
   allowSaveAndNew?: boolean;
 }) {
@@ -717,30 +744,24 @@ function CrudList({
   const { data = [] } = useQuery({
     queryKey: [table, "admin"],
     queryFn: async () =>
-      (
-        await supabase
-          .from(table as any)
-          .select("*")
-          .order(orderBy, { ascending: true })
-      ).data ?? [],
+      ((await crudTable(table).select("*").order(orderBy, { ascending: true })).data ?? []) as T[],
   });
-  const rows = data as any[];
+  const rows = data;
   const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<any>(null);
+  const [editing, setEditing] = useState<Partial<T> | null>(null);
 
   const save = async (keepOpen?: boolean) => {
-    const p = { ...editing };
+    const p: Record<string, unknown> = { ...editing };
     delete p.created_at;
     delete p.updated_at;
     let err;
     if (p.id) {
-      const { error } = await supabase
-        .from(table as any)
+      const { error } = await crudTable(table)
         .update(p)
-        .eq("id", p.id);
+        .eq("id", p.id as string);
       err = error;
     } else {
-      const { error } = await supabase.from(table as any).insert(p);
+      const { error } = await crudTable(table).insert(p);
       err = error;
     }
     if (err) return toast.error(err.message);
@@ -755,16 +776,12 @@ function CrudList({
   };
   const del = async (id: string) => {
     if (!confirm("Delete?")) return;
-    await supabase
-      .from(table as any)
-      .delete()
-      .eq("id", id);
+    await crudTable(table).delete().eq("id", id);
     qc.invalidateQueries({ queryKey: [table] });
   };
   const toggleVis = async (id: string, v: boolean) => {
     if (!visibilityCol) return;
-    await supabase
-      .from(table as any)
+    await crudTable(table)
       .update({ [visibilityCol]: v })
       .eq("id", id);
     qc.invalidateQueries({ queryKey: [table] });
@@ -862,7 +879,7 @@ function CrudList({
 /* ---------- Services ---------- */
 function ServicesEditor() {
   return (
-    <CrudList
+    <CrudList<Tables<"services">>
       title="Services"
       table="services"
       visibilityCol="is_active"
@@ -931,7 +948,7 @@ function ServicesEditor() {
 /* ---------- Portfolio ---------- */
 function PortfolioEditor() {
   return (
-    <CrudList
+    <CrudList<Tables<"portfolio_projects">>
       title="Portfolio"
       table="portfolio_projects"
       visibilityCol="is_active"
@@ -1024,7 +1041,7 @@ function PortfolioEditor() {
 /* ---------- Before / After ---------- */
 function BeforeAfterEditor() {
   return (
-    <CrudList
+    <CrudList<Tables<"before_after_items">>
       title="Before / After showcase"
       table="before_after_items"
       visibilityCol="is_active"
@@ -1076,7 +1093,7 @@ function BeforeAfterEditor() {
 /* ---------- Pricing ---------- */
 function PricingEditor() {
   return (
-    <CrudList
+    <CrudList<Tables<"pricing_plans">>
       title="Pricing plans"
       table="pricing_plans"
       visibilityCol="is_active"
@@ -1133,7 +1150,7 @@ function PricingEditor() {
 /* ---------- Offers ---------- */
 function OffersEditor() {
   return (
-    <CrudList
+    <CrudList<Tables<"offers">>
       title="Offers & Promotions"
       table="offers"
       orderBy="created_at"
@@ -1228,7 +1245,7 @@ function PromoSettingsPanel() {
 
   if (!settings) return null;
 
-  const save = async (patch: any) => {
+  const save = async (patch) => {
     const next = { ...settings, ...patch };
     setLocal(next);
     setSaving(true);
@@ -1436,7 +1453,7 @@ function PromoSettingsPanel() {
   );
 }
 
-function BannerLivePreview({ f, set }: { f: any; set: (v: any) => void }) {
+function BannerLivePreview({ f, set }: { f: any; set: (v) => void }) {
   const layout = f.layout || "full";
   const isVideo = f.media_type === "video";
   const bg = f.background_color || "#0a1128";
@@ -1449,8 +1466,8 @@ function BannerLivePreview({ f, set }: { f: any; set: (v: any) => void }) {
       const url = await uploadToWebsiteMedia(file);
       set({ ...f, image_url: url });
       toast.success("Image added");
-    } catch (e: any) {
-      toast.error(e.message || "Upload failed");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Upload failed"));
     } finally {
       setUploading(false);
     }
@@ -1712,8 +1729,8 @@ function BulkHeroUpload() {
       setFiles([]);
       qc.invalidateQueries({ queryKey: ["promo_banners", "admin"] });
       qc.invalidateQueries({ queryKey: ["promo_banners", "hero_slider", "count"] });
-    } catch (e: any) {
-      toast.error(e.message || "Upload failed");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Upload failed"));
     } finally {
       setUploading(false);
     }
@@ -1837,11 +1854,11 @@ function BannersEditor() {
     queryFn: async () =>
       (
         await supabase.from("website_sections").select("section_key,title").order("sort_order")
-      ).data?.filter((s: any) => s.section_key?.startsWith("custom_")) ?? [],
+      ).data?.filter((s) => s.section_key?.startsWith("custom_")) ?? [],
   });
   const positionOptions = [
     ...PROMO_POSITIONS,
-    ...(customSections ?? []).map((s: any) => ({
+    ...(customSections ?? []).map((s) => ({
       value: s.section_key,
       label: `Section: ${s.title}`,
     })),
@@ -1850,7 +1867,7 @@ function BannersEditor() {
   return (
     <div className="space-y-6">
       <PromoSettingsPanel />
-      <CrudList
+      <CrudList<Tables<"promo_banners">>
         title="Promotional banners & slides"
         table="promo_banners"
         visibilityCol="is_active"
@@ -2078,7 +2095,7 @@ function AboutEditor() {
 /* ---------- FAQ ---------- */
 function FaqEditor() {
   return (
-    <CrudList
+    <CrudList<Tables<"faqs">>
       title="FAQs"
       table="faqs"
       visibilityCol="is_active"
@@ -2105,7 +2122,7 @@ function FaqEditor() {
 /* ---------- Reviews ---------- */
 function ReviewsEditor() {
   return (
-    <CrudList
+    <CrudList<Tables<"testimonials">>
       title="Reviews & Testimonials"
       table="testimonials"
       visibilityCol="is_approved"
@@ -2175,13 +2192,13 @@ function MediaLibrary() {
       await uploadToWebsiteMedia(file);
       toast.success("Uploaded");
       qc.invalidateQueries({ queryKey: ["media_library"] });
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch (e) {
+      toast.error(getErrorMessage(e));
     } finally {
       setUploading(false);
     }
   };
-  const del = async (m: any) => {
+  const del = async (m) => {
     if (!confirm("Delete media?")) return;
     if (m.storage_path) await supabase.storage.from("website-media").remove([m.storage_path]);
     await supabase.from("media_library").delete().eq("id", m.id);
@@ -2215,7 +2232,7 @@ function MediaLibrary() {
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-        {items.map((m: any) => (
+        {items.map((m) => (
           <div key={m.id} className="group relative overflow-hidden rounded-xl border">
             <img
               src={m.public_url}
