@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PublicLayout } from "@/components/site/PublicLayout";
 import { ArrowRight, Calendar, Newspaper } from "lucide-react";
+import type { Tables } from "@/integrations/supabase/types";
 
 const URL = "https://elfoinnovations.com/blogs";
 const TITLE = "Software Development Insights, Guides & Technology Blog | ELFO Innovations";
@@ -55,7 +56,7 @@ export const Route = createFileRoute("/blogs")({
 });
 
 function BlogIndex() {
-  const loaderData = Route.useLoaderData() as any[];
+  const loaderData = Route.useLoaderData() as Tables<"blogs">[];
   const { data, isLoading } = useQuery({
     queryKey: ["public-blogs"],
     queryFn: async () =>
@@ -95,7 +96,7 @@ function BlogIndex() {
           </div>
         ) : (
           <div className="grid gap-8 md:grid-cols-2">
-            {(data ?? []).map((b: any) => (
+            {(data ?? []).map((b) => (
               <Link
                 key={b.id}
                 to="/blogs/$slug"

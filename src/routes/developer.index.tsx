@@ -36,8 +36,8 @@ function DeveloperOverview() {
         .eq("developer_id", dev.id);
       const rows = projects ?? [];
       const completedStages = rows.reduce(
-        (n: number, p: any) =>
-          n + (p.project_stages ?? []).filter((s: any) => COMPLETED.has(s.status)).length,
+        (n: number, p) =>
+          n + (p.project_stages ?? []).filter((s) => COMPLETED.has(s.status)).length,
         0,
       );
       return { active: rows.length, completedStages };

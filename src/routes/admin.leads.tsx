@@ -37,6 +37,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/utils";
+import type { Enums, Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/admin/leads")({
   head: () => ({ meta: [{ title: "Leads — Admin" }] }),
@@ -69,7 +71,7 @@ function genPassword() {
 function AdminLeads() {
   const qc = useQueryClient();
   const createClient = useServerFn(createClientWithLogin);
-  const [convertLead, setConvertLead] = useState<any>(null);
+  const [convertLead, setConvertLead] = useState<Tables<"leads"> | null>(null);
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -84,17 +86,14 @@ function AdminLeads() {
       (await supabase.from("leads").select("*").order("created_at", { ascending: false })).data,
   });
 
-  const updateStatus = async (id: string, status: string) => {
-    const { error } = await supabase
-      .from("leads")
-      .update({ status: status as any })
-      .eq("id", id);
+  const updateStatus = async (id: string, status: Enums<"lead_status">) => {
+    const { error } = await supabase.from("leads").update({ status: status }).eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Status updated");
     qc.invalidateQueries({ queryKey: ["admin-leads"] });
   };
 
-  const openConvert = (lead: any) => {
+  const openConvert = (lead: Tables<"leads">) => {
     setConvertLead(lead);
     setPassword(genPassword());
     setShowPw(false);
@@ -121,8 +120,8 @@ function AdminLeads() {
       setConvertLead(null);
       qc.invalidateQueries({ queryKey: ["admin-leads"] });
       qc.invalidateQueries({ queryKey: ["admin-clients"] });
-    } catch (e: any) {
-      toast.error(e?.message || "Failed to create login");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Failed to create login"));
     } finally {
       setBusy(false);
     }
@@ -137,7 +136,7 @@ function AdminLeads() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const filtered = (data ?? []).filter((l: any) => {
+  const filtered = (data ?? []).filter((l) => {
     if (statusFilter !== "all" && l.status !== statusFilter) return false;
     const q = search.trim().toLowerCase();
     if (!q) return true;
@@ -148,7 +147,7 @@ function AdminLeads() {
 
   const exportCsv = () => {
     if (!filtered.length) return toast.error("No leads to export");
-    const cols = [
+    const cols: (keyof Tables<"leads">)[] = [
       "lead_code",
       "full_name",
       "email",
@@ -156,21 +155,20 @@ function AdminLeads() {
       "company",
       "country",
       "budget_readiness",
-      "est_budget",
+      "estimated_budget",
       "timeline",
       "status",
-      "message",
+      "project_description",
       "created_at",
     ];
-    const esc = (v: any) => {
+    const esc = (v: unknown) => {
       if (v === null || v === undefined) return "";
       const s = String(v).replace(/"/g, '""');
       return /[",\n\r]/.test(s) ? `"${s}"` : s;
     };
-    const csv = [
-      cols.join(","),
-      ...filtered.map((r: any) => cols.map((c) => esc(r[c])).join(",")),
-    ].join("\n");
+    const csv = [cols.join(","), ...filtered.map((r) => cols.map((c) => esc(r[c])).join(","))].join(
+      "\n",
+    );
     const blob = new Blob([`\ufeff${csv}`], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -219,7 +217,7 @@ function AdminLeads() {
 
       <div className="mt-4 grid gap-3 lg:hidden">
         {(data ?? [])
-          .filter((l: any) => {
+          .filter((l) => {
             if (statusFilter !== "all" && l.status !== statusFilter) return false;
             const q = search.trim().toLowerCase();
             if (!q) return true;
@@ -227,7 +225,7 @@ function AdminLeads() {
               v?.toLowerCase().includes(q),
             );
           })
-          .map((l: any) => (
+          .map((l) => (
             <div key={l.id} className="glass-card rounded-2xl p-4">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
@@ -241,7 +239,10 @@ function AdminLeads() {
                 </Badge>
               </div>
               <div className="mt-3 flex items-center gap-2">
-                <Select value={l.status} onValueChange={(v) => updateStatus(l.id, v)}>
+                <Select
+                  value={l.status}
+                  onValueChange={(v) => updateStatus(l.id, v as Enums<"lead_status">)}
+                >
                   <SelectTrigger className="h-8 flex-1 text-xs">
                     <SelectValue />
                   </SelectTrigger>
@@ -283,7 +284,7 @@ function AdminLeads() {
           </thead>
           <tbody>
             {(data ?? [])
-              .filter((l: any) => {
+              .filter((l) => {
                 if (statusFilter !== "all" && l.status !== statusFilter) return false;
                 const q = search.trim().toLowerCase();
                 if (!q) return true;
@@ -291,7 +292,7 @@ function AdminLeads() {
                   (v) => v?.toLowerCase().includes(q),
                 );
               })
-              .map((l: any) => (
+              .map((l) => (
                 <tr key={l.id} className="border-t hover:bg-accent/30">
                   <td className="px-4 py-3 font-mono text-xs text-primary">{l.lead_code}</td>
                   <td className="px-4 py-3 font-medium">
@@ -306,7 +307,10 @@ function AdminLeads() {
                     <Badge variant="outline">{l.budget_readiness}</Badge>
                   </td>
                   <td className="px-4 py-3">
-                    <Select value={l.status} onValueChange={(v) => updateStatus(l.id, v)}>
+                    <Select
+                      value={l.status}
+                      onValueChange={(v) => updateStatus(l.id, v as Enums<"lead_status">)}
+                    >
                       <SelectTrigger className="h-8 w-[180px] text-xs">
                         <SelectValue />
                       </SelectTrigger>

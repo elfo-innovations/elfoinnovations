@@ -203,7 +203,9 @@ export function InquiryModal({ open, onClose }: { open: boolean; onClose: () => 
           );
           setDone({ code: offlineCode });
           return;
-        } catch {}
+        } catch {
+          // Could not queue offline either; fall through to the normal error message below.
+        }
       }
       const msg = /duplicate|unique|already/i.test(error.message)
         ? "A user with this email address has already been registered"

@@ -9,7 +9,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
-const DEFAULTS = [
+const DEFAULTS: { id?: string; question: string; answer: string }[] = [
   {
     question: "Is Elfo Innovations a registered business?",
     answer:
@@ -90,7 +90,7 @@ export function FaqSection() {
     queryFn: async () =>
       (await supabase.from("faqs").select("*").eq("is_active", true).order("sort_order")).data,
   });
-  const items = (data && data.length > 0 ? data : DEFAULTS) as any[];
+  const items = data && data.length > 0 ? data : DEFAULTS;
   const visibleItems = showAll ? items : items.slice(0, VISIBLE_COUNT);
   const hasMore = items.length > VISIBLE_COUNT;
 

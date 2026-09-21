@@ -49,6 +49,19 @@ function fileToBase64(file: File): Promise<{ data: string; mimeType: string }> {
   });
 }
 
+// Minimal typing for the browser Web Speech API (not in TypeScript's DOM lib).
+type SpeechRecognitionLike = {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+  onend: (() => void) | null;
+  onerror: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+};
+type SpeechRecognitionCtor = new () => SpeechRecognitionLike;
+
 export function SiteChatWidget() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([GREETING]);
@@ -64,7 +77,7 @@ export function SiteChatWidget() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const sessionId = useRef<string | undefined>(undefined);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const voiceModeRef = useRef(false); // mirrors voiceMode so the speech-recognition callback always reads the latest value
 
   useEffect(() => {
@@ -130,8 +143,11 @@ export function SiteChatWidget() {
 
   // Set up browser speech-to-text (Web Speech API) once, if the browser supports it
   useEffect(() => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const w = window as Window & {
+      SpeechRecognition?: SpeechRecognitionCtor;
+      webkitSpeechRecognition?: SpeechRecognitionCtor;
+    };
+    const SpeechRecognition = w.SpeechRecognition || w.webkitSpeechRecognition;
     if (!SpeechRecognition) return;
 
     const recognition = new SpeechRecognition();
@@ -139,7 +155,7 @@ export function SiteChatWidget() {
     recognition.interimResults = false;
     recognition.lang = "hi-IN"; // Hindi recognition handles Hinglish/code-switched speech far better than en-US
 
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event) => {
       const transcript = event.results[0][0].transcript;
       if (voiceModeRef.current) {
         // Hands-free: send immediately instead of just filling the text box

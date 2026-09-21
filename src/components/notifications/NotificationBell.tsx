@@ -46,7 +46,7 @@ export function NotificationBell() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
-        (payload: any) => {
+        (payload) => {
           load();
           if (payload.eventType === "INSERT") {
             const n = payload.new as Notif;

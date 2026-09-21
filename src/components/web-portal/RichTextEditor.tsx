@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { getErrorMessage } from "@/lib/utils";
 
 const FORMAT_OPTIONS = [
   { label: "Paragraph", tag: "P" },
@@ -103,8 +104,8 @@ export function RichTextEditor({
           .from("website-media")
           .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
         if (signed?.signedUrl) exec("insertImage", signed.signedUrl);
-      } catch (e: any) {
-        window.alert(e?.message || "Image upload failed");
+      } catch (e) {
+        window.alert(getErrorMessage(e, "Image upload failed"));
       } finally {
         setUploading(false);
       }

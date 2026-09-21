@@ -22,6 +22,7 @@ import {
   UserPlus,
   Home,
   Bot,
+  type LucideIcon,
 } from "lucide-react";
 import { ElfoLogo } from "@/components/brand/Logo";
 import { ThemeToggle } from "@/components/brand/ThemeToggle";
@@ -45,7 +46,7 @@ function FollowUsButton() {
   );
 }
 
-type Nav = { to: string; label: string; icon: any };
+type Nav = { to: string; label: string; icon: LucideIcon };
 
 const NAVS: Record<"admin" | "developer" | "client", Nav[]> = {
   admin: [
@@ -221,7 +222,18 @@ function ShellInner({
   mobileOpen,
   setMobileOpen,
   children,
-}: any) {
+}: {
+  role: "admin" | "developer" | "client";
+  nav: Nav[];
+  user: NonNullable<ReturnType<typeof useAuth>["user"]>;
+  location: ReturnType<typeof useLocation>;
+  navigate: ReturnType<typeof useNavigate>;
+  signOut: () => Promise<void>;
+  roles: ReturnType<typeof useAuth>["roles"];
+  mobileOpen: boolean;
+  setMobileOpen: (open: boolean) => void;
+  children: ReactNode;
+}) {
   // Only clients can be "closed" — admin bypasses.
   const { data: clientRow } = useQuery({
     queryKey: ["me-client-closed", user.id],
@@ -336,7 +348,7 @@ export function StatCard({
   label: string;
   value: string | number;
   hint?: string;
-  icon: any;
+  icon: LucideIcon;
 }) {
   return (
     <div className="glass-card rounded-2xl p-5">

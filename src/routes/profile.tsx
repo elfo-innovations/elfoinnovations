@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/utils";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({ meta: [{ title: "My Profile — ELFO" }] }),
@@ -21,7 +22,7 @@ function ProfilePage() {
   const navigate = useNavigate();
   const changePw = useServerFn(updateMyPassword);
   const fileRef = useRef<HTMLInputElement>(null);
-  const [, setProfile] = useState<any>(null);
+  const [, setProfile] = useState<unknown>(null);
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [company, setCompany] = useState("");
@@ -93,8 +94,8 @@ function ProfilePage() {
       if (error) throw error;
       setAvatarUrl(url);
       toast.success("Avatar updated");
-    } catch (e: any) {
-      toast.error(e?.message || "Upload failed");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Upload failed"));
     } finally {
       setUploading(false);
     }
@@ -107,8 +108,8 @@ function ProfilePage() {
       await changePw({ data: { password } });
       toast.success("Password updated");
       setPassword("");
-    } catch (e: any) {
-      toast.error(e?.message || "Failed");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Failed"));
     } finally {
       setBusy(false);
     }

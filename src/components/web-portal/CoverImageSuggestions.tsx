@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Sparkles, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { getErrorMessage } from "@/lib/utils";
 
 export type BlogSuggestion = {
   title: string;
@@ -39,8 +40,8 @@ export function CoverImageSuggestions({
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       setSuggestions(data.suggestions);
-    } catch (e: any) {
-      setError(e?.message || "Couldn't generate suggestions for this image.");
+    } catch (e) {
+      setError(getErrorMessage(e, "Couldn't generate suggestions for this image."));
     } finally {
       setLoading(false);
     }

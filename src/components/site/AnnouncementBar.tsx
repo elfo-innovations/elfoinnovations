@@ -15,7 +15,7 @@ export function AnnouncementBar() {
           .order("sort_order")
       ).data ?? [],
   });
-  const banner = (data as any[] | undefined)?.[0];
+  const banner = data?.[0];
   if (!banner) return null;
   return (
     <div

@@ -7,7 +7,15 @@ import { useInquiry } from "@/hooks/use-inquiry";
 import { formatPriceForLang } from "@/lib/pricing-currency";
 import type { LangCode } from "@/i18n";
 
-const DEFAULTS = [
+const DEFAULTS: {
+  id?: string;
+  name: string;
+  price: string;
+  description: string;
+  features: string[];
+  is_popular: boolean;
+  cta_label?: string | null;
+}[] = [
   {
     name: "STARTER",
     price: "$500",
@@ -54,7 +62,7 @@ export function PricingSection() {
       (await supabase.from("pricing_plans").select("*").eq("is_active", true).order("sort_order"))
         .data,
   });
-  const plans = (data && data.length > 0 ? data : DEFAULTS) as any[];
+  const plans = data && data.length > 0 ? data : DEFAULTS;
 
   const gridColsClass =
     plans.length >= 5

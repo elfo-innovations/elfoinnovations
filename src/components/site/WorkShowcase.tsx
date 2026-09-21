@@ -10,7 +10,7 @@ import img4 from "@/assets/work-image-33.png";
 import img5 from "@/assets/work-image-34.png";
 import img6 from "@/assets/work-hero-1.png";
 
-type Work = { title: string; tag: string; image: string; repo: string | null };
+type Work = { title: string; tag: string; image: string | undefined; repo: string | null };
 
 // Shown only if the admin hasn't added any Portfolio entries yet (Web Portal → Portfolio).
 const DEFAULT_WORKS: Work[] = [
@@ -119,10 +119,10 @@ export function WorkShowcase() {
 
   const works: Work[] =
     projects && projects.length > 0
-      ? projects.map((p: any) => ({
+      ? projects.map((p) => ({
           title: p.project_name,
           tag: p.category || "",
-          image: p.after_image_url,
+          image: p.after_image_url ?? undefined,
           repo: p.github_url || null,
         }))
       : DEFAULT_WORKS;

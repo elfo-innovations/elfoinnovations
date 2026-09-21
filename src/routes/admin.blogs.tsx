@@ -20,6 +20,7 @@ import {
 import { MediaPicker } from "@/components/web-portal/MediaPicker";
 import { RichTextEditor } from "@/components/web-portal/RichTextEditor";
 import { CoverImageSuggestions } from "@/components/web-portal/CoverImageSuggestions";
+import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/admin/blogs")({
   head: () => ({ meta: [{ title: "Blogs — Admin" }] }),
@@ -85,7 +86,7 @@ function AdminBlogs() {
     setForm({ ...EMPTY });
     setOpen(true);
   };
-  const edit = (b: any) => {
+  const edit = (b: Tables<"blogs">) => {
     setForm({
       id: b.id,
       slug: b.slug,
@@ -97,7 +98,7 @@ function AdminBlogs() {
       tags: (b.tags ?? []).join(", "),
       category: b.category ?? "",
       tldr: b.tldr ?? "",
-      faqs: Array.isArray(b.faqs) ? b.faqs : [],
+      faqs: Array.isArray(b.faqs) ? (b.faqs as { question: string; answer: string }[]) : [],
       author_name: b.author_name ?? "ELFO INNOVATIONS",
       meta_title: b.meta_title ?? "",
       meta_description: b.meta_description ?? "",
@@ -129,7 +130,7 @@ function AdminBlogs() {
     } else {
       published_at = null;
     }
-    const payload: any = {
+    const payload: TablesInsert<"blogs"> = {
       slug: slugify(form.slug),
       title: form.title.trim(),
       excerpt: form.excerpt.trim() || null,
@@ -168,7 +169,7 @@ function AdminBlogs() {
     qc.invalidateQueries({ queryKey: ["admin-blogs"] });
   };
 
-  const togglePublish = async (b: any) => {
+  const togglePublish = async (b: Tables<"blogs">) => {
     const next = !b.is_published;
     const { error } = await supabase
       .from("blogs")
@@ -203,7 +204,7 @@ function AdminBlogs() {
       </div>
 
       <div className="mt-6 grid gap-4 md:grid-cols-2">
-        {(data ?? []).map((b: any) => (
+        {(data ?? []).map((b) => (
           <div key={b.id} className="glass-card overflow-hidden rounded-2xl">
             {b.cover_image && (
               <div className="aspect-[16/7] overflow-hidden bg-muted">

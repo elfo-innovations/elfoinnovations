@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import type { Enums, Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/admin/reviews")({
   head: () => ({ meta: [{ title: "Reviews — Admin" }] }),
@@ -49,7 +50,7 @@ function AdminReviews() {
   const qc = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [q, setQ] = useState("");
-  const [rejectFor, setRejectFor] = useState<any>(null);
+  const [rejectFor, setRejectFor] = useState<Tables<"client_reviews"> | null>(null);
   const [reason, setReason] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -60,12 +61,13 @@ function AdminReviews() {
         .from("client_reviews")
         .select("*, projects(name)")
         .order("created_at", { ascending: false });
-      if (statusFilter !== "all") query = query.eq("status", statusFilter as any);
+      if (statusFilter !== "all")
+        query = query.eq("status", statusFilter as Enums<"review_status">);
       return (await query).data ?? [];
     },
   });
 
-  const filtered = (reviews ?? []).filter((r: any) => {
+  const filtered = (reviews ?? []).filter((r) => {
     if (!q) return true;
     const s = q.toLowerCase();
     return [r.client_name, r.company, r.email, r.title, r.message].some((x) =>
@@ -75,7 +77,7 @@ function AdminReviews() {
 
   const setStatus = async (
     id: string,
-    status: "approved" | "rejected",
+    status: Enums<"review_status">,
     rejection_reason?: string,
   ) => {
     setBusyId(id);
@@ -98,9 +100,9 @@ function AdminReviews() {
   };
 
   const counts = {
-    pending: (reviews ?? []).filter((r: any) => r.status === "pending").length,
-    approved: (reviews ?? []).filter((r: any) => r.status === "approved").length,
-    rejected: (reviews ?? []).filter((r: any) => r.status === "rejected").length,
+    pending: (reviews ?? []).filter((r) => r.status === "pending").length,
+    approved: (reviews ?? []).filter((r) => r.status === "approved").length,
+    rejected: (reviews ?? []).filter((r) => r.status === "rejected").length,
   };
 
   return (
@@ -161,7 +163,7 @@ function AdminReviews() {
           </div>
         ) : (
           <div className="space-y-3">
-            {filtered.map((r: any) => (
+            {filtered.map((r) => (
               <div key={r.id} className="glass-card rounded-2xl p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
@@ -235,7 +237,7 @@ function AdminReviews() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => setStatus(r.id, "pending" as any)}
+                      onClick={() => setStatus(r.id, "pending")}
                       disabled
                       className="rounded-full opacity-0 pointer-events-none"
                     >

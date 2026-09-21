@@ -43,6 +43,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/developers")({
   head: () => ({ meta: [{ title: "Developers — Admin" }] }),
@@ -136,8 +137,8 @@ function AdminDevelopers() {
       setOpen(false);
       reset();
       qc.invalidateQueries({ queryKey: ["admin-developers"] });
-    } catch (e: any) {
-      toast.error(e?.message || "Failed to create developer");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Failed to create developer"));
     } finally {
       setBusy(false);
     }
@@ -162,8 +163,8 @@ function AdminDevelopers() {
       });
       toast.success("Credentials emailed to " + credentials.email);
       setCredentials(null);
-    } catch (e: any) {
-      toast.error(e?.message || "Failed to send email");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Failed to send email"));
     } finally {
       setActionBusy(null);
     }
@@ -178,8 +179,8 @@ function AdminDevelopers() {
       });
       toast.success("Password reset");
       setResetDraft(null);
-    } catch (e: any) {
-      toast.error(e?.message || "Reset failed");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Reset failed"));
     } finally {
       setActionBusy(null);
     }
@@ -196,8 +197,8 @@ function AdminDevelopers() {
       });
       toast.success("Password reset & credentials emailed to " + resetDraft.email);
       setResetDraft(null);
-    } catch (e: any) {
-      toast.error(e?.message || "Reset/email failed");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Reset/email failed"));
     } finally {
       setActionBusy(null);
     }
@@ -235,7 +236,7 @@ function AdminDevelopers() {
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {(data ?? [])
-          .filter((d: any) => {
+          .filter((d) => {
             const q = search.trim().toLowerCase();
             if (!q) return true;
             const hay = [d.full_name, d.email, d.phone, d.status, ...(d.skills ?? [])]
@@ -244,7 +245,7 @@ function AdminDevelopers() {
               .toLowerCase();
             return hay.includes(q);
           })
-          .map((d: any) => (
+          .map((d) => (
             <div key={d.id} className="glass-card rounded-2xl p-5">
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0 truncate font-semibold">{d.full_name}</div>
@@ -277,7 +278,7 @@ function AdminDevelopers() {
                     className="text-primary hover:bg-primary/10"
                     onClick={() =>
                       setResetDraft({
-                        user_id: d.user_id,
+                        user_id: d.user_id!,
                         name: d.full_name,
                         email: d.email,
                         password: generateBrandedPassword(),
@@ -298,8 +299,8 @@ function AdminDevelopers() {
                       await deleteDev({ data: { developer_id: d.id } });
                       toast.success("Developer deleted");
                       qc.invalidateQueries({ queryKey: ["admin-developers"] });
-                    } catch (e: any) {
-                      toast.error(e?.message || "Delete failed");
+                    } catch (e) {
+                      toast.error(getErrorMessage(e, "Delete failed"));
                     }
                   }}
                 >
@@ -391,7 +392,7 @@ function AdminDevelopers() {
               <Label>Status</Label>
               <Select
                 value={form.status}
-                onValueChange={(v: any) => setForm({ ...form, status: v })}
+                onValueChange={(v) => setForm({ ...form, status: v as typeof form.status })}
               >
                 <SelectTrigger>
                   <SelectValue />

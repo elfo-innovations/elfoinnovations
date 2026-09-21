@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { listPending, markDone, markFailed } from "@/lib/offline-queue";
+import type { TablesInsert } from "@/integrations/supabase/types";
 
 let syncing = false;
 
@@ -14,7 +15,7 @@ export async function syncOfflineInquiries(): Promise<{ synced: number; failed: 
     const pending = await listPending();
     for (const item of pending) {
       try {
-        const p = item.payload as any;
+        const p = item.payload as TablesInsert<"leads">;
         // Idempotency: reuse the queued id as the lead_code suffix so retries don't duplicate.
         const leadCode =
           p.lead_code || `ELFO-${item.id.replace(/-/g, "").slice(0, 8).toUpperCase()}`;

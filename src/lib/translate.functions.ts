@@ -19,6 +19,13 @@ const inputSchema = z.object({
  * Returns { translated, detectedLang } — detectedLang is a best-effort
  * ISO code ("en", "es", "fr", "de", "ar", "ur", "ja", "zh", ...).
  */
+// Response shapes of the two free translation endpoints we call below.
+type GoogleTranslateResponse = [([string, ...unknown[]] | null)[] | null, unknown, string?];
+type MyMemoryResponse = {
+  responseData?: { translatedText?: string; detectedLanguage?: string };
+  matches?: { source?: string }[];
+};
+
 export const translateMessage = createServerFn({ method: "POST" })
   .inputValidator((data) => inputSchema.parse(data))
   .handler(async ({ data }) => {
@@ -35,11 +42,11 @@ export const translateMessage = createServerFn({ method: "POST" })
       });
 
       if (res.ok) {
-        const json: any = await res.json();
+        const json = (await res.json()) as GoogleTranslateResponse | null;
         // Shape: [ [ [translatedChunk, originalChunk, ...], ... ], null, "detectedSourceLang", ... ]
         const chunks = Array.isArray(json?.[0]) ? json[0] : [];
         const translated = chunks
-          .map((c: any) => c?.[0] ?? "")
+          .map((c) => c?.[0] ?? "")
           .join("")
           .trim();
         const detected = typeof json?.[2] === "string" ? json[2] : target;
@@ -64,7 +71,7 @@ export const translateMessage = createServerFn({ method: "POST" })
 
       const res = await fetch(url);
       if (res.ok) {
-        const json: any = await res.json();
+        const json = (await res.json()) as MyMemoryResponse | null;
         const translated: string | undefined = json?.responseData?.translatedText;
         const detected: string | undefined =
           json?.responseData?.detectedLanguage || json?.matches?.[0]?.source;

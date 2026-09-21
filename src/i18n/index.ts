@@ -9,6 +9,15 @@ import ja from "./locales/ja.json";
 import zh from "./locales/zh.json";
 import ur from "./locales/ur.json";
 
+// Minimal typing for the Google Translate widget script we inject at runtime.
+type GoogleTranslateElementCtor = {
+  new (
+    options: { pageLanguage: string; autoDisplay: boolean; layout: unknown },
+    elementId: string,
+  ): unknown;
+  InlineLayout: { SIMPLE: unknown };
+};
+
 export type LangCode = "en" | "es" | "fr" | "de" | "ar" | "ur" | "ja" | "zh";
 export type LangScope = "public" | "admin" | "developer" | "client";
 
@@ -45,7 +54,9 @@ export function getScopedLang(scope: LangScope): LangCode {
   try {
     const saved = window.localStorage.getItem(storageKeyFor(scope)) as LangCode | null;
     if (saved && LANGUAGES.some((l) => l.code === saved)) return saved;
-  } catch {}
+  } catch {
+    // localStorage unavailable (private mode or blocked); use the default language.
+  }
   return "en";
 }
 
@@ -156,7 +167,9 @@ function ensureGoogleTranslateWidget() {
   ).googleTranslateElementInit = () => {
     try {
       const google = (
-        window as typeof window & { google?: { translate?: { TranslateElement?: any } } }
+        window as typeof window & {
+          google?: { translate?: { TranslateElement?: GoogleTranslateElementCtor } };
+        }
       ).google;
       if (!google?.translate?.TranslateElement) return;
       new google.translate.TranslateElement(
@@ -167,7 +180,9 @@ function ensureGoogleTranslateWidget() {
         },
         "google_translate_element",
       );
-    } catch {}
+    } catch {
+      // Widget failed to initialise; the site keeps working without Google Translate.
+    }
   };
 
   const script = document.createElement("script");
@@ -179,7 +194,9 @@ function ensureGoogleTranslateWidget() {
 export async function changeLanguage(scope: LangScope, code: LangCode) {
   try {
     window.localStorage.setItem(storageKeyFor(scope), code);
-  } catch {}
+  } catch {
+    // Could not persist the choice; the language still changes for this session.
+  }
   await i18n.changeLanguage(code);
   applyLangSideEffects(code);
   setGoogTransCookie(code);

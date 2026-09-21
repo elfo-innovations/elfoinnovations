@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useInquiry } from "@/hooks/use-inquiry";
 import { Link } from "@tanstack/react-router";
+import type { Tables } from "@/integrations/supabase/types";
 
 const Monitor3D = lazy(() => import("./Monitor3D").then((m) => ({ default: m.Monitor3D })));
 
@@ -25,10 +26,14 @@ function Monitor3DPlaceholder() {
 function DeferredMonitor3D() {
   const [ready, setReady] = useState(false);
   useEffect(() => {
-    const w: any = window;
-    const schedule = w.requestIdleCallback || ((cb: any) => setTimeout(cb, 200));
-    const cancel = w.cancelIdleCallback || clearTimeout;
-    let idleId: any;
+    const w = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    const schedule =
+      w.requestIdleCallback || ((cb: () => void) => setTimeout(cb, 200) as unknown as number);
+    const cancel = w.cancelIdleCallback || ((id: number) => clearTimeout(id));
+    let idleId: number | undefined;
 
     const startLoading = () => {
       idleId = schedule(() => setReady(true), { timeout: 1500 });
@@ -62,7 +67,7 @@ export function Hero() {
     queryKey: ["hero_content"],
     queryFn: async () => (await supabase.from("hero_content").select("*").maybeSingle()).data,
   });
-  const h: any = data || {};
+  const h: Partial<Tables<"hero_content">> = data ?? {};
   const heading: string = h.heading || "SOLUTIONS TODAY SUCCESS TOMORROW";
 
   const highlightRaw: string = h.highlight ?? "TODAY, TOMORROW";
@@ -77,7 +82,7 @@ export function Hero() {
     : null;
   const segments = pattern ? heading.split(pattern) : [heading];
   const headingStyle = { fontFamily: `"${h.heading_font || "Poppins"}", var(--font-display)` };
-  const trust: { label: string }[] = (h.trust_items as any) || [
+  const trust: { label: string }[] = (h.trust_items as { label: string }[] | null) || [
     { label: "130+ shipped" },
     { label: "4.9/5 client rating" },
     { label: "Enterprise-grade delivery" },

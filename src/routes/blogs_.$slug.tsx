@@ -12,11 +12,14 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import type { Tables } from "@/integrations/supabase/types";
 
 const SITE = "https://elfoinnovations.com";
 
+type BlogFaq = { question: string; answer: string };
+
 export const Route = createFileRoute("/blogs_/$slug")({
-  head: ({ loaderData, params }: any) => {
+  head: ({ loaderData, params }: { loaderData?: Tables<"blogs">; params: { slug: string } }) => {
     const b = loaderData;
     const url = `${SITE}/blogs/${params.slug}`;
     const title =
@@ -81,7 +84,7 @@ export const Route = createFileRoute("/blogs_/$slug")({
                     children: JSON.stringify({
                       "@context": "https://schema.org",
                       "@type": "FAQPage",
-                      mainEntity: b.faqs.map((f: { question: string; answer: string }) => ({
+                      mainEntity: (b.faqs as BlogFaq[]).map((f) => ({
                         "@type": "Question",
                         name: f.question,
                         acceptedAnswer: { "@type": "Answer", text: f.answer },
@@ -280,7 +283,7 @@ function formatDateTime(d: Date) {
 }
 
 function BlogPost() {
-  const b = Route.useLoaderData() as any;
+  const b = Route.useLoaderData() as Tables<"blogs">;
   const { data: related } = useQuery({
     queryKey: ["related-blogs", b.id],
     queryFn: async () =>
@@ -377,7 +380,7 @@ function BlogPost() {
           <div
             ref={contentRef}
             className="prose prose-neutral mt-8 max-w-none dark:prose-invert [&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:pl-4 [&_blockquote]:italic [&_h1]:mt-10 [&_h1]:font-display [&_h1]:text-3xl [&_h1]:font-bold [&_h2]:mt-10 [&_h2]:font-display [&_h2]:text-2xl [&_h2]:font-bold [&_h3]:mt-8 [&_h3]:font-display [&_h3]:text-xl [&_h3]:font-bold [&_h4]:mt-7 [&_h4]:text-lg [&_h4]:font-bold [&_h5]:mt-6 [&_h5]:text-base [&_h5]:font-bold [&_img]:rounded-xl [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:mt-4 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:pl-6"
-            dangerouslySetInnerHTML={{ __html: sanitizeHtml(b.content_html) }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(b.content_html ?? "") }}
           />
         ) : (
           <div className="mt-8 text-base">{blocks}</div>
@@ -402,7 +405,7 @@ function BlogPost() {
               Frequently Asked Questions
             </h2>
             <Accordion type="single" collapsible className="mt-4">
-              {b.faqs.map((f: { question: string; answer: string }, i: number) => (
+              {(b.faqs as BlogFaq[]).map((f, i) => (
                 <AccordionItem key={i} value={`faq-${i}`}>
                   <AccordionTrigger>{f.question}</AccordionTrigger>
                   <AccordionContent className="text-muted-foreground">{f.answer}</AccordionContent>
@@ -418,7 +421,7 @@ function BlogPost() {
           <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
             <h2 className="font-display text-2xl font-bold">Keep reading</h2>
             <div className="mt-6 grid gap-6 md:grid-cols-3">
-              {(related ?? []).map((r: any) => (
+              {(related ?? []).map((r) => (
                 <Link
                   key={r.id}
                   to="/blogs/$slug"

@@ -93,12 +93,10 @@ function Home() {
     (promoSettings?.hero_mode === "slider" && heroSlideCount >= 4) ||
     (promoSettings?.hero_mode === "image" && !!promoSettings?.hero_image_url);
 
-  const sectionTitles = new Map(
-    (data as any[] | undefined)?.map((s) => [s.section_key, s.title]) ?? [],
-  );
+  const sectionTitles = new Map(data?.map((s) => [s.section_key, s.title] as const) ?? []);
   // Custom sections (created via Section Manager → "+ New section") aren't in
   // RENDERERS — keep them in the order so they render via CustomPromoSection below.
-  const rawOrder = (data as any[] | undefined)?.map((s) => s.section_key) ?? [
+  const rawOrder: string[] = data?.map((s) => s.section_key) ?? [
     "hero",
     "showcase",
     "portfolio",

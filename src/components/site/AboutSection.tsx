@@ -4,6 +4,7 @@ import { CheckCircle2, Target, Eye, Zap, ExternalLink, Sparkles, Heart } from "l
 import { Button } from "@/components/ui/button";
 import { useFollowUs } from "@/hooks/use-follow-us";
 import { BecomeDeveloperButton } from "@/components/recruitment/DeveloperApplicationModal";
+import type { Tables } from "@/integrations/supabase/types";
 
 export function AboutSection() {
   const { open: openFollow } = useFollowUs();
@@ -11,8 +12,8 @@ export function AboutSection() {
     queryKey: ["about_content"],
     queryFn: async () => (await supabase.from("about_content").select("*").maybeSingle()).data,
   });
-  const a: any = data || {};
-  const why: { title: string; description: string }[] = a.why_us || [];
+  const a: Partial<Tables<"about_content">> = data ?? {};
+  const why = (a.why_us as { title: string; description: string }[] | null) || [];
   return (
     <section id="about" className="border-t bg-background py-20 sm:py-28">
       <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:px-8">

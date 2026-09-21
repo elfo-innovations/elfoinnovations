@@ -50,10 +50,8 @@ export const notifyAdminOfLead = createServerFn({ method: "POST" })
       return { sent: false, provider: "error", error: String(e) };
     });
 
-    if (!adminMail.sent)
-      console.error("[lead notify] admin email not sent:", (adminMail as any).error);
-    if (!clientMail.sent)
-      console.error("[lead notify] client email not sent:", (clientMail as any).error);
+    if (!adminMail.sent) console.error("[lead notify] admin email not sent:", adminMail.error);
+    if (!clientMail.sent) console.error("[lead notify] client email not sent:", clientMail.error);
 
     return { ok: true, adminEmailSent: adminMail.sent, clientEmailSent: clientMail.sent };
   });

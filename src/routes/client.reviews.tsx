@@ -187,7 +187,7 @@ function ClientReviews() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">— None —</SelectItem>
-                    {projects!.map((p: any) => (
+                    {projects!.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
                         {p.name}
                       </SelectItem>
@@ -230,7 +230,7 @@ function ClientReviews() {
             </p>
           ) : (
             <div className="mt-4 space-y-3">
-              {reviews!.map((r: any) => (
+              {reviews!.map((r) => (
                 <div key={r.id} className="rounded-xl border p-4">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0">

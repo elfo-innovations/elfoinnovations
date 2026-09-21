@@ -42,6 +42,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/utils";
+import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/admin/developer-requests")({
   head: () => ({ meta: [{ title: "Developer Requests — Admin" }] }),
@@ -78,7 +80,7 @@ function AdminDeveloperRequests() {
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState(false);
   const [mode, setMode] = useState<null | "accept" | "reject">(null);
-  const [active, setActive] = useState<any>(null);
+  const [active, setActive] = useState<Tables<"developer_applications"> | null>(null);
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [username, setUsername] = useState("");
@@ -100,18 +102,18 @@ function AdminDeveloperRequests() {
     const rows = apps ?? [];
     return {
       all: rows.length,
-      pending: rows.filter((r: any) => r.status === "pending").length,
-      accepted: rows.filter((r: any) => r.status === "accepted").length,
-      rejected: rows.filter((r: any) => r.status === "rejected").length,
+      pending: rows.filter((r) => r.status === "pending").length,
+      accepted: rows.filter((r) => r.status === "accepted").length,
+      rejected: rows.filter((r) => r.status === "rejected").length,
     };
   }, [apps]);
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
     return (apps ?? [])
-      .filter((r: any) => (tab === "all" ? true : r.status === tab))
+      .filter((r) => (tab === "all" ? true : r.status === tab))
       .filter(
-        (r: any) =>
+        (r) =>
           !q ||
           [r.full_name, r.email, r.primary_role, r.country, r.city, ...(r.skills ?? [])]
             .join(" ")
@@ -120,7 +122,7 @@ function AdminDeveloperRequests() {
       );
   }, [apps, tab, search]);
 
-  const openAccept = (row: any) => {
+  const openAccept = (row: Tables<"developer_applications">) => {
     setActive(row);
     setMode("accept");
     setSubject("Welcome to Elfo Innovations 🎉");
@@ -129,7 +131,7 @@ function AdminDeveloperRequests() {
     setPassword(generateBrandedPassword());
   };
 
-  const openReject = (row: any) => {
+  const openReject = (row: Tables<"developer_applications">) => {
     setActive(row);
     setMode("reject");
     setSubject("Update on your application — ELFO Innovations");
@@ -141,16 +143,18 @@ function AdminDeveloperRequests() {
     if (!subject.trim() || !message.trim()) return toast.error("Subject and message are required");
     setBusy(true);
     try {
-      const payload: any = {
-        id: active.id,
-        subject: subject.trim(),
-        message: message.trim(),
-        ...(mode === "accept"
-          ? { username: username.trim(), password, loginUrl: `${window.location.origin}/auth` }
-          : {}),
-      };
-      const res: any =
-        mode === "accept" ? await approve({ data: payload }) : await reject({ data: payload });
+      const base = { id: active.id, subject: subject.trim(), message: message.trim() };
+      const res =
+        mode === "accept"
+          ? await approve({
+              data: {
+                ...base,
+                username: username.trim(),
+                password,
+                loginUrl: `${window.location.origin}/auth`,
+              },
+            })
+          : await reject({ data: base });
       qc.invalidateQueries({ queryKey: ["developer_applications"] });
       qc.invalidateQueries({ queryKey: ["developers"] });
       if (res?.emailSent)
@@ -163,8 +167,8 @@ function AdminDeveloperRequests() {
         );
       setMode(null);
       setActive(null);
-    } catch (e: any) {
-      toast.error(e?.message || "Action failed");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Action failed"));
     } finally {
       setBusy(false);
     }
@@ -172,10 +176,10 @@ function AdminDeveloperRequests() {
 
   const openResume = async (path: string) => {
     try {
-      const res: any = await resumeUrl({ data: { path } });
+      const res = await resumeUrl({ data: { path } });
       window.open(res.url, "_blank", "noopener");
-    } catch (e: any) {
-      toast.error(e?.message || "Could not open resume");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Could not open resume"));
     }
   };
 
@@ -240,7 +244,7 @@ function AdminDeveloperRequests() {
             No applications here yet.
           </div>
         )}
-        {rows.map((r: any) => (
+        {rows.map((r) => (
           <div key={r.id} className="glass-card rounded-2xl p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
@@ -331,7 +335,7 @@ function AdminDeveloperRequests() {
               )}
               {r.resume_path && (
                 <button
-                  onClick={() => openResume(r.resume_path)}
+                  onClick={() => openResume(r.resume_path!)}
                   className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium hover:bg-accent"
                 >
                   <FileText className="h-3.5 w-3.5" /> {r.resume_name || "Resume.pdf"}

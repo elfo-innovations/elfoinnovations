@@ -50,7 +50,7 @@ function AdminInvoices() {
       </p>
 
       <div className="mt-6 grid gap-3">
-        {(data ?? []).map((inv: any) => (
+        {(data ?? []).map((inv) => (
           <div key={inv.id} className="glass-card rounded-2xl p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">

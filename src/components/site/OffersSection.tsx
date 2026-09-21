@@ -16,7 +16,7 @@ export function OffersSection() {
           .order("created_at", { ascending: false })
       ).data ?? [],
   });
-  const offers = (data as any[]) ?? [];
+  const offers = data ?? [];
   if (offers.length === 0) return null;
   return (
     <section id="offers" className="border-t bg-background py-20 sm:py-28">
