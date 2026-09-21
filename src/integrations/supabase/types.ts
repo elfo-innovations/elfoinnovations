@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -1369,51 +1369,120 @@ export type Database = {
       }
       promo_banners: {
         Row: {
+          accent_color: string | null
           background_color: string | null
           created_at: string
           cta_href: string | null
           cta_label: string | null
           description: string | null
           end_at: string | null
+          height_px: number | null
           id: string
           image_url: string | null
           is_active: boolean
+          layout: string
+          media_type: string
           position: string
           sort_order: number
           start_at: string | null
+          text_h_align: string
+          text_v_align: string
           title: string
           updated_at: string
         }
         Insert: {
+          accent_color?: string | null
           background_color?: string | null
           created_at?: string
           cta_href?: string | null
           cta_label?: string | null
           description?: string | null
           end_at?: string | null
+          height_px?: number | null
           id?: string
           image_url?: string | null
           is_active?: boolean
+          layout?: string
+          media_type?: string
           position: string
           sort_order?: number
           start_at?: string | null
+          text_h_align?: string
+          text_v_align?: string
           title: string
           updated_at?: string
         }
         Update: {
+          accent_color?: string | null
           background_color?: string | null
           created_at?: string
           cta_href?: string | null
           cta_label?: string | null
           description?: string | null
           end_at?: string | null
+          height_px?: number | null
           id?: string
           image_url?: string | null
           is_active?: boolean
+          layout?: string
+          media_type?: string
           position?: string
           sort_order?: number
           start_at?: string | null
+          text_h_align?: string
+          text_v_align?: string
           title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      promo_settings: {
+        Row: {
+          bg_color: string
+          bg_color_enabled: boolean
+          hero_image_url: string | null
+          hero_mode: string
+          id: string
+          is_active: boolean
+          logo_enabled: boolean
+          logo_url: string | null
+          marquee_enabled: boolean
+          marquee_text: string
+          theme: string
+          theme_color: string
+          theme_color_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          bg_color?: string
+          bg_color_enabled?: boolean
+          hero_image_url?: string | null
+          hero_mode?: string
+          id?: string
+          is_active?: boolean
+          logo_enabled?: boolean
+          logo_url?: string | null
+          marquee_enabled?: boolean
+          marquee_text?: string
+          theme?: string
+          theme_color?: string
+          theme_color_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          bg_color?: string
+          bg_color_enabled?: boolean
+          hero_image_url?: string | null
+          hero_mode?: string
+          id?: string
+          is_active?: boolean
+          logo_enabled?: boolean
+          logo_url?: string | null
+          marquee_enabled?: boolean
+          marquee_text?: string
+          theme?: string
+          theme_color?: string
+          theme_color_enabled?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -1552,6 +1621,30 @@ export type Database = {
           sort_order?: number
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      site_chat_logs: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          role: string
+          session_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+          session_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          session_id?: string
         }
         Relationships: []
       }
@@ -1719,12 +1812,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1748,11 +1841,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1773,11 +1866,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1798,11 +1891,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1815,11 +1908,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

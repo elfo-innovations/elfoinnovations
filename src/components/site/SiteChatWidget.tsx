@@ -48,7 +48,7 @@ export function SiteChatWidget() {
   const [voiceMode, setVoiceMode] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const sessionId = useRef<string>();
+  const sessionId = useRef<string | undefined>(undefined);
   const recognitionRef = useRef<any>(null);
   const voiceModeRef = useRef(false); // mirrors voiceMode so the speech-recognition callback always reads the latest value
 
@@ -159,7 +159,7 @@ export function SiteChatWidget() {
   const logMessage = async (msg: Msg) => {
     try {
       await supabase.from("site_chat_logs").insert({
-        session_id: sessionId.current,
+        session_id: sessionId.current ?? getSessionId(),
         role: msg.role,
         content: msg.content,
       });

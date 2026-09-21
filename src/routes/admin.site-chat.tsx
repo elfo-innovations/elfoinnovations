@@ -96,7 +96,7 @@ function AdminSiteChat() {
           <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
             <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} /> Refresh
           </Button>
-          <Link to="/admin/web-portal">
+          <Link to="/admin/web-portal" search={{ tab: "faq" }}>
             <Button size="sm">
               <HelpCircle className="mr-1.5 h-3.5 w-3.5" /> Edit FAQs
             </Button>
