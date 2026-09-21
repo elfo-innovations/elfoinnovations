@@ -11,8 +11,7 @@ BEGIN
   PERFORM net.http_post(
     url := 'https://elfoinnovations.com/api/public/hooks/dispatch-push', -- confirmed domain
     headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'apikey', 'sb_publishable_457hgbemElU2_JfDl8zMyQ_ct93W_44' -- same key used elsewhere in the old trigger, or regednerate
+      'Content-Type', 'application/json'
     ),
     body := jsonb_build_object('notification_id', NEW.id::text)
   );

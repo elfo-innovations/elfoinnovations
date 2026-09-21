@@ -35,8 +35,7 @@ BEGIN
   PERFORM net.http_post(
     url := 'https://elfoinnovation.lovable.app/api/public/hooks/dispatch-push',
     headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'apikey', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyeGxxdmNmbHp1c2tta2R6bHdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzMTM4OTIsImV4cCI6MjA5OTg4OTg5Mn0.HZrGPfk-IYtspxYhquYmSsLFcUD8nVeDXB7qWKNmpaA'
+      'Content-Type', 'application/json'
     ),
     body := jsonb_build_object('notification_id', NEW.id::text)
   );
