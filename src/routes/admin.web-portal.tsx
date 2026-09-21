@@ -239,15 +239,12 @@ function Overview() {
 }
 
 /* ---------- Sections Manager (drag reorder + enable) ---------- */
-type DragHandleProps = ReturnType<typeof useSortable>["attributes"] &
-  ReturnType<typeof useSortable>["listeners"];
-
 function SortableRow({
   id,
   children,
 }: {
   id: string;
-  children: (h: DragHandleProps) => React.ReactNode;
+  children: (h: React.HTMLAttributes<HTMLElement>) => React.ReactNode;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
@@ -261,7 +258,7 @@ function SortableRow({
         opacity: isDragging ? 0.5 : 1,
       }}
     >
-      {children({ ...attributes, ...listeners })}
+      {children({ ...attributes, ...listeners } as React.HTMLAttributes<HTMLElement>)}
     </div>
   );
 }
@@ -406,22 +403,25 @@ function HeroEditor() {
     queryKey: ["hero_content", "admin"],
     queryFn: async () => (await supabase.from("hero_content").select("*").maybeSingle()).data,
   });
-  const [f, setF] = useState<any>({});
+  const [f, setF] = useState<Partial<Tables<"hero_content">>>({});
   useMemo(() => {
     if (data && Object.keys(f).length === 0) setF(data);
   }, [data]);
 
   const save = async () => {
-    const payload = { ...f };
+    const payload: TablesUpdate<"hero_content"> = { ...f };
     delete payload.created_at;
     delete payload.updated_at;
-    const { error } = await supabase.from("hero_content").update(payload).eq("id", f.id);
+    const { error } = await supabase
+      .from("hero_content")
+      .update(payload)
+      .eq("id", f.id as string);
     if (error) return toast.error(error.message);
     toast.success("Saved");
     qc.invalidateQueries({ queryKey: ["hero_content"] });
   };
 
-  const trust: any[] = f.trust_items || [];
+  const trust = (f.trust_items as { label: string }[] | null) || [];
   return (
     <div className="glass-card space-y-4 rounded-2xl p-4 sm:p-6">
       <div className="font-display text-lg font-bold">Hero Section</div>
@@ -719,7 +719,7 @@ const crudTable = (table: keyof Database["public"]["Tables"]) =>
   supabase.from(table) as unknown as CrudTable;
 
 /* ---------- Generic CRUD table ---------- */
-function CrudList<T extends { id?: string }>({
+function CrudList<T extends { id: string }>({
   title,
   table,
   orderBy = "sort_order",
@@ -853,7 +853,10 @@ function CrudList<T extends { id?: string }>({
             </div>
             <div className="col-span-2 flex flex-wrap items-center justify-end gap-2 sm:col-span-1 sm:contents">
               {visibilityCol && (
-                <Switch checked={!!r[visibilityCol]} onCheckedChange={(v) => toggleVis(r.id, v)} />
+                <Switch
+                  checked={!!(r as Record<string, unknown>)[visibilityCol]}
+                  onCheckedChange={(v) => toggleVis(r.id, v)}
+                />
               )}
               <Button
                 variant="ghost"
@@ -1239,13 +1242,13 @@ function PromoSettingsPanel() {
           .eq("is_active", true)
       ).count ?? 0,
   });
-  const [local, setLocal] = useState<any>(null);
+  const [local, setLocal] = useState<Partial<Tables<"promo_settings">> | null>(null);
   const settings = local ?? data;
   const [saving, setSaving] = useState(false);
 
   if (!settings) return null;
 
-  const save = async (patch) => {
+  const save = async (patch: Partial<Tables<"promo_settings">>) => {
     const next = { ...settings, ...patch };
     setLocal(next);
     setSaving(true);
@@ -1453,7 +1456,13 @@ function PromoSettingsPanel() {
   );
 }
 
-function BannerLivePreview({ f, set }: { f: any; set: (v) => void }) {
+function BannerLivePreview({
+  f,
+  set,
+}: {
+  f: Partial<Tables<"promo_banners">>;
+  set: (v: Partial<Tables<"promo_banners">>) => void;
+}) {
   const layout = f.layout || "full";
   const isVideo = f.media_type === "video";
   const bg = f.background_color || "#0a1128";
@@ -1788,15 +1797,15 @@ function BulkHeroUpload() {
   );
 }
 
-function MarqueeModal({ value, onSave }: { value: string; onSave: (v: string) => void }) {
+function MarqueeModal({ value, onSave }: { value?: string | null; onSave: (v: string) => void }) {
   const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState(value);
+  const [draft, setDraft] = useState(value ?? "");
   return (
     <Dialog
       open={open}
       onOpenChange={(v) => {
         setOpen(v);
-        if (v) setDraft(value);
+        if (v) setDraft(value ?? "");
       }}
     >
       <DialogTrigger asChild>
@@ -1966,17 +1975,20 @@ function AboutEditor() {
     queryKey: ["about_content", "admin"],
     queryFn: async () => (await supabase.from("about_content").select("*").maybeSingle()).data,
   });
-  const [f, setF] = useState<any>({});
+  const [f, setF] = useState<Partial<Tables<"about_content">>>({});
   useMemo(() => {
     if (data && !f.id) setF(data);
   }, [data]);
-  const why: any[] = f.why_us || [];
-  const stats: any[] = f.stats || [];
+  const why = (f.why_us as { title: string; description: string }[] | null) || [];
+  const stats = (f.stats as { label: string; value: string }[] | null) || [];
   const save = async () => {
-    const p = { ...f };
+    const p: TablesUpdate<"about_content"> = { ...f };
     delete p.created_at;
     delete p.updated_at;
-    const { error } = await supabase.from("about_content").update(p).eq("id", f.id);
+    const { error } = await supabase
+      .from("about_content")
+      .update(p)
+      .eq("id", f.id as string);
     if (error) return toast.error(error.message);
     toast.success("Saved");
     qc.invalidateQueries({ queryKey: ["about_content"] });
@@ -2182,7 +2194,7 @@ function MediaLibrary() {
   });
   const [uploading, setUploading] = useState(false);
   const [search, setSearch] = useState("");
-  const items = (data as any[]).filter(
+  const items = data.filter(
     (m) => !search || m.file_name?.toLowerCase().includes(search.toLowerCase()),
   );
 
@@ -2198,7 +2210,7 @@ function MediaLibrary() {
       setUploading(false);
     }
   };
-  const del = async (m) => {
+  const del = async (m: Tables<"media_library">) => {
     if (!confirm("Delete media?")) return;
     if (m.storage_path) await supabase.storage.from("website-media").remove([m.storage_path]);
     await supabase.from("media_library").delete().eq("id", m.id);
@@ -2235,7 +2247,7 @@ function MediaLibrary() {
         {items.map((m) => (
           <div key={m.id} className="group relative overflow-hidden rounded-xl border">
             <img
-              src={m.public_url}
+              src={m.public_url ?? undefined}
               alt={m.file_name}
               className="aspect-square w-full object-cover"
             />

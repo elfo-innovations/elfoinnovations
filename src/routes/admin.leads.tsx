@@ -87,10 +87,7 @@ function AdminLeads() {
   });
 
   const updateStatus = async (id: string, status: Enums<"lead_status">) => {
-    const { error } = await supabase
-      .from("leads")
-      .update({ status: status })
-      .eq("id", id);
+    const { error } = await supabase.from("leads").update({ status: status }).eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Status updated");
     qc.invalidateQueries({ queryKey: ["admin-leads"] });
@@ -169,10 +166,9 @@ function AdminLeads() {
       const s = String(v).replace(/"/g, '""');
       return /[",\n\r]/.test(s) ? `"${s}"` : s;
     };
-    const csv = [
-      cols.join(","),
-      ...filtered.map((r) => cols.map((c) => esc(r[c])).join(",")),
-    ].join("\n");
+    const csv = [cols.join(","), ...filtered.map((r) => cols.map((c) => esc(r[c])).join(","))].join(
+      "\n",
+    );
     const blob = new Blob([`\ufeff${csv}`], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -243,7 +239,10 @@ function AdminLeads() {
                 </Badge>
               </div>
               <div className="mt-3 flex items-center gap-2">
-                <Select value={l.status} onValueChange={(v) => updateStatus(l.id, v as Enums<"lead_status">)}>
+                <Select
+                  value={l.status}
+                  onValueChange={(v) => updateStatus(l.id, v as Enums<"lead_status">)}
+                >
                   <SelectTrigger className="h-8 flex-1 text-xs">
                     <SelectValue />
                   </SelectTrigger>
@@ -308,7 +307,10 @@ function AdminLeads() {
                     <Badge variant="outline">{l.budget_readiness}</Badge>
                   </td>
                   <td className="px-4 py-3">
-                    <Select value={l.status} onValueChange={(v) => updateStatus(l.id, v as Enums<"lead_status">)}>
+                    <Select
+                      value={l.status}
+                      onValueChange={(v) => updateStatus(l.id, v as Enums<"lead_status">)}
+                    >
                       <SelectTrigger className="h-8 w-[180px] text-xs">
                         <SelectValue />
                       </SelectTrigger>

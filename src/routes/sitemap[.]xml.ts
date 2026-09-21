@@ -31,9 +31,8 @@ export const Route = createFileRoute("/sitemap.xml")({
             .eq("is_published", true);
           for (const b of data ?? []) {
             entries.push({
-              path: `/blogs/${(b).slug}`,
-              lastmod:
-                ((b).updated_at || (b).published_at || "").slice(0, 10) || undefined,
+              path: `/blogs/${b.slug}`,
+              lastmod: (b.updated_at || b.published_at || "").slice(0, 10) || undefined,
               changefreq: "monthly",
               priority: "0.6",
             });

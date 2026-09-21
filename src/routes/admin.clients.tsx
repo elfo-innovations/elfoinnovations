@@ -94,9 +94,7 @@ function AdminClients() {
   // Build lookup maps for the referral network: who referred whom.
   const clientsById = new Map((data ?? []).map((c) => [c.id, c]));
   const referrerIds = new Set(
-    (data ?? [])
-      .filter((c) => c.referred_by_client_id)
-      .map((c) => c.referred_by_client_id),
+    (data ?? []).filter((c) => c.referred_by_client_id).map((c) => c.referred_by_client_id),
   );
   const referredCountByReferrer = new Map<string, number>();
   (data ?? []).forEach((c) => {
@@ -357,14 +355,11 @@ function AdminClients() {
             No clients yet. Click "Add Client" to create portal access.
           </div>
         )}
-        {data &&
-          data.length > 0 &&
-          view === "connected" &&
-          !data.some((c) => isConnected(c)) && (
-            <div className="col-span-full rounded-2xl border border-dashed p-10 text-center text-sm text-muted-foreground">
-              No connected clients yet — no one has used a referral code so far.
-            </div>
-          )}
+        {data && data.length > 0 && view === "connected" && !data.some((c) => isConnected(c)) && (
+          <div className="col-span-full rounded-2xl border border-dashed p-10 text-center text-sm text-muted-foreground">
+            No connected clients yet — no one has used a referral code so far.
+          </div>
+        )}
       </div>
 
       <Dialog
