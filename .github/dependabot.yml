@@ -1,0 +1,10 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # security-updates (vulnerability patches) are on by default for every
+    # ecosystem entry and cannot be disabled here; this block additionally
+    # enables routine version-updates on the schedule above.
+    open-pull-requests-limit: 10

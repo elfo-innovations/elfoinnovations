@@ -147,6 +147,55 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-09-22 14:00 PKT — AI Agent (Claude)
+
+### Completed
+- Finding 18 (no automated dependency scanning), LOW.
+- Added `.github/dependabot.yml`: npm ecosystem, root directory, weekly schedule,
+  `open-pull-requests-limit: 10`. Security-updates are on by default for any configured
+  ecosystem (not a separate toggle) — the comment in the file notes this so a future agent
+  doesn't go looking for a missing option.
+- Added `.github/workflows/security-audit.yml`: runs on `push`/`pull_request` to `main`,
+  checks out the repo, sets up Node 22 (matches `@types/node@^22.16.5`, the only version
+  signal in this repo — there's no `.nvmrc`/`engines` field), runs `npm ci`, then
+  `npm audit --audit-level=high` (job fails on any high/critical finding via the command's own
+  exit code — no extra `if:` needed).
+- **Pre-existing, unrelated bug found and fixed as a prerequisite**: `npm ci` failed outright
+  before this fix — `package-lock.json` was missing the resolved entry for `lru-cache@11.5.3`
+  (an optional peer of `nitro`), so the lockfile and `package.json` were out of sync. A CI job
+  that immediately fails on every push regardless of real vulnerabilities isn't useful, so with
+  the project owner's explicit approval I ran `npm install` once to resync the lock.
+  Verified the resulting diff line-by-line before touching git: exactly one `"version"` string
+  in the whole diff (the new `lru-cache@11.5.3` entry, added not changed); the other ~68 changed
+  lines are pre-existing optional platform-binary entries gaining a `"dev": true` flag or losing
+  a stale `"libc": [...]` array — npm-metadata normalization from a slightly newer npm than
+  generated the original lock, not dependency changes. No package added/removed/bumped other
+  than that one missing entry. `package.json` untouched; no `packageManager` field added; no
+  package-manager switch.
+- Verified with a clean `rm -rf node_modules && npm ci` (succeeds), `npm audit --audit-level=high`
+  (0 vulnerabilities), `npm run lint` (0 errors, the same pre-existing 11 warnings), `npx tsc
+  --noEmit` (clean), `npm run build` (succeeds, produces `.output/server/wrangler.json` /
+  `.output/server/index.mjs` matching `wrangler.toml`'s `main`, confirming the Cloudflare Worker
+  output shape is unaffected).
+
+### Commit
+- Will be recorded once pushed (this entry is written just before the commit in the same
+  session).
+
+### Notes
+- Finding 16 (Node vs. Bun) has not been decided/actioned anywhere in this repo yet — no
+  `bun.lock`, no `.nvmrc`, no `engines` field exist. `security-audit.yml` was written for npm +
+  Node 22 to match the current, actual state of the repo. If Finding 16 later moves this project
+  to Bun, this workflow's install/audit steps need to be updated to match (don't forget it —
+  it's easy to update `package.json`'s scripts and miss this workflow file).
+- `lru-cache@11.5.3` is only an **optional** peer of `nitro` (storage-driver peer, alongside
+  `idb-keyval`, `db0`, `ioredis`, etc.) — resolving it in the lockfile doesn't add a hard runtime
+  dependency or change what actually gets installed/used at runtime; it just lets `npm ci` do a
+  fully-specified install instead of erroring on the gap.
+- Nothing left unfinished from this session.
+
+---
+
 ## 2026-09-22 13:42 PKT — AI Agent (Claude)
 
 ### Completed
