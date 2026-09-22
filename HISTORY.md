@@ -147,8 +147,50 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-09-22 13:42 PKT — AI Agent (Claude)
 
+### Completed
+- Finding 17 (Nitro pinned to a beta version, `"nitro": "3.0.260603-beta"` in `package.json`) —
+  **investigated only, no change made.**
+- Confirmed current versions: `nitro` is `3.0.260603-beta` (both `package.json` and
+  `package-lock.json` agree, resolved to that exact tarball); `@tanstack/react-start` resolves
+  to `1.168.38` (satisfies the `^1.168.26` range in `package.json`).
+- Traced *why* nitro is a dependency at all: it is not a direct or peer dependency of
+  `@tanstack/react-start` or `@tanstack/start-plugin-core` (checked both on the npm registry —
+  neither lists `nitro`). It comes in solely via `@lovable.dev/vite-tanstack-config@2.9.0`,
+  which declares `"nitro": ">=3.0.260603-beta"` as an **optional** peer dependency. That
+  `>=` floor is itself the currently pinned version, i.e. this project is already on the
+  minimum version that config package supports.
+- Checked the npm registry directly (`registry.npmjs.org/nitro`): dist-tag `latest` is
+  `3.0.260903-beta`; all 3.x versions published since `3.0.0` (2025-10-10) are `-alpha` or
+  `-beta` — there is no non-prerelease 3.x version. The package's own README/npm page states
+  outright: "You're viewing the v3 branch. For the current stable release, see Nitro v2." Nitro
+  v2 is a different, older major line and is not what this project's Vite 8 /
+  `@lovable.dev/vite-tanstack-config` / TanStack Start setup is built against — it would not be
+  a compatible substitute, only a downgrade to an unrelated branch.
+- Conclusion: **no compatible stable Nitro release currently exists** for this project's exact
+  TanStack Start setup. Per instruction, did not touch `package.json`/`package-lock.json`, did
+  not run `npm install`, did not run any of the verification steps (lint/typecheck/build/dev
+  smoke test/Cloudflare check) since there was nothing to verify.
 
+### Commit
+- This entry only — no dependency or code change. Not a "fix" commit, just documentation per
+  the project owner's explicit instruction for the no-compatible-version case.
+
+### Notes
+- **The beta pin is intentional and currently required, not a leftover mistake.** Do not
+  "helpfully" bump `nitro` to a newer beta (e.g. `3.0.260903-beta`) without the project owner's
+  explicit approval — the instruction for this finding was stable-only, and a newer beta was
+  out of scope here.
+- Revisit Finding 17 next time `npm view nitro` (or `registry.npmjs.org/nitro` dist-tags) shows
+  a `latest` without a `-beta`/`-alpha` suffix on the 3.x line, AND
+  `@lovable.dev/vite-tanstack-config`'s peer range still accepts it — re-check that peer range
+  too, it may have moved by then.
+- Nothing else touched this session; working tree was already clean and in sync with
+  `origin/main` (pulled `3c73fe3` — the Finding-14 follow-up / `config.toml` fix from a prior
+  session — before starting this investigation).
+
+---
 
 ## 2026-09-22 13:11 PKT — AI Agent (Claude)
 
