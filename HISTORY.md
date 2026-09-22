@@ -147,6 +147,25 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-09-22 10:34 PKT — AI Agent (Claude)
+
+### Completed
+- Finding 11 (No server-side route guard on dashboard routes): added `src/lib/route-guards.ts` exporting `requireRole(allowedRoles)`, a `beforeLoad` handler. Added `beforeLoad: requireRole([...])` to all 13 `admin.*.tsx`, 7 `client.*.tsx`, and 4 `developer.*.tsx` route files (24 total), matching each group's role. No component/loader logic touched.
+- **Deviated from the ready-to-use prompt on purpose, and this matters for future agents**: this app's Supabase session lives only in browser localStorage (`src/integrations/supabase/client.ts`) — nothing carries it to the server on a plain page load (no cookie; `auth-middleware.ts` requires an explicit `Authorization` header and is only wired up for server-function calls, not page navigation). Calling `supabase.auth.getSession()` unconditionally inside `beforeLoad` would report signed-out on every SSR page load — hard refresh, direct/bookmarked link — even for real signed-in users, and redirect all of them to `/auth`. That would have been a severe regression, not a fix. `requireRole()` is therefore a no-op when `typeof window === "undefined"` (SSR) and only enforces in the browser. This still closes the gap for same-session, in-app navigation (sidebar links, tab switches — the vast majority of dashboard traffic) without breaking hard reloads for real users. RLS remains the real, always-on data boundary regardless.
+- Verified `npm run typecheck`, `npm run lint` (0 new errors/warnings vs. baseline), `npm run build` all pass.
+- Important files: `src/lib/route-guards.ts` (new), all 24 `admin.*`/`client.*`/`developer.*` route files under `src/routes/`.
+
+### Commit
+- `8f57bc3` — `fix(security): add beforeLoad role guard to admin/client/developer routes (Finding 11)`
+- Status: Committed and pushed
+
+### Notes
+- If a future finding asks for a "server-side" auth check again: check whether it's actually server-visible first. This app's auth is browser-only (localStorage), so anything called `beforeLoad`/`loader` that hits `supabase.auth.getSession()` needs the same SSR no-op guard, or it will false-positive on every hard page load. Don't assume a fix prompt has already accounted for this — verify by reading `client.ts` and `auth-middleware.ts` before writing the guard.
+- Also be careful editing route files programmatically (I did this with a script for all 24 files): a naive "insert after the first `import` line" approach breaks on multi-line `import { A, B, C } from "..."` statements — track brace depth, not just line prefixes, or you'll silently corrupt a file's import block. Caught and fixed this before committing; always re-check the full diff of every touched file, not just a sample.
+- Nothing left unfinished from this session.
+
+---
+
 ## 2026-09-22 10:26 PKT — AI Agent (Claude)
 
 ### Completed
