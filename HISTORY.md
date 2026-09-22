@@ -147,6 +147,48 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-09-22 14:20 PKT — AI Agent (Claude)
+
+### Completed
+- Finding 20 (CI doesn't run lint, typecheck, build, or tests), HIGH.
+- Verified against actual `origin/main` (`c488dad`) before changing anything: `.github/workflows/`
+  only had `keep-alive.yml` (Supabase ping) and `security-audit.yml` (Finding 18, `npm audit`
+  only) — neither ran lint/typecheck/build/tests, so the finding still applied.
+- Confirmed current script state directly rather than trusting the old report: `npm run lint`
+  and `npm run typecheck` (`tsc --noEmit`) already exist in `package.json` (Finding 2 has
+  landed). `npm test` does **not** exist yet — Finding 19 (commit `c9c1c8b`,
+  `test: add Finding 1 pricing regression test, introduce Vitest`) has not been pushed to
+  `origin/main` yet, confirmed via `git fetch origin` + `git log`. Per instructions, did not
+  invent a replacement test command or recreate Finding 19.
+- Added `.github/workflows/ci.yml`: runs on every push and on pull requests targeting `main`;
+  checks out the repo, sets up Node 22 (matches `security-audit.yml`'s existing convention —
+  no `.nvmrc`/`engines` field exists), `npm ci`, then separate steps for `npm run lint`,
+  `npm run typecheck --if-present`, `npm run build`, `npm test --if-present`. Used npm's native
+  `--if-present` flag (not a custom conditional) for typecheck/test so the workflow already
+  runs typecheck today and will automatically start running `npm test` the moment Finding 19's
+  script lands — no future edit to this workflow required for that. Report-only: no auto-fix,
+  no commits/pushes, no deploy, no secrets used. `keep-alive.yml` and `security-audit.yml` left
+  untouched — different purposes, no reason to merge them.
+- Verified locally (clean `npm ci`): `npm run lint` (0 errors, same pre-existing 11 warnings),
+  `npm run typecheck --if-present` (passes), `npm run build` (succeeds), `npm test --if-present`
+  (no-ops with exit 0, confirming it won't break CI before Finding 19 lands). Validated the
+  workflow YAML with `python3 -c "import yaml; yaml.safe_load(...)"`.
+
+### Commit
+- Will be recorded once pushed (this entry is written just before the commit in the same
+  session).
+
+### Notes
+- This workflow depends on Finding 19 (adds `npm test`) to start actually running tests in CI —
+  until then the test step is a documented no-op, not a gap. No dependency on Finding 2 (already
+  landed).
+- If a future agent edits this workflow, keep the `--if-present` pattern for any script whose
+  existence depends on another finding landing — it avoids needing to remember to flip a
+  conditional later.
+- Nothing left unfinished from this session.
+
+---
+
 ## 2026-09-22 14:00 PKT — AI Agent (Claude)
 
 ### Completed
