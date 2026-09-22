@@ -28,7 +28,7 @@ VAPID_SUBJECT = "mailto:elfoinnovations@gmail.com"
 # placeholder with the real site key from the Cloudflare Turnstile dashboard
 # before deploying, or both forms will refuse submissions (they fail closed
 # when unconfigured — see src/lib/turnstile-verify.server.ts).
-VITE_TURNSTILE_SITE_KEY = "REPLACE_WITH_REAL_TURNSTILE_SITE_KEY"
+VITE_TURNSTILE_SITE_KEY = "0x4AAAAAAFAEFl_2o7TbU47Z"
 # RESEND_API_KEY, SUPABASE_SERVICE_ROLE_KEY, VAPID_PRIVATE_KEY are NOT here on purpose —
 # keep those as "Secret" type in the Cloudflare dashboard (Settings > Variables and secrets).
 # Secrets persist across deploys automatically and should never be committed to the repo.
