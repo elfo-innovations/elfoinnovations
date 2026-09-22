@@ -145,6 +145,31 @@ Use this format:
 ---
 ```
 
+## Recent Entries
+
+## 2026-09-22 10:26 PKT — AI Agent (Claude)
+
+### Completed
+- Finding 10 (No HTTP security headers anywhere): added `applySecurityHeaders()` in `src/server.ts`, applied to both the normal SSR response and the catch-all error branch. Sets CSP, X-Frame-Options: DENY, X-Content-Type-Options: nosniff, Referrer-Policy, Permissions-Policy (microphone=(self) for site chat voice input).
+- The finding's suggested CSP (script-src/style-src/connect-src limited to 'self' + Supabase) would have broken two real features — verified by reading the code, not assumed:
+  - Google Translate page widget (`src/i18n/index.ts`) loads `translate.google.com`, which talks to `translate.googleapis.com` and `www.gstatic.com`.
+  - Google Fonts (`src/routes/__root.tsx`) loads `fonts.googleapis.com` (stylesheet) + `fonts.gstatic.com` (fonts).
+  Both hosts are now allowed in the relevant directives; everything else stays locked to 'self'.
+- Verified with `npm run typecheck`, `npm run lint`, `npm run build`, and a real `wrangler dev --local` run — checked response headers via `curl -I` on a normal SSR page, a 404, and confirmed the error branch also wraps headers.
+- Important file: `src/server.ts`.
+
+### Commit
+- `e9842e5` — `fix(security): add CSP and other security headers to all server responses (Finding 10)`
+- Status: Committed and pushed
+
+### Notes
+- Also closed Finding 8 earlier this session (see commit `b69ceaf` and the live-DB fix below) — not code, so no separate HISTORY entry was made for it until now; noting it here for continuity.
+- Finding 8 (schema drift): the "missing columns on website_sections/hero_content" part of that finding was a miscalculation — live columns matched committed migrations exactly, verified via `list_tables` (Supabase MCP). The real gap was that the already-committed `promo_settings` catch-up migration (`20260921120000_add_promo_settings_table.sql`) was never registered in Supabase's `schema_migrations` tracking table. Registered it directly against the live DB (did NOT re-run the CREATE TABLE — table already existed, would have errored). Added a lesson to `AGENTS.md` about this class of drift.
+- If asked to look at security headers again: don't just paste a finding's suggested CSP verbatim — this repo dynamically loads third-party scripts (Google Translate) and external stylesheets (Google Fonts), so always grep `src/` for `https://`, `createElement("script")`, and `<link rel="stylesheet">` before tightening `script-src`/`style-src`/`connect-src`.
+- Nothing left unfinished from this session.
+
+---
+
 ## Most Important Rule
 
 **Every AI that works on this repository must maintain this file.**
