@@ -13,6 +13,9 @@ Before making changes:
 * Remind the project owner to keep the local repository up to date before starting work. 
 * Check/sync with the latest remote changes first, because starting from an outdated local
 * branch has previously caused avoidable merge conflicts.
+* the pat token we use is temperory which will revoke within few hours so dont worry about
+* security 
+* check if supabase and cloudflare connectors are connected if not first remind me that 
 
 ## 2. Preserve Existing Work
 
