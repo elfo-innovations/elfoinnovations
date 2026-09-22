@@ -44,18 +44,55 @@ function isH3SwallowedErrorBody(body: string): boolean {
   }
 }
 
+// Security headers applied to every response.
+//
+// script-src/style-src/font-src/connect-src carry extra allowances beyond
+// 'self' for two features that are otherwise silently broken by a strict
+// CSP:
+//   - The Google Translate page-widget (src/i18n/index.ts) loads
+//     translate.google.com's script, which in turn talks to
+//     translate.googleapis.com and pulls resources from www.gstatic.com.
+//   - Google Fonts (src/routes/__root.tsx) loads a stylesheet from
+//     fonts.googleapis.com and font files from fonts.gstatic.com.
+// Speech-to-text (site chat voice input) uses the browser's native
+// webkitSpeechRecognition, not a page-level fetch, so it needs no
+// connect-src entry — only the Permissions-Policy microphone allowance
+// below. Chat-message translation runs server-side (createServerFn), so
+// it never touches the page's connect-src either.
+const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  "connect-src 'self' https://gwkwpbrlrmqrsdjnnckb.supabase.co wss://gwkwpbrlrmqrsdjnnckb.supabase.co https://translate.googleapis.com https://translate.google.com",
+  "script-src 'self' 'unsafe-inline' https://translate.google.com https://www.gstatic.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "img-src 'self' data: https:",
+  "frame-ancestors 'none'",
+].join("; ");
+
+function applySecurityHeaders(response: Response): Response {
+  const cloned = new Response(response.body, response);
+  cloned.headers.set("Content-Security-Policy", CONTENT_SECURITY_POLICY);
+  cloned.headers.set("X-Frame-Options", "DENY");
+  cloned.headers.set("X-Content-Type-Options", "nosniff");
+  cloned.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  cloned.headers.set("Permissions-Policy", "camera=(), microphone=(self), geolocation=()");
+  return cloned;
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      return applySecurityHeaders(await normalizeCatastrophicSsrResponse(response));
     } catch (error) {
       console.error(error);
-      return new Response(renderErrorPage(), {
-        status: 500,
-        headers: { "content-type": "text/html; charset=utf-8" },
-      });
+      return applySecurityHeaders(
+        new Response(renderErrorPage(), {
+          status: 500,
+          headers: { "content-type": "text/html; charset=utf-8" },
+        }),
+      );
     }
   },
 };
