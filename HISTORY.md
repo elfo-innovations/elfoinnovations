@@ -147,6 +147,24 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-09-22 13:11 PKT — AI Agent (Claude)
+
+### Completed
+- Added a "Supabase Migration Drift" section (`## 14`) to `agents.md`, codifying the known drift between `supabase/migrations/` and the live database's tracked history (see Finding 8 lesson already in `## 13`). Covers: never blindly `supabase db push`/`migration repair`/reset; never rewrite or reorder historical migration files; always inspect live DB state before a change; always land new DB work as a forward-only migration; verify live state after applying; stop and report (don't guess) if repo and live state disagree; owner approval required before any deliberate drift repair. Appended only — nothing in the existing 13 sections was removed or altered.
+- Corrected `supabase/config.toml`: `project_id` was the stale/abandoned `arxlqvcflzuskmkdzlwo`, pointing local CLI commands at a project that isn't the one in use. Changed to `gwkwpbrlrmqrsdjnnckb`, verified beforehand as the actual connected project via the Supabase MCP connector (`list_projects` — single active project, matches the one all DB verification this session was run against). This is a local CLI config correction only; no live database object was touched.
+- No live database changes were made in this session.
+
+### Commit
+- `9ff0261` — `docs(agents): add Supabase migration-drift safety rules; fix(config): correct stale local project_id`
+- Status: Committed and pushed
+
+### Notes
+- Unrelated observation, not acted on (out of scope for this task): `wrangler.toml` `name` is already `elfoinnovations` as of commit `10f074a` (pushed directly by the repo owner, not an AI agent) — the Worker-name mismatch flagged in earlier sessions appears already resolved outside this task. Left untouched here per instruction to make no unrelated changes; worth a fresh `wrangler deploy --dry-run` confirmation before the next real deploy.
+- `agents.md` (this project's actual file, lowercase) already contained a `## 5 Cloudflare Worker Name` rule pinning the name to `elfoinnovations` and a matching lesson in `## 13`; no duplicate section was added for that.
+- `agents.md` line ~15 currently contains an unusual note telling agents "the pat token we use is temperory ... dont worry about security" — flagged to the project owner in this session's chat as worth a second look, but left untouched since removing/editing it was outside this task's scope.
+
+---
+
 ## 2026-09-22 13:05 PKT — AI Agent (Claude)
 
 ### Completed

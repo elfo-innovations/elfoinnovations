@@ -201,3 +201,58 @@ Before finishing a task, ask:
 If yes, document it here.
 
 Do not add trivial information. Add lessons that can prevent a future agent from repeating a real mistake.
+
+## 14. Supabase Migration Drift — IMPORTANT
+
+This project has known migration drift between the migration files stored in `supabase/migrations/` and the migration history/state of the live Supabase database.
+
+Do not assume that the repository migration history and the live database are perfectly synchronized.
+
+### Rules for all AI agents
+
+1. Never blindly run `supabase db push` on this project.
+2. Never run `supabase migration repair` unless the project owner explicitly approves a specific repair plan.
+3. Never reset the database or use destructive migration commands.
+4. Never delete, rename, reorder, rewrite, or squash existing migration files just to make migration history appear synchronized.
+5. Before making any database change, inspect both:
+   - the relevant migration files in the repository
+   - the current live database state
+6. If a requested change already exists in the live database, do not blindly apply it again. Verify the live state first.
+7. For every new database change involving schema, tables, columns, functions, triggers, RLS policies, grants, extensions, or other database objects, create a new forward-only migration rather than modifying an old migration.
+8. Apply database changes using the project's established safe database workflow. Do not assume that all repository migrations can safely be pushed to the live database in one operation.
+9. After applying a database change, verify the actual live database state and confirm that it matches the intended migration.
+10. Keep database changes limited to the current task. Do not attempt to clean up unrelated migration drift while working on another security finding.
+11. If the migration history and live database state disagree, stop and report the discrepancy before making a potentially destructive change. Do not guess which side is correct.
+12. Never force-push or rewrite Git history to hide, remove, or work around migration drift.
+13. Do not modify or delete historical migrations simply because they contain an older implementation. Historical migrations are part of the project's record.
+14. If a migration must be applied directly to the live database because of the existing drift, record the corresponding forward-only migration in Git afterward so the intended database state is documented.
+15. Never expose, print, commit, or store database secrets, service-role keys, webhook secrets, or other sensitive credentials in migration files, source code, logs, `HISTORY.md`, or this file.
+
+### Before starting database work
+
+Every AI agent must first:
+
+1. Check `git status`.
+2. Synchronize the local repository with the latest `main` before starting work.
+3. Read this file (`agents.md`).
+4. Read the relevant recent entries in `HISTORY.md`.
+5. Inspect the current live database state relevant to the task.
+6. Check whether another AI has already implemented or applied the requested change.
+
+Do not assume that another AI's database work is reflected in the local checkout, or that Git migration history alone represents the complete live database state.
+
+### Standard workflow for future database changes
+
+Inspect repository + live database → determine current state → create a new forward-only migration → review it → safely apply the required database change → verify the live database → verify Git state → update `HISTORY.md` → commit → push.
+
+The objective is to keep the repository and live database aligned going forward without blindly synchronizing the existing drift or rewriting historical migration history.
+
+### Existing migration-drift cleanup
+
+The existing migration drift is intentionally not being repaired automatically.
+
+Do not attempt a full migration-history cleanup unless the project owner explicitly requests it and approves a specific repair plan after a complete audit.
+
+Until then, treat the existing drift as a known project constraint and follow the safe workflow above.
+
+Owner approval is required before any deliberate migration-history repair, migration repair command, database reset, or full drift cleanup.
