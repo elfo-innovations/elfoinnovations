@@ -147,6 +147,94 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-09-22 14:45 PKT — AI Agent (Claude)
+
+### Completed
+- Finding 19 (No automated test suite exists), HIGH. Two previous AI sessions had worked on
+  this but neither had pushed anything to `origin/main` — verified via `git log`/`git status`
+  before starting; nothing to continue from, so this was built from scratch.
+- Added **Vitest** as the test runner (`"test": "vitest run"` in `package.json`). No
+  `"packageManager"` field added — checked explicitly before and after every install.
+- Added one real **integration** regression test for Finding 1
+  (`test/finding1/pricing.test.ts`), not a copied-logic unit test:
+  - Re-verified Finding 1 directly against the live Supabase project (`elfo-web`,
+    `gwkwpbrlrmqrsdjnnckb`) via `pg_get_functiondef` before writing anything — confirmed
+    `trg_generate_project_invoice` (AFTER INSERT on `public.projects`) really does look up
+    `services.price`/`is_active` by the submitted `service_id` and ignores any submitted
+    `price`, skipping services that don't exist or aren't active. Not a miscalculation —
+    the fix is real and unchanged from what the finding described.
+  - `test/finding1/schema.sql` — minimal schema (clients, services, projects,
+    project_invoices, user_roles, notifications + the two enums) reproducing only the
+    columns the trigger actually touches, taken from `information_schema.columns` /
+    `pg_enum` on the live project — not guessed.
+  - `test/finding1/trigger.sql` — the actual `generate_project_invoice()` function body and
+    trigger, copied verbatim from `pg_get_functiondef()` output. Not hand-written.
+  - The test installs this schema+trigger into an isolated **local PostgreSQL 16** database
+    (installed via `apt-get`, running locally, own role `finding19_test`/own database
+    `finding19_test`, local-only throwaway password — never production credentials, never
+    the production Supabase connection string), inserts a service priced at 5000, inserts a
+    project whose `selected_services` claims `price: 999999` for that service, lets the real
+    `AFTER INSERT` trigger fire, and asserts the resulting invoice row uses `5000` — never
+    `999999`. Two more cases cover a nonexistent `service_id` and an inactive service, both
+    asserting the invoice ends up with no line items / a `0` subtotal rather than falling
+    back to the submitted price.
+  - **Proved the test is meaningful, not just green**: temporarily edited a scratch copy of
+    the trigger to trust `svc->>'price'` instead of `services.price` and to skip the
+    `is_active` filter, reran the suite — all 3 tests failed with the manipulated
+    `999999`/inactive-service values showing up in the invoice, exactly as expected. Restored
+    the real trigger file afterward (`git diff` confirms zero diff vs. the verbatim-pulled
+    version) and reran — all 3 pass again.
+- Supabase branching was **not** attempted — this org is on the Supabase Free plan (confirmed
+  via `list_projects`), which doesn't support branching, so a local Postgres instance was
+  used instead per the task's own instructions. No branch was created, no paid resource was
+  created, no plan upgrade was made.
+- **Production Supabase was only read from** (`pg_get_functiondef`, `information_schema`,
+  `pg_enum` — all read-only) to pull the real trigger/schema. No row was inserted, updated, or
+  deleted in the production database, and no migration was applied to it.
+- **Integrated on top of Finding 20** (`a60465f`, CI workflow) and a subsequent Turnstile
+  site-key fix (`59a79bb`) that landed on `origin/main` while this work was in progress —
+  rebased this commit onto current `origin/main` rather than pushing the stale local commit.
+  Finding 20's `.github/workflows/ci.yml` already calls `npm test --if-present`, so it starts
+  actually running these tests with no further changes needed on either side.
+
+### Verification
+- `npm ci` — clean install, succeeds.
+- `npm test` (`vitest run`) — 3/3 tests pass.
+- `npm run lint` — 0 errors, 11 warnings (same pre-existing baseline as prior sessions; the
+  only errors it caught were Prettier formatting issues in the new test file itself, fixed
+  with `prettier --write` before committing — no other files touched).
+- `npx tsc --noEmit` — clean.
+- `npm run build` — succeeds; Cloudflare Worker output (`.output/server/wrangler.json`) still
+  generates correctly.
+- Full diff reviewed before committing: only `package.json`, `package-lock.json` (new
+  `vitest`/`pg`/`@types/pg` devDependencies), `vitest.config.ts`, and `test/finding1/*` are
+  changed/added. Grepped the new files for secrets/production identifiers (service-role
+  keys, JWTs, the production project ref) — none present; the only credentials in the test
+  file are the local-only Postgres role/password created for this session.
+
+### Commit
+- `c9c1c8b` rebased onto `59a79bb` — see new hash after push, recorded in the next entry.
+- Status: rebased locally, pushing to `origin/main` in this same session.
+
+### Notes
+- Local PostgreSQL 16 was installed via `apt-get install postgresql postgresql-contrib` and
+  is running as a system service in this sandbox only — it does not exist in any other AI's
+  sandbox and does not persist anywhere shared. A future agent continuing this work will need
+  to either reinstall it locally or point `FINDING19_TEST_DATABASE_URL` at their own isolated
+  Postgres instance; the test defaults to
+  `postgresql://finding19_test:finding19_test_local_only@127.0.0.1:5432/finding19_test` if
+  that env var isn't set.
+- If Finding 1's trigger is ever intentionally changed, `test/finding1/trigger.sql` must be
+  re-pulled from the live `generate_project_invoice()` function (via
+  `pg_get_functiondef`) rather than hand-edited, or the test will silently stop verifying
+  the real production behavior.
+- Finding 20's CI workflow and the Turnstile site-key fix (both already on `origin/main`)
+  were left completely untouched by this session — verified via `git show --stat` that
+  neither overlaps this session's files except `HISTORY.md`, resolved as a simple keep-both
+  merge.
+
+---
+
 ## 2026-09-22 14:20 PKT — AI Agent (Claude)
 
 ### Completed

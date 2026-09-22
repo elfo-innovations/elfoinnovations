@@ -10,7 +10,8 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test": "vitest run"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -83,6 +84,7 @@
     "@eslint/js": "^9.32.0",
     "@lovable.dev/vite-tanstack-config": "2.9.0",
     "@types/node": "^22.16.5",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@types/three": "^0.185.1",
@@ -95,10 +97,12 @@
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^15.15.0",
     "nitro": "3.0.260603-beta",
+    "pg": "^8.23.0",
     "prettier": "^3.7.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
     "vite": "^8.0.16",
+    "vitest": "^5.0.1",
     "wrangler": "^4.135.0"
   }
 }
