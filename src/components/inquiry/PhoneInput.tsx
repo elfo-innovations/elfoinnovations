@@ -1,11 +1,10 @@
 import { useMemo, useState } from "react";
 import { Check, ChevronDown, Search } from "lucide-react";
 import { COUNTRIES, type Country } from "@/lib/countries";
+import { type PhoneValue } from "@/lib/phone";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-
-export type PhoneValue = { country: Country; local: string; full: string; valid: boolean };
 
 export function PhoneInput({
   value,
@@ -112,10 +111,3 @@ export function PhoneInput({
     </div>
   );
 }
-
-export const defaultPhone = (): PhoneValue => ({
-  country: COUNTRIES[0],
-  local: "",
-  full: "",
-  valid: false,
-});

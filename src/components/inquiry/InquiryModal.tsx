@@ -13,7 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PhoneInput, defaultPhone, type PhoneValue } from "./PhoneInput";
+import { PhoneInput } from "./PhoneInput";
+import { defaultPhone, type PhoneValue } from "@/lib/phone";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { notifyAdminOfLead } from "@/lib/leads-notify.functions";

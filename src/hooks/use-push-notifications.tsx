@@ -57,6 +57,11 @@ export function usePushNotifications() {
     return () => {
       cancelled = true;
     };
+    // Depend on user?.id (not the user object) on purpose: useAuth's user object gets a new
+    // reference on every auth-context re-render, and re-running this would re-register the
+    // service worker / re-request permission / re-subscribe on every such render, not just on
+    // actual login/logout. save (useServerFn) is stable across renders.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, save]);
 }
 

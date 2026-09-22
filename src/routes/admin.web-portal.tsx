@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,7 +18,8 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { MediaPicker, uploadToWebsiteMedia } from "@/components/web-portal/MediaPicker";
+import { MediaPicker } from "@/components/web-portal/MediaPicker";
+import { uploadToWebsiteMedia } from "@/lib/media-upload";
 import { DateTimeField } from "@/components/web-portal/DateTimeField";
 import {
   DndContext,
@@ -406,8 +407,9 @@ function HeroEditor() {
     queryFn: async () => (await supabase.from("hero_content").select("*").maybeSingle()).data,
   });
   const [f, setF] = useState<Partial<Tables<"hero_content">>>({});
-  useMemo(() => {
-    if (data && Object.keys(f).length === 0) setF(data);
+  useEffect(() => {
+    if (!data) return;
+    setF((prev) => (Object.keys(prev).length === 0 ? data : prev));
   }, [data]);
 
   const save = async () => {
@@ -1978,8 +1980,9 @@ function AboutEditor() {
     queryFn: async () => (await supabase.from("about_content").select("*").maybeSingle()).data,
   });
   const [f, setF] = useState<Partial<Tables<"about_content">>>({});
-  useMemo(() => {
-    if (data && !f.id) setF(data);
+  useEffect(() => {
+    if (!data) return;
+    setF((prev) => (prev.id ? prev : data));
   }, [data]);
   const why = (f.why_us as { title: string; description: string }[] | null) || [];
   const stats = (f.stats as { label: string; value: string }[] | null) || [];

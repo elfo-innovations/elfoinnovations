@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { uploadToWebsiteMedia } from "@/lib/media-upload";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,28 +14,6 @@ import { Input } from "@/components/ui/input";
 import { Upload, ImagePlus, Search, Check, Loader2, ImageOff } from "lucide-react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/utils";
-
-export async function uploadToWebsiteMedia(file: File): Promise<string> {
-  const ext = file.name.split(".").pop() || "png";
-  const path = `${crypto.randomUUID()}.${ext}`;
-  const { error } = await supabase.storage
-    .from("website-media")
-    .upload(path, file, { upsert: false });
-  if (error) throw error;
-  const { data: signed } = await supabase.storage
-    .from("website-media")
-    .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
-  const url = signed?.signedUrl || "";
-  await supabase.from("media_library").insert({
-    file_name: file.name,
-    storage_path: path,
-    public_url: url,
-    file_type: file.type,
-    file_size: file.size,
-    folder: "website",
-  });
-  return url;
-}
 
 export function MediaPicker({
   value,

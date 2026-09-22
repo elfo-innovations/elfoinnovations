@@ -54,6 +54,10 @@ function ProfilePage() {
       setCountry(data?.country || "");
       setAvatarUrl(data?.avatar_url || null);
     })();
+    // Depend on user?.id (not the user object) on purpose: useAuth's user object gets a new
+    // reference on every auth-context re-render, and depending on the object would re-fetch and
+    // overwrite in-progress edits on every such render, not just when the signed-in user changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   const saveProfile = async () => {

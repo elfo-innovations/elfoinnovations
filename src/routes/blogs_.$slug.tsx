@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PublicLayout } from "@/components/site/PublicLayout";
 import { ArrowLeft, Calendar, ListTree } from "lucide-react";
 import type { ReactNode } from "react";
-import { sanitizeHtml } from "@/components/web-portal/RichTextEditor";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 import {
   Accordion,
   AccordionContent,
