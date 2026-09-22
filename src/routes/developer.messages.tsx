@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { MessagesSquare } from "lucide-react";
+import { requireRole } from "@/lib/route-guards";
 
 function MessagesPlaceholder({ role }: { role: "developer" | "client" }) {
   return (
@@ -21,5 +22,6 @@ function MessagesPlaceholder({ role }: { role: "developer" | "client" }) {
 }
 
 export const Route = createFileRoute("/developer/messages")({
+  beforeLoad: requireRole(["developer"]),
   component: () => <MessagesPlaceholder role="developer" />,
 });

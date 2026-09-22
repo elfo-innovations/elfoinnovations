@@ -21,8 +21,10 @@ import { MediaPicker } from "@/components/web-portal/MediaPicker";
 import { RichTextEditor } from "@/components/web-portal/RichTextEditor";
 import { CoverImageSuggestions } from "@/components/web-portal/CoverImageSuggestions";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
+import { requireRole } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/admin/blogs")({
+  beforeLoad: requireRole(["admin"]),
   head: () => ({ meta: [{ title: "Blogs — Admin" }] }),
   component: AdminBlogs,
 });

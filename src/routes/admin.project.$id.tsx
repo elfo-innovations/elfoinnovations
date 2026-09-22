@@ -30,6 +30,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/utils";
 import type { Enums, TablesUpdate } from "@/integrations/supabase/types";
+import { requireRole } from "@/lib/route-guards";
 
 const STAGE_ORDER = ["frontend", "backend", "database", "hosting"] as const;
 const STAGE_STATUSES = [
@@ -61,6 +62,7 @@ function stageVisual(status: string) {
 }
 
 export const Route = createFileRoute("/admin/project/$id")({
+  beforeLoad: requireRole(["admin"]),
   component: AdminProjectDetail,
 });
 

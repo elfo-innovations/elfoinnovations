@@ -7,8 +7,10 @@ import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { requireRole } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/admin/site-chat")({
+  beforeLoad: requireRole(["admin"]),
   head: () => ({ meta: [{ title: "Site Chat (Elsa) — Admin" }] }),
   component: AdminSiteChat,
 });

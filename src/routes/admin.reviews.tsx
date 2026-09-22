@@ -26,8 +26,10 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import type { Enums, Tables } from "@/integrations/supabase/types";
+import { requireRole } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/admin/reviews")({
+  beforeLoad: requireRole(["admin"]),
   head: () => ({ meta: [{ title: "Reviews — Admin" }] }),
   component: AdminReviews,
 });

@@ -20,8 +20,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { requireRole } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/client/reviews")({
+  beforeLoad: requireRole(["client"]),
   head: () => ({ meta: [{ title: "Reviews — Client" }] }),
   component: ClientReviews,
 });

@@ -20,11 +20,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/utils";
+import { requireRole } from "@/lib/route-guards";
 
 const STAGE_ORDER = ["frontend", "backend", "database", "hosting"] as const;
 const COMPLETED = new Set(["admin_approved", "sent_to_client", "client_approved"]);
 
 export const Route = createFileRoute("/client/projects")({
+  beforeLoad: requireRole(["client"]),
   component: ClientProjects,
 });
 

@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { MessagesSquare } from "lucide-react";
+import { requireRole } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/client/messages")({
+  beforeLoad: requireRole(["client"]),
   component: () => (
     <DashboardShell role="client">
       <h1 className="font-display text-3xl font-bold tracking-tight">Messages</h1>

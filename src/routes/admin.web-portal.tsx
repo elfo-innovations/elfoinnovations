@@ -58,8 +58,10 @@ import {
 } from "lucide-react";
 import { getErrorMessage } from "@/lib/utils";
 import type { Database, Tables, TablesUpdate } from "@/integrations/supabase/types";
+import { requireRole } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/admin/web-portal")({
+  beforeLoad: requireRole(["admin"]),
   validateSearch: (s: Record<string, unknown>) => ({ tab: (s.tab as string) || "overview" }),
   component: WebPortalPage,
 });

@@ -44,8 +44,10 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/utils";
+import { requireRole } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/admin/developers")({
+  beforeLoad: requireRole(["admin"]),
   head: () => ({ meta: [{ title: "Developers — Admin" }] }),
   component: AdminDevelopers,
 });

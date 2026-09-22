@@ -4,8 +4,10 @@ import { Users, FileText, FolderKanban, Code2, DollarSign } from "lucide-react";
 import { DashboardShell, StatCard } from "@/components/dashboard/DashboardShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { requireRole } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/admin/")({
+  beforeLoad: requireRole(["admin"]),
   head: () => ({ meta: [{ title: "Admin — ELFO INNOVATIONS" }] }),
   component: AdminOverview,
 });

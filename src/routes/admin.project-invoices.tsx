@@ -7,8 +7,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { InvoicePrintView, type ProjectInvoiceRow } from "@/components/invoices/InvoicePrintView";
+import { requireRole } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/admin/project-invoices")({
+  beforeLoad: requireRole(["admin"]),
   component: AdminProjectInvoices,
 });
 

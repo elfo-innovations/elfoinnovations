@@ -20,8 +20,10 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { InvoicePrintView, type ProjectInvoiceRow } from "@/components/invoices/InvoicePrintView";
 import { getErrorMessage } from "@/lib/utils";
+import { requireRole } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/client/invoices")({
+  beforeLoad: requireRole(["client"]),
   component: ClientInvoices,
 });
 

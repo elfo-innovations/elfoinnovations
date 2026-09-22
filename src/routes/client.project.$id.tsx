@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { requireRole } from "@/lib/route-guards";
 
 const STAGE_ORDER = ["frontend", "backend", "database", "hosting"] as const;
 
@@ -26,6 +27,7 @@ function stageVisual(status: string) {
 }
 
 export const Route = createFileRoute("/client/project/$id")({
+  beforeLoad: requireRole(["client"]),
   component: ClientProjectDetail,
 });
 

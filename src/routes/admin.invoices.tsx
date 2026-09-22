@@ -12,10 +12,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { requireRole } from "@/lib/route-guards";
 
 const STATUSES = ["submitted", "reviewed", "approved", "rejected", "paid"];
 
 export const Route = createFileRoute("/admin/invoices")({
+  beforeLoad: requireRole(["admin"]),
   head: () => ({ meta: [{ title: "Invoices — Admin" }] }),
   component: AdminInvoices,
 });

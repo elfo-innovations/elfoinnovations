@@ -44,8 +44,10 @@ import {
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/utils";
 import type { Tables } from "@/integrations/supabase/types";
+import { requireRole } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/admin/developer-requests")({
+  beforeLoad: requireRole(["admin"]),
   head: () => ({ meta: [{ title: "Developer Requests — Admin" }] }),
   component: AdminDeveloperRequests,
 });

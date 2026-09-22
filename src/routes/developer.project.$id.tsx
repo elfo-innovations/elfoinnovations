@@ -28,6 +28,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/utils";
 import type { Enums, TablesUpdate } from "@/integrations/supabase/types";
+import { requireRole } from "@/lib/route-guards";
 
 const STAGE_ORDER = ["frontend", "backend", "database", "hosting"] as const;
 const DEV_STATUSES = ["pending", "delivered", "admin_review", "revision_requested"];
@@ -51,6 +52,7 @@ function stageVisual(status: string) {
 }
 
 export const Route = createFileRoute("/developer/project/$id")({
+  beforeLoad: requireRole(["developer"]),
   component: DevProjectDetail,
 });
 

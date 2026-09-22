@@ -4,11 +4,13 @@ import { ChevronRight } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { requireRole } from "@/lib/route-guards";
 
 const STAGE_ORDER = ["frontend", "backend", "database", "hosting"] as const;
 const COMPLETED = new Set(["admin_approved", "sent_to_client", "client_approved"]);
 
 export const Route = createFileRoute("/admin/projects")({
+  beforeLoad: requireRole(["admin"]),
   head: () => ({ meta: [{ title: "Projects — Admin" }] }),
   component: AdminProjectsPage,
 });

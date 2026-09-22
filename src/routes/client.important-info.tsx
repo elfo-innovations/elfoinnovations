@@ -14,8 +14,10 @@ import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/badge";
+import { requireRole } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/client/important-info")({
+  beforeLoad: requireRole(["client"]),
   head: () => ({ meta: [{ title: "Important Info — Client" }] }),
   component: ImportantInfo,
 });

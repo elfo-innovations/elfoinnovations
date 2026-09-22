@@ -39,8 +39,10 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/utils";
 import type { Enums, Tables } from "@/integrations/supabase/types";
+import { requireRole } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/admin/leads")({
+  beforeLoad: requireRole(["admin"]),
   head: () => ({ meta: [{ title: "Leads — Admin" }] }),
   component: AdminLeads,
 });

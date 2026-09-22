@@ -5,10 +5,12 @@ import { supabase } from "@/integrations/supabase/client";
 
 import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/badge";
+import { requireRole } from "@/lib/route-guards";
 
 const STAGE_ORDER = ["frontend", "backend", "database", "hosting"] as const;
 
 export const Route = createFileRoute("/developer/projects")({
+  beforeLoad: requireRole(["developer"]),
   component: DeveloperProjectsPage,
 });
 

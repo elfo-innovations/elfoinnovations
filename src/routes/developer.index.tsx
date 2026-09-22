@@ -4,10 +4,12 @@ import { DashboardShell, StatCard } from "@/components/dashboard/DashboardShell"
 import { Briefcase, CheckCircle2, MessagesSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { requireRole } from "@/lib/route-guards";
 
 const COMPLETED = new Set(["admin_approved", "sent_to_client", "client_approved"]);
 
 export const Route = createFileRoute("/developer/")({
+  beforeLoad: requireRole(["developer"]),
   head: () => ({ meta: [{ title: "Developer — ELFO INNOVATIONS" }] }),
   component: DeveloperOverview,
 });

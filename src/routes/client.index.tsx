@@ -5,10 +5,12 @@ import { Briefcase, CheckCircle2, Receipt } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { ReferralModal } from "@/components/client/ReferralModal";
+import { requireRole } from "@/lib/route-guards";
 
 const COMPLETED = new Set(["admin_approved", "sent_to_client", "client_approved"]);
 
 export const Route = createFileRoute("/client/")({
+  beforeLoad: requireRole(["client"]),
   head: () => ({ meta: [{ title: "Client — ELFO INNOVATIONS" }] }),
   component: ClientOverview,
 });
