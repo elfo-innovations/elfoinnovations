@@ -160,15 +160,20 @@ Use this format:
   - `src/components/recruitment/DeveloperApplicationModal.tsx` — renders the Turnstile widget before the submit button, gates `onSubmit`.
   - `wrangler.toml` — added `VITE_TURNSTILE_SITE_KEY` placeholder to `[vars]` with a comment that it must be replaced before deploy (both forms fail closed without it).
   - `src/server.ts` — CSP `script-src`/`frame-src` now allow `challenges.cloudflare.com` (Turnstile's script + widget iframe). No `connect-src` change needed — `siteverify` is a server-to-server call.
+- **Offline lead submission removed by explicit project-owner decision** (this closed the `sync-inquiries.ts` bypass noted below in an earlier draft of this entry — see AGENTS.md section 12 for the permanent rule):
+  - `src/components/inquiry/InquiryModal.tsx` — no longer calls `enqueueInquiry`. Pre-submit connectivity check shows "You're offline. Please connect to the internet and try again." A submission that fails mid-flight shows exactly "Submission failed. Please check your internet connection and try again." — no queueing, user retries manually.
+  - `src/components/PWABoot.tsx` — removed the online/offline banner + `syncOfflineInquiries()` auto-sync effect. Service-worker registration logic (unrelated) left untouched.
+  - `src/lib/offline-queue.ts` and `src/lib/sync-inquiries.ts` — confirmed (via repo-wide grep) they had exactly two consumers, `InquiryModal.tsx` and `PWABoot.tsx`, both now disconnected. Left in place, unused, per instruction — not deleted.
 - `npm run typecheck`, `npm run lint` (0 new errors, same pre-existing warning baseline), `npm run build` all pass.
 - `package-lock.json` picked up incidental npm-version churn from a local `npm install` needed to run the checks — reverted before review, not part of this commit.
 
 ### Commit
-- Not yet committed. Waiting on explicit authorization/PAT from the project owner before committing or pushing (per instruction).
+- `bdcbd33` — `fix(security): add Cloudflare Turnstile to lead + developer application forms, disable offline lead queueing (Finding 12)`
+- Status: Committed and pushed to `main`.
 
 ### Notes
 - **Deployment blocker, by design (fail-closed):** `VITE_TURNSTILE_SITE_KEY` in `wrangler.toml` is a placeholder and `TURNSTILE_SECRET_KEY` has not been set as a Cloudflare Secret. Until both are configured with real values, the lead form and developer-application form will refuse every submission with a "verification unavailable" error rather than silently skip the check. This is intentional — do not "fix" it by making the check optional.
-- **Known gap, deliberately not touched — needs an explicit decision, not a guess:** `src/lib/sync-inquiries.ts` (the offline-queue background sync for `InquiryModal`) still calls `supabase.from("leads").insert()` directly under anon RLS, with no Turnstile check. `enqueueInquiry()`/`syncOfflineInquiries()` are plain exported functions independent of the React component's `turnstileToken` gate, so this is a real bypass of Finding 12 for the `leads` table specifically (not `developer_applications` — that form has no offline queue). Not fixed because both solutions considered break the existing "queue silently, send automatically whenever you're back online — possibly much later" UX: Turnstile tokens are single-use and expire in minutes, so neither storing a token at enqueue time nor doing nothing at sync time is safe/correct without an actual architecture decision from the project owner.
+- The `sync-inquiries.ts` Turnstile-bypass gap (flagged earlier this session) is now resolved by removing offline lead submission entirely rather than patching the sync path — see AGENTS.md section 12. `offline-queue.ts`/`sync-inquiries.ts` remain in the repo, unused; do not re-wire them up without the project owner's explicit approval.
 - Site chatbot (`SiteChatWidget.tsx`, `site_chat_logs`) was intentionally left completely unmodified — explicitly out of scope for this fix per instruction, despite being named in the original Finding 12 text as lower-priority in-scope.
 - Nothing else left unfinished from this session's Finding 12 work.
 
