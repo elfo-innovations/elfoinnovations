@@ -147,6 +147,55 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-09-22 13:05 PKT — AI Agent (Claude)
+
+### Completed
+- Finding 13 (pg_net extension registered in public schema, LOW). The finding's own
+  ready-to-use prompt does not work as written -- did not follow it literally, see Notes.
+- Verified live before changing anything: `net.http_request_queue` had 0 pending rows (nothing
+  in flight to lose), and `net.http_post` is called from exactly one place in the codebase
+  (`public.dispatch_push_for_notification()`).
+- Applied migration `20260922130000_move_pg_net_extension_schema.sql`:
+  `DROP EXTENSION pg_net; CREATE EXTENSION pg_net SCHEMA extensions;` -- this is what actually
+  moves the linter-visible `pg_extension.extnamespace` from `public` to `extensions`. No code
+  change: `dispatch_push_for_notification()` already calls `net.http_post` and still does.
+- Verified live after applying: `pg_extension.extnamespace` for pg_net is now `extensions`; a
+  real test request via `net.http_post` to httpbin.org completed with `status_code 200`
+  (checked via `net._http_response`); `dispatch_push_for_notification()`'s body is
+  byte-for-byte unchanged and its trigger on `public.notifications` is still attached/enabled.
+- Deliberately did NOT insert a test row into `public.notifications` to fire the trigger
+  end-to-end -- that would create a real (if briefly visible) fake notification for a real
+  user. The checks above cover the only thing this migration could plausibly have broken.
+- `npm run lint`/`tsc`/`vite build` unaffected (DB-only change) -- ran them anyway: still 0
+  errors / 11 warnings, clean, passes.
+
+### Commit
+- `cad6944` -- `fix(db): move pg_net extension out of public schema (Finding 13)`
+- Status: Committed and pushed to `main`. Applied directly to the live DB via Supabase MCP
+  before committing the migration file (matches this repo's usual order for db fixes).
+
+### Notes
+- **The finding's ready-to-use prompt is wrong for this extension and would have broken the
+  push-dispatch trigger if followed literally.** `ALTER EXTENSION pg_net SET SCHEMA extensions`
+  fails outright -- pg_net is not relocatable (`pg_extension.extrelocatable = false`). And even
+  if it didn't fail, there is no `extensions.http_post` to switch to: pg_net's docs confirm it
+  always creates its real objects (`http_post`, `http_request_queue`, etc.) in a schema
+  literally named `net`, regardless of which schema `CREATE EXTENSION` is given -- that
+  argument only changes the extension's own bookkeeping entry, which is what the linter checks.
+  Supabase's own default project setup does the same `CREATE EXTENSION pg_net SCHEMA
+  extensions` and still calls `net.http_post` everywhere. **Lesson for future findings
+  involving pg_net: never rewrite a `net.*` call site to `extensions.*` -- it will not exist.**
+- Separate, lower-priority observation surfaced while investigating (NOT fixed, out of scope
+  for Finding 13): the `net` schema's `USAGE` grant to `anon`/`authenticated` is a Supabase
+  platform default (their `grant_pg_net_access()` event trigger), reapplied automatically
+  whenever `pg_net` is (re)created -- this is why no grants needed to be manually restored
+  after the drop/recreate above. It's not a live REST-facing SSRF path today because `net` is
+  not in PostgREST's exposed schemas (`pgrst.db_schemas` is unset -> default `public` only),
+  but it's worth a future finding if that setting ever changes.
+- Nothing left unfinished from this session.
+
+---
+
 ## 2026-09-22 12:20 PKT — AI Agent (Claude)
 
 ### Completed
