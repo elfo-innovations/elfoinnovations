@@ -147,6 +147,42 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-09-22 12:20 PKT — AI Agent (Claude)
+
+### Completed
+- Reviewed the 18 remaining `npm run lint` warnings (14 `react-refresh/only-export-components`,
+  4 `react-hooks/exhaustive-deps`) individually rather than mass-suppressing them.
+- Fixed `HeroEditor`/`AboutEditor` in `admin.web-portal.tsx`: both used `useMemo` purely for a
+  side effect (`setF` on data load), which is not something React guarantees the timing of.
+  Replaced with `useEffect` + a functional state update; this also removed the root cause of
+  their exhaustive-deps warning instead of just silencing it.
+- Extracted 3 non-component helpers into their own lib files to fix the react-refresh warning
+  at the source: `defaultPhone`/`PhoneValue` -> `src/lib/phone.ts`, `uploadToWebsiteMedia` ->
+  `src/lib/media-upload.ts`, `sanitizeHtml` -> `src/lib/sanitize-html.ts`. The last one also
+  stops the public blog page (`blogs_.$slug.tsx`) importing from an admin-only editor
+  component, which was an odd dependency regardless of the lint warning.
+- Left 2 exhaustive-deps warnings (`use-push-notifications.tsx`, `profile.tsx`) with an
+  `eslint-disable-next-line` + comment: both intentionally depend on `user?.id` rather than
+  the `user` object so the effect doesn't re-run on every auth-context re-render.
+- Left 10 react-refresh warnings unchanged: 6 shadcn/ui primitives (component + cva variants)
+  and 4 context hooks (Provider + useX) are both the standard, intentional pattern for their
+  category. Splitting them would be a large diff for a dev-only Fast Refresh warning with zero
+  runtime effect.
+- `npm run lint`: 0 errors / 11 warnings (was 18). `tsc --noEmit` and `vite build` both pass.
+
+### Commit
+- `1e931ec` — `fix(lint): resolve 7 of the 18 remaining lint warnings, document the rest`
+- Status: Committed and pushed to `main`.
+
+### Notes
+- Finding 12 (Turnstile, offline-queue removal) and all prior security work were not touched.
+- `use-push-notifications.tsx` and `profile.tsx` still show as exhaustive-deps warnings in
+  some tooling summaries because of the eslint-disable comment, not because they were missed
+  — see the comment directly above each `}, [user?.id, ...])` line for the reasoning.
+- Nothing left unfinished from this session.
+
+---
+
 ## 2026-09-22 11:10 PKT — AI Agent (Claude)
 
 ### Completed
