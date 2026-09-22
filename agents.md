@@ -177,6 +177,7 @@ Whenever an AI discovers something important that future agents should **NOT do*
 * **Do not force-push or use destructive Git commands without explicit approval.**
 * **Do not expose or commit secrets.**
 * **Do not remove existing security protections just to solve an error.**
+* **A committed catch-up migration is not the same as a tracked one.** When a table/column already exists live and you write a migration file to document it retroactively, that file will NOT show up in Supabase's `list_migrations` / `schema_migrations` history unless you explicitly register it there (and you should NOT re-run its DDL against production if the objects already exist — it will just error). Verify with `list_migrations` against the `supabase/migrations/` folder by name, not just by diffing table/column schemas, or you'll miss this class of drift (Finding 8).
 
 ### Rule for future agents
 
