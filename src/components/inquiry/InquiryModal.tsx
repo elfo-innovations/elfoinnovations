@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from "react";
+import { useState, useRef, type KeyboardEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check, Loader2, Sparkles } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -14,12 +14,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PhoneInput, defaultPhone, type PhoneValue } from "./PhoneInput";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { enqueueInquiry } from "@/lib/offline-queue";
 import { useServerFn } from "@tanstack/react-start";
 import { notifyAdminOfLead } from "@/lib/leads-notify.functions";
+import { submitLead } from "@/lib/leads.functions";
+import { Turnstile, type TurnstileHandle } from "@/components/Turnstile";
 import { cn } from "@/lib/utils";
+
+// Public site key — safe to ship to the client, exposed via wrangler.toml [vars].
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
 type BudgetReadiness = "yes_approved" | "maybe_depends" | "not_yet_exploring";
 
@@ -43,9 +46,12 @@ const budgetOptions: { value: BudgetReadiness; title: string; desc: string }[] =
 
 export function InquiryModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const notifyAdmin = useServerFn(notifyAdminOfLead);
+  const submitLeadFn = useServerFn(submitLead);
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<null | { code: string }>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileHandle>(null);
 
   const [description, setDescription] = useState("");
   const [budget, setBudget] = useState<BudgetReadiness | null>(null);
@@ -78,6 +84,7 @@ export function InquiryModal({ open, onClose }: { open: boolean; onClose: () => 
     setEstBudget("");
     setContactMethod("email");
     setTouched({});
+    setTurnstileToken(null);
   };
 
   const close = () => {
@@ -117,10 +124,19 @@ export function InquiryModal({ open, onClose }: { open: boolean; onClose: () => 
       }
       return;
     }
+    if (!turnstileToken) {
+      toast.error("Please complete the verification challenge before submitting");
+      return;
+    }
+    // Finding 12 follow-up: offline queueing was removed from this form on
+    // purpose — see AGENTS.md. Every real lead submission must go through
+    // submitLead's Turnstile check; there is no longer a path that skips it.
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      toast.error("You're offline. Please connect to the internet and try again.");
+      return;
+    }
     setSubmitting(true);
     const normalizedEmail = email.trim().toLowerCase();
-    const normalizedPhone = phone.full.replace(/\s+/g, "");
-    const isOffline = typeof navigator !== "undefined" && navigator.onLine === false;
 
     const payload = {
       full_name: fullName.trim(),
@@ -136,52 +152,17 @@ export function InquiryModal({ open, onClose }: { open: boolean; onClose: () => 
       preferred_contact: contactMethod,
     };
 
-    // Offline path: queue in IndexedDB and confirm to the user.
-    if (isOffline) {
-      try {
-        const q = await enqueueInquiry(payload);
-        const offlineCode = `ELFO-${q.id.replace(/-/g, "").slice(0, 8).toUpperCase()}`;
-        setSubmitting(false);
-        toast.success(
-          "You are offline. Your inquiry has been saved on this device and will be sent automatically when your connection returns.",
-        );
-        setDone({ code: offlineCode });
-        return;
-      } catch {
-        setSubmitting(false);
-        toast.error("Could not save inquiry offline. Please try again when online.");
-        return;
-      }
-    }
-
-    const [{ data: emailHit }, { data: phoneHit }] = await Promise.all([
-      supabase.from("leads").select("id").ilike("email", normalizedEmail).limit(1).maybeSingle(),
-      supabase.from("leads").select("id").eq("phone", normalizedPhone).limit(1).maybeSingle(),
-    ]);
-    if (emailHit) {
+    // Duplicate check, Turnstile verification, and the insert itself now all
+    // happen server-side in submitLead (Finding 12) — this used to be two
+    // direct anon-RLS `supabase.from("leads")` calls from the client.
+    try {
+      const res = await submitLeadFn({
+        data: { ...payload, turnstileToken },
+      });
       setSubmitting(false);
-      toast.error("A user with this email address has already been registered");
-      return;
-    }
-    if (phoneHit) {
-      setSubmitting(false);
-      toast.error("A user with this phone number has already been registered");
-      return;
-    }
-
-    const leadCode = `ELFO-${(typeof crypto !== "undefined" && "randomUUID" in crypto
-      ? crypto.randomUUID()
-      : Math.random().toString(16).slice(2, 10)
-    )
-      .slice(0, 8)
-      .toUpperCase()}`;
-    const { error } = await supabase.from("leads").insert({ lead_code: leadCode, ...payload });
-    setSubmitting(false);
-    if (!error) {
-      // Fire-and-forget: don't block the success UI on email delivery.
       notifyAdmin({
         data: {
-          lead_code: leadCode,
+          lead_code: res.leadCode,
           full_name: payload.full_name,
           email: payload.email,
           phone: payload.phone,
@@ -191,29 +172,22 @@ export function InquiryModal({ open, onClose }: { open: boolean; onClose: () => 
           timeline: payload.timeline ?? null,
         },
       }).catch(() => {});
-    }
-    if (error) {
-      // Network hiccup — queue as fallback so the user isn't blocked.
-      if (/fetch|network|failed to fetch/i.test(error.message || "")) {
-        try {
-          const q = await enqueueInquiry(payload);
-          const offlineCode = `ELFO-${q.id.replace(/-/g, "").slice(0, 8).toUpperCase()}`;
-          toast.success(
-            "Network issue detected. Your inquiry has been saved and will retry automatically.",
-          );
-          setDone({ code: offlineCode });
-          return;
-        } catch {
-          // Could not queue offline either; fall through to the normal error message below.
-        }
+      setDone({ code: res.leadCode });
+    } catch (e) {
+      setSubmitting(false);
+      const message = e instanceof Error ? e.message : "";
+      turnstileRef.current?.reset();
+      setTurnstileToken(null);
+      // A failed/interrupted submission is no longer queued for later retry
+      // (see AGENTS.md — offline lead queueing was intentionally removed).
+      // The user re-submits manually once reconnected; the exact message
+      // below is per the project owner's decision.
+      if (/fetch|network|failed to fetch/i.test(message)) {
+        toast.error("Submission failed. Please check your internet connection and try again.");
+        return;
       }
-      const msg = /duplicate|unique|already/i.test(error.message)
-        ? "A user with this email address has already been registered"
-        : error.message || "Something went wrong. Please try again.";
-      toast.error(msg);
-      return;
+      toast.error(message || "Something went wrong. Please try again.");
     }
-    setDone({ code: leadCode });
   };
 
   // Let people press Enter to advance/submit instead of forcing a mouse click,
@@ -501,6 +475,17 @@ export function InquiryModal({ open, onClose }: { open: boolean; onClose: () => 
                           </Select>
                         </div>
                       </div>
+                      {TURNSTILE_SITE_KEY && (
+                        <div className="mt-5">
+                          <Turnstile
+                            ref={turnstileRef}
+                            siteKey={TURNSTILE_SITE_KEY}
+                            onVerify={setTurnstileToken}
+                            onExpire={() => setTurnstileToken(null)}
+                            onError={() => setTurnstileToken(null)}
+                          />
+                        </div>
+                      )}
                     </motion.div>
                   )}
                 </AnimatePresence>

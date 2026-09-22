@@ -164,7 +164,17 @@ If something depends on Cloudflare, Supabase, GitHub, deployment configuration, 
 * Do not invent environment variables, Worker names, project IDs, deployment pipelines, or credentials.
 * If something cannot be verified, say so.
 
-## 12. Shared AI Lessons / Project Memory
+## 12. Offline Lead Submission Is Intentionally Disabled — Do Not Re-enable
+
+As of the Finding 12 follow-up, the lead/contact form (`InquiryModal.tsx`) does **not** queue submissions when the user is offline, and does **not** retry automatically in the background.
+
+* Before submitting, the form checks connectivity; if offline, it shows a message asking the user to connect and try again — nothing is queued.
+* If a submission fails mid-flight (network error), the user sees exactly: "Submission failed. Please check your internet connection and try again." They must click Submit again manually once reconnected.
+* This is a deliberate security-over-convenience trade-off: every actual lead insert must go through Turnstile verification (`submitLead` in `src/lib/leads.functions.ts`). The old offline queue (`src/lib/offline-queue.ts`, `src/lib/sync-inquiries.ts`) bypassed Turnstile entirely — `enqueueInquiry()`/`syncOfflineInquiries()` were plain exported functions independent of any UI-level check, so anyone with page-script access could call them directly and insert leads with zero verification.
+* `offline-queue.ts` and `sync-inquiries.ts` are left in the repo, unused, in case the project owner wants to revisit this later — they are **not** wired into `InquiryModal.tsx` or `PWABoot.tsx` anymore.
+* **Do not re-enable, reconnect, or redesign automatic offline lead submission/background syncing unless the project owner explicitly approves it.** Their continued presence in the repo is not permission to reintroduce them — a future agent finding this dead code must not "helpfully" wire it back up.
+
+## 13. Shared AI Lessons / Project Memory
 
 This section is maintained by **ALL AI agents working on this repository**.
 
@@ -177,6 +187,7 @@ Whenever an AI discovers something important that future agents should **NOT do*
 * **Do not force-push or use destructive Git commands without explicit approval.**
 * **Do not expose or commit secrets.**
 * **Do not remove existing security protections just to solve an error.**
+* **When gating a public form endpoint (rate limiting, CAPTCHA, Turnstile, etc.), check for offline-queue / background-sync code paths, not just the primary submit handler.** `InquiryModal.tsx`'s lead form had a secondary path (`src/lib/offline-queue.ts` + `src/lib/sync-inquiries.ts`) that inserted directly, independent of whatever gate lived in the main submit function — the offline queue functions were plain exports, reachable without going through the component's UI state at all. A verification check added only to the "happy path" submit handler did not close this off. Resolved by disabling offline lead submission entirely rather than trying to patch the queue path — see section 12 above.
 * **A committed catch-up migration is not the same as a tracked one.** When a table/column already exists live and you write a migration file to document it retroactively, that file will NOT show up in Supabase's `list_migrations` / `schema_migrations` history unless you explicitly register it there (and you should NOT re-run its DDL against production if the objects already exist — it will just error). Verify with `list_migrations` against the `supabase/migrations/` folder by name, not just by diffing table/column schemas, or you'll miss this class of drift (Finding 8).
 
 ### Rule for future agents

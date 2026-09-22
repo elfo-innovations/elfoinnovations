@@ -1,15 +1,17 @@
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { syncOfflineInquiries } from "@/lib/sync-inquiries";
+import { useEffect } from "react";
 
 /**
  * Registers /sw.js on real, deployed origins only. Skipped in dev, iframe
  * previews, and when ?sw=off is present (kill switch).
- * Also wires online/offline UI + auto-sync of queued inquiries.
+ *
+ * NOTE: this used to also wire an online/offline banner and auto-sync of
+ * queued lead-form inquiries. That was intentionally removed (Finding 12
+ * follow-up, see AGENTS.md) — offline lead submission is disabled in favor
+ * of always requiring a live Turnstile verification. Do not re-add a call
+ * to syncOfflineInquiries()/enqueueInquiry() here without the project
+ * owner's explicit approval.
  */
 export function PWABoot() {
-  const [isOffline, setIsOffline] = useState(false);
-
   useEffect(() => {
     if (typeof window === "undefined") return;
     const host = window.location.hostname;
@@ -49,49 +51,5 @@ export function PWABoot() {
     }
   }, []);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const goOnline = async () => {
-      setIsOffline(false);
-      const res = await syncOfflineInquiries();
-      if (res.synced > 0) {
-        toast.success(
-          `${res.synced} queued inquiry${res.synced > 1 ? "ies" : ""} sent successfully.`,
-        );
-      }
-    };
-    const goOffline = () => {
-      if (navigator.onLine === false) setIsOffline(true);
-    };
-    window.addEventListener("online", goOnline);
-    window.addEventListener("offline", goOffline);
-    // Attempt initial sync in case there's a leftover queue.
-    if (navigator.onLine)
-      syncOfflineInquiries().then((r) => {
-        if (r.synced > 0)
-          toast.success(
-            `${r.synced} queued inquiry${r.synced > 1 ? "ies" : ""} sent successfully.`,
-          );
-      });
-    return () => {
-      window.removeEventListener("online", goOnline);
-      window.removeEventListener("offline", goOffline);
-    };
-  }, []);
-
-  if (!isOffline) return null;
-  return (
-    <div
-      aria-live="polite"
-      className="pointer-events-none fixed bottom-4 left-1/2 z-[100] -translate-x-1/2 rounded-full border border-border/60 bg-background/90 px-4 py-2 text-xs shadow-lg backdrop-blur"
-    >
-      <span
-        className="mr-2 inline-block h-2 w-2 rounded-full align-middle"
-        style={{ background: "#f59e0b" }}
-      />
-      <span className="align-middle">
-        Offline — your inquiry will be saved and sent when your connection returns.
-      </span>
-    </div>
-  );
+  return null;
 }

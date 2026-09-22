@@ -5,6 +5,9 @@ import {
   normalizeUrl,
   type ApplicationInput,
 } from "@/lib/application-validation";
+import { verifyTurnstileToken } from "@/lib/turnstile-verify.server";
+
+type ApplicationSubmitInput = ApplicationInput & { turnstileToken: string };
 
 type DecisionInput = {
   id: string;
@@ -16,10 +19,14 @@ type DecisionInput = {
 };
 
 export const submitDeveloperApplication = createServerFn({ method: "POST" })
-  .inputValidator((input: ApplicationInput) => input)
+  .inputValidator((input: ApplicationSubmitInput) => input)
   .handler(async ({ data }) => {
     const errors = validateApplication(data);
     if (Object.keys(errors).length) throw new Error(Object.values(errors)[0]);
+
+    // Finding 12: verify Turnstile before touching the DB. Data shape and
+    // validation above are unchanged from before this fix.
+    await verifyTurnstileToken(data.turnstileToken);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { applicationReceivedEmail } = await import("@/lib/email-templates");

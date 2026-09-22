@@ -147,6 +147,33 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-09-22 11:10 PKT — AI Agent (Claude)
+
+### Completed
+- Finding 12 (public form endpoints have no rate limiting or CAPTCHA), **scope: contact/lead form + developer-application form only — the site chatbot (`site_chat_logs`) is explicitly excluded from this fix per the project owner's instruction.**
+- Added Cloudflare Turnstile:
+  - `src/components/Turnstile.tsx` (new) — script-tag widget wrapper, exposes a `reset()` via ref.
+  - `src/lib/turnstile-verify.server.ts` (new) — server-only `verifyTurnstileToken()`; fails closed (rejects the submission) if `TURNSTILE_SECRET_KEY` isn't configured.
+  - `src/lib/leads.functions.ts` (new) — `submitLead` server fn. Moved the lead duplicate-check and insert server-side (previously two direct anon-RLS `supabase.from("leads")` calls from `InquiryModal.tsx`); verifies Turnstile before either.
+  - `src/components/inquiry/InquiryModal.tsx` — step-2 now renders the Turnstile widget and routes the online submit path through `submitLead`.
+  - `src/lib/developer-applications.functions.ts` — `submitDeveloperApplication` now requires `turnstileToken` on its input and calls `verifyTurnstileToken()` before the insert. Data shape/validation unchanged.
+  - `src/components/recruitment/DeveloperApplicationModal.tsx` — renders the Turnstile widget before the submit button, gates `onSubmit`.
+  - `wrangler.toml` — added `VITE_TURNSTILE_SITE_KEY` placeholder to `[vars]` with a comment that it must be replaced before deploy (both forms fail closed without it).
+  - `src/server.ts` — CSP `script-src`/`frame-src` now allow `challenges.cloudflare.com` (Turnstile's script + widget iframe). No `connect-src` change needed — `siteverify` is a server-to-server call.
+- `npm run typecheck`, `npm run lint` (0 new errors, same pre-existing warning baseline), `npm run build` all pass.
+- `package-lock.json` picked up incidental npm-version churn from a local `npm install` needed to run the checks — reverted before review, not part of this commit.
+
+### Commit
+- Not yet committed. Waiting on explicit authorization/PAT from the project owner before committing or pushing (per instruction).
+
+### Notes
+- **Deployment blocker, by design (fail-closed):** `VITE_TURNSTILE_SITE_KEY` in `wrangler.toml` is a placeholder and `TURNSTILE_SECRET_KEY` has not been set as a Cloudflare Secret. Until both are configured with real values, the lead form and developer-application form will refuse every submission with a "verification unavailable" error rather than silently skip the check. This is intentional — do not "fix" it by making the check optional.
+- **Known gap, deliberately not touched — needs an explicit decision, not a guess:** `src/lib/sync-inquiries.ts` (the offline-queue background sync for `InquiryModal`) still calls `supabase.from("leads").insert()` directly under anon RLS, with no Turnstile check. `enqueueInquiry()`/`syncOfflineInquiries()` are plain exported functions independent of the React component's `turnstileToken` gate, so this is a real bypass of Finding 12 for the `leads` table specifically (not `developer_applications` — that form has no offline queue). Not fixed because both solutions considered break the existing "queue silently, send automatically whenever you're back online — possibly much later" UX: Turnstile tokens are single-use and expire in minutes, so neither storing a token at enqueue time nor doing nothing at sync time is safe/correct without an actual architecture decision from the project owner.
+- Site chatbot (`SiteChatWidget.tsx`, `site_chat_logs`) was intentionally left completely unmodified — explicitly out of scope for this fix per instruction, despite being named in the original Finding 12 text as lower-priority in-scope.
+- Nothing else left unfinished from this session's Finding 12 work.
+
+---
+
 ## 2026-09-22 10:34 PKT — AI Agent (Claude)
 
 ### Completed

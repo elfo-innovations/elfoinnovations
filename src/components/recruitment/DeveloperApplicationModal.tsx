@@ -1,4 +1,4 @@
-import { useState, type ReactNode, type KeyboardEvent } from "react";
+import { useState, useRef, type ReactNode, type KeyboardEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2, UploadCloud, FileText, X, CheckCircle2, Rocket, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,10 @@ import {
 } from "@/lib/application-validation";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/utils";
+import { Turnstile, type TurnstileHandle } from "@/components/Turnstile";
+
+// Public site key — safe to ship to the client, exposed via wrangler.toml [vars].
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
 type Form = {
   full_name: string;
@@ -95,6 +99,8 @@ export function DeveloperApplicationModal({
   const [file, setFile] = useState<File | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileHandle>(null);
   const [done, setDone] = useState(false);
 
   const set = (k: keyof Form, v: string) => {
@@ -132,6 +138,7 @@ export function DeveloperApplicationModal({
     setFile(null);
     setErrors({});
     setDone(false);
+    setTurnstileToken(null);
   };
 
   const close = (v: boolean) => {
@@ -147,6 +154,10 @@ export function DeveloperApplicationModal({
       toast.error("Please fix the highlighted fields");
       return;
     }
+    if (!turnstileToken) {
+      toast.error("Please complete the verification challenge before submitting");
+      return;
+    }
     setBusy(true);
     try {
       let resume_path: string | null = null;
@@ -158,13 +169,15 @@ export function DeveloperApplicationModal({
         if (upErr) throw new Error(`Resume upload failed: ${upErr.message}`);
         resume_path = path;
       }
-      const res = await submit({ data: { ...payload, resume_path } });
+      const res = await submit({ data: { ...payload, resume_path, turnstileToken } });
       setDone(true);
       if (!res?.emailSent) {
         // Application is stored; email delivery just isn't configured yet.
         console.warn("Confirmation email not sent:", res?.emailError);
       }
     } catch (e) {
+      turnstileRef.current?.reset();
+      setTurnstileToken(null);
       toast.error(getErrorMessage(e, "Could not submit your application"));
     } finally {
       setBusy(false);
@@ -453,6 +466,16 @@ export function DeveloperApplicationModal({
                   )}
                 </label>
               </div>
+
+              {TURNSTILE_SITE_KEY && (
+                <Turnstile
+                  ref={turnstileRef}
+                  siteKey={TURNSTILE_SITE_KEY}
+                  onVerify={setTurnstileToken}
+                  onExpire={() => setTurnstileToken(null)}
+                  onError={() => setTurnstileToken(null)}
+                />
+              )}
 
               <Button
                 onClick={onSubmit}

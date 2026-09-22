@@ -59,13 +59,21 @@ function isH3SwallowedErrorBody(body: string): boolean {
 // connect-src entry — only the Permissions-Policy microphone allowance
 // below. Chat-message translation runs server-side (createServerFn), so
 // it never touches the page's connect-src either.
+// Finding 12: Cloudflare Turnstile (contact/lead form + developer
+// application form only — the chatbot is explicitly excluded from this
+// fix) loads its script from challenges.cloudflare.com and renders its
+// widget in an iframe from the same origin, so both script-src and
+// frame-src need it. siteverify itself is a server-to-server call from
+// src/lib/turnstile-verify.server.ts and never touches the browser, so no
+// connect-src entry is needed for it.
 const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
   "connect-src 'self' https://gwkwpbrlrmqrsdjnnckb.supabase.co wss://gwkwpbrlrmqrsdjnnckb.supabase.co https://translate.googleapis.com https://translate.google.com",
-  "script-src 'self' 'unsafe-inline' https://translate.google.com https://www.gstatic.com",
+  "script-src 'self' 'unsafe-inline' https://translate.google.com https://www.gstatic.com https://challenges.cloudflare.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com",
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: https:",
+  "frame-src 'self' https://challenges.cloudflare.com",
   "frame-ancestors 'none'",
 ].join("; ");
 
