@@ -26,9 +26,7 @@ import {
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/utils";
 import { Turnstile, type TurnstileHandle } from "@/components/Turnstile";
-
-// Public site key — safe to ship to the client, exposed via wrangler.toml [vars].
-const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
+import { TURNSTILE_SITE_KEY } from "@/lib/turnstile-site-key";
 
 type Form = {
   full_name: string;

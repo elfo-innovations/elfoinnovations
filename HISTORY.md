@@ -235,6 +235,84 @@ Use this format:
 
 ---
 
+## 2026-09-23 10:08 PKT — AI Agent (Claude)
+
+### Completed
+- Diagnosed and fixed the Turnstile "Please complete the verification challenge before
+  submitting" issue on both the Contact/Lead form and the Developer Application form (both
+  affected identically — verified via screenshot showing the Contact/Lead form failing, not
+  just Developer Application as originally reported).
+- **Root cause (proven, not guessed):** `wrangler.toml [vars]` entries (including
+  `VITE_TURNSTILE_SITE_KEY`, set to the real key in `59a79bb`) are Cloudflare Worker
+  **runtime** bindings only. Vite's build step — which produces the browser bundle read by
+  `import.meta.env.VITE_*` — never reads `wrangler.toml`; it uses
+  `loadEnv(mode, cwd, "VITE_")` from `@lovable.dev/vite-tanstack-config` (checked the
+  installed package source directly, `dist/index.js`), which only picks up real `.env` files
+  / actual `process.env` at build time. No `.env` file exists in this repo (correctly
+  gitignored). So `import.meta.env.VITE_TURNSTILE_SITE_KEY` was `undefined` in the browser,
+  and both modals gate the widget with `{TURNSTILE_SITE_KEY && <Turnstile ... />}` — so it
+  silently never rendered, `turnstileToken` stayed `null`, and submit always blocked.
+- **Evidence, not assumption:**
+  - `npm run build` locally with no `.env` present → grepped `.output/public/` for the literal
+    site key string (`0x4AAAAAAFAEFl_2o7TbU47Z`): absent. Grepped for the Supabase publishable
+    key as a control: present.
+  - Fetched the **live deployed Worker bundle** via the Cloudflare MCP
+    (`workers_get_worker_code`, script `elfoinnovations`) and grepped it the same way: the
+    Turnstile site key was **absent** from production too; the Supabase key was present.
+  - Traced *why* the Supabase key was present despite the same theoretical gap: it's not
+    because `[vars]` reaches the build — `src/integrations/supabase/client.ts` already has a
+    hardcoded literal fallback (`import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_..."`)
+    with a comment already explaining this exact `[vars]`-doesn't-reach-build gap. This is the
+    "existing Supabase pattern" that confirmed the diagnosis.
+- **Fix (matches the existing project convention, minimum change):** added
+  `src/lib/turnstile-site-key.ts` exporting `TURNSTILE_SITE_KEY` with the same
+  `import.meta.env.VITE_TURNSTILE_SITE_KEY || "<literal>"` fallback pattern already used in
+  `client.ts`. Updated `InquiryModal.tsx` and `DeveloperApplicationModal.tsx` to import this
+  shared constant instead of each computing `import.meta.env.VITE_TURNSTILE_SITE_KEY` locally.
+  This is safe to hardcode — it's the PUBLIC Turnstile widget key (already stated as
+  non-secret in the existing `wrangler.toml` comment), not the secret.
+  `TURNSTILE_SECRET_KEY` / `turnstile-verify.server.ts` were **not touched** — that remains a
+  Cloudflare Worker Secret read via `process.env` at Worker runtime (a different, valid
+  mechanism from Vite build-time env; not part of this bug).
+- Also updated the `wrangler.toml` comment above `VITE_TURNSTILE_SITE_KEY` to explain it's a
+  runtime-only binding that doesn't reach the Vite build, pointing at
+  `turnstile-site-key.ts` as the actual browser-visible source of truth — so a future agent
+  doesn't re-diagnose this from scratch.
+- Verified: `npm run lint` (0 errors / 11 warnings — same pre-existing baseline, no new
+  warnings), `npm run typecheck` (clean), `npm run build` (clean, no `.env` present), then
+  re-ran the same "grep the client bundle" test — site key now **present** in
+  `.output/public/assets/*.js`.
+- Important files: `src/lib/turnstile-site-key.ts` (new),
+  `src/components/inquiry/InquiryModal.tsx`, `src/components/recruitment/DeveloperApplicationModal.tsx`,
+  `wrangler.toml` (comment only, value unchanged).
+
+### Commit
+- Not yet committed at time of writing — see next entry/session for hash once pushed.
+
+### Notes
+- **Deployment still required.** This is a client-bundle fix — it only takes effect on the
+  *next* `npm run build && npx wrangler deploy` (or Cloudflare's own CI build). The currently
+  live Worker still has the old broken bundle until redeployed.
+- Confirmed via Cloudflare MCP (`workers_list`) and Supabase MCP (`list_projects`) that both
+  connectors are connected — project owner does not need to be reminded.
+- The user-supplied `prompt.txt` referenced an "attached/saved deployment .txt file" with a
+  previous `npm run build` / `npx wrangler deploy` log — **that file was never actually
+  uploaded** (only a screenshot and `prompt.txt` were present in
+  `/mnt/user-data/uploads/`). Did not fabricate having read it; used the live Worker bundle
+  fetch instead as an equivalent (arguably stronger) source of truth about what's actually
+  deployed.
+- **Lesson for future agents:** when a `[vars]` entry in `wrangler.toml` is meant to reach
+  `import.meta.env.VITE_*` in the browser bundle for this project, it will NOT do so on its
+  own — this project's Vite config only pulls `VITE_*` values from real `.env` files /
+  `process.env` at build time via `loadEnv()`, never from `wrangler.toml`. The working
+  pattern in this repo is a hardcoded non-secret fallback literal at the point of use
+  (see `client.ts` and now `turnstile-site-key.ts`), not relying on `[vars]` alone. If a
+  *secret* ever needs to be build-time-visible (it shouldn't for anything client-facing),
+  that's a different problem — check Cloudflare's dashboard "Build" environment variables
+  (separate from `[vars]`/Worker Secrets), not `wrangler.toml`.
+
+---
+
 ## 2026-09-22 14:20 PKT — AI Agent (Claude)
 
 ### Completed
