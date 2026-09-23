@@ -147,6 +147,56 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-09-23 08:45 PKT — AI Agent (Claude)
+
+### Completed
+- Security fix (Task 2): `public.leads` and `public.developer_applications` allowed anonymous
+  clients to `INSERT` directly via the PostgREST API using only the public anon key (RLS policies
+  "Anyone submits a lead" / "Anyone can submit a developer application" had `WITH CHECK (true)` for
+  `anon, authenticated`, plus matching `GRANT INSERT` to those roles). This let anyone bypass the
+  Turnstile verification and server-side validation that the public Contact/Lead form and Developer
+  Application form perform.
+- Confirmed both public forms already submit exclusively through server functions
+  (`submitLead` in `src/lib/leads.functions.ts`, `submitDeveloperApplication` in
+  `src/lib/developer-applications.functions.ts`) using the service-role client (`supabaseAdmin`),
+  which bypasses RLS entirely — so neither table needed an anon/authenticated INSERT policy or
+  grant for legitimate submissions to keep working. No application code changes were required.
+- Added forward-only migration
+  `supabase/migrations/20260923090000_lock_down_leads_and_dev_applications_insert.sql` that drops
+  both permissive INSERT policies and revokes the `INSERT` grant from `anon, authenticated` on both
+  tables. Applied directly to the live `elfo-web` Supabase project via the Supabase MCP
+  `apply_migration` tool (registers it in migration history, unlike a plain SQL run).
+- Verified live state: `pg_policies` no longer has any INSERT policy for `leads` or
+  `developer_applications`; `information_schema.role_table_grants` no longer has an `INSERT` grant
+  for `anon`/`authenticated` on either table. Ran a `SET LOCAL ROLE anon; INSERT ...; ROLLBACK;`
+  against both tables directly on the live DB — both now fail with `permission denied for table
+  ...` (42501). Ran the same test as `service_role` (what `supabaseAdmin` uses) — insert succeeds
+  (rolled back), confirming the legitimate server-side path is untouched.
+- Ran `npm run typecheck` (pass), `npm run lint` (0 errors, 11 warnings — same baseline), `npm test`
+  (3/3 pass), `npm run build` (pass).
+- Important files: `supabase/migrations/20260923090000_lock_down_leads_and_dev_applications_insert.sql`
+  (new). No application code was changed.
+
+### Commit
+- (recorded after commit — see next entry / git log for SHA)
+- Status: committed and pushed to `origin/main`
+
+### Notes
+- Did not touch Finding 19/PGlite, Turnstile config, `developer-resumes` storage security,
+  `site_chat_logs`/chatbot, `has_role`, `notifyAdminOfLead`, or the intentional admin-credential
+  issue, per task scope.
+- Left the `Admins read/update/delete leads` and `Admins can view/update/delete developer
+  applications` policies untouched — only the anon/authenticated INSERT path was in scope.
+- Noticed (but deliberately left alone, out of scope for this task) that `anon` and `authenticated`
+  also hold stray table-level `SELECT/UPDATE/DELETE` grants on both tables at the `GRANT` level —
+  harmless today since RLS `SELECT/UPDATE/DELETE` policies on both tables are scoped `TO
+  authenticated` with an admin-only `USING` clause (so `anon` has no matching policy and
+  `authenticated` non-admins are blocked by `current_user_is_admin()`/`has_role(...)`), but a future
+  finding could reasonably tighten these grants too. Flagging for a future task rather than bundling
+  it into this one.
+
+---
+
 ## 2026-09-23 — AI Agent (Claude)
 
 ### Completed
