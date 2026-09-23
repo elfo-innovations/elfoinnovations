@@ -53,9 +53,7 @@ const EMPTY: Form = {
 const fieldBorder = (hasError?: boolean) =>
   cn(
     "rounded-xl transition-colors",
-    hasError
-      ? "border-2 border-destructive focus-visible:ring-destructive"
-      : "border border-input",
+    hasError ? "border-2 border-destructive focus-visible:ring-destructive" : "border border-input",
   );
 
 // Reads a File and returns its base64 payload (no data: URL prefix), for
