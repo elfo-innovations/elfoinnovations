@@ -20,6 +20,7 @@ import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ServicesRouteImport } from './routes/services'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminBlogsRouteImport } from './routes/admin.blogs'
 import { Route as AdminClientsRouteImport } from './routes/admin.clients'
@@ -101,6 +102,11 @@ const ServicesRoute = ServicesRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -252,6 +258,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/services': typeof ServicesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/admin/blogs': typeof AdminBlogsRoute
   '/admin/clients': typeof AdminClientsRoute
   '/admin/developer-requests': typeof AdminDeveloperRequestsRoute
@@ -292,6 +299,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/services': typeof ServicesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/admin/blogs': typeof AdminBlogsRoute
   '/admin/clients': typeof AdminClientsRoute
   '/admin/developer-requests': typeof AdminDeveloperRequestsRoute
@@ -333,6 +341,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/services': typeof ServicesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/admin/blogs': typeof AdminBlogsRoute
   '/admin/clients': typeof AdminClientsRoute
   '/admin/developer-requests': typeof AdminDeveloperRequestsRoute
@@ -375,6 +384,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/services'
     | '/sitemap.xml'
+    | '/terms'
     | '/admin/blogs'
     | '/admin/clients'
     | '/admin/developer-requests'
@@ -415,6 +425,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/services'
     | '/sitemap.xml'
+    | '/terms'
     | '/admin/blogs'
     | '/admin/clients'
     | '/admin/developer-requests'
@@ -455,6 +466,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/services'
     | '/sitemap.xml'
+    | '/terms'
     | '/admin/blogs'
     | '/admin/clients'
     | '/admin/developer-requests'
@@ -496,6 +508,7 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   ServicesRoute: typeof ServicesRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TermsRoute: typeof TermsRoute
   AdminBlogsRoute: typeof AdminBlogsRoute
   AdminClientsRoute: typeof AdminClientsRoute
   AdminDeveloperRequestsRoute: typeof AdminDeveloperRequestsRoute
@@ -602,6 +615,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -808,6 +828,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   ServicesRoute: ServicesRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TermsRoute: TermsRoute,
   AdminBlogsRoute: AdminBlogsRoute,
   AdminClientsRoute: AdminClientsRoute,
   AdminDeveloperRequestsRoute: AdminDeveloperRequestsRoute,
