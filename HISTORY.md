@@ -147,6 +147,66 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-09-23 08:52 PKT — AI Agent (Claude)
+
+### Completed
+- Security fix (Task 3): `public.has_role(_user_id uuid, _role app_role)` is `SECURITY DEFINER`,
+  `SET search_path = 'public'`, and was executable by `anon`. Because it accepts arbitrary
+  `uuid`/`role` arguments and returns a boolean, an anonymous caller could enumerate whether
+  specific user IDs hold a given role (most usefully `admin`) via a plain PostgREST RPC call —
+  confirmed live before the fix with `SET LOCAL ROLE anon; SELECT has_role(...)` succeeding.
+- Checked every call site before changing anything:
+  - All application call sites (`src/lib/account.functions.ts`, `src/lib/developers.functions.ts`,
+    `src/lib/developer-applications.functions.ts`, `src/lib/clients.functions.ts`) call `has_role`
+    via `context.supabase.rpc("has_role", ...)` from inside server functions gated by
+    `requireSupabaseAuth`, which requires a valid Bearer token — these execute as `authenticated`,
+    never `anon`, so none needed anon access.
+  - Exactly one anon-facing RLS policy called `has_role` directly: `"Public read published blogs"`
+    on `public.blogs` (`FOR SELECT TO anon, authenticated USING (is_published = true OR
+    has_role(auth.uid(), 'admin'))`). Every other `has_role`-referencing policy (on `public.*`
+    admin-management tables and `storage.objects`) is already scoped `TO authenticated` only.
+  - `public.current_user_is_admin()` (also `SECURITY DEFINER`, owned by the same role as
+    `has_role`) wraps `has_role(auth.uid(), 'admin')` with no arguments, so it can only ever check
+    the caller's own session — it cannot be used to probe other users' roles.
+- Added forward-only migration
+  `supabase/migrations/20260923100000_lock_down_has_role_anon_enumeration.sql`:
+  - Rewrote the `blogs` policy to call `current_user_is_admin()` instead of `has_role` directly.
+  - Granted `anon` `EXECUTE` on `current_user_is_admin()` (safe: zero-argument, self-only check).
+  - Revoked `EXECUTE` on `has_role(uuid, app_role)` from `PUBLIC` and `anon`; left `authenticated`
+    and `service_role` grants untouched.
+  - Applied directly to the live `elfo-web` Supabase project via the Supabase MCP `apply_migration`
+    tool (registers it in migration history).
+- Verified live: `anon` can no longer execute `has_role` (`SET LOCAL ROLE anon; SELECT
+  has_role(...)` → `42501 permission denied for function has_role`); `anon` reading published
+  blogs still works (`SET LOCAL ROLE anon; SELECT count(*) FROM blogs WHERE is_published = true`
+  → 28 rows, no error); `authenticated` can still call `has_role` (matches all real app call
+  sites); `has_function_privilege` confirms `anon` has `has_role_exec = false, cuia_exec = true`
+  while `authenticated`/`service_role`/`postgres` keep `has_role_exec = true`.
+- Ran `npm run typecheck` (pass), `npm run lint` (0 errors, 11 warnings — same baseline), `npm test`
+  (3/3 pass), `npm run build` (pass). No application code was changed.
+- Important files: `supabase/migrations/20260923100000_lock_down_has_role_anon_enumeration.sql`
+  (new).
+
+### Commit
+- (recorded after commit — see git log for SHA)
+- Status: committed and pushed to `origin/main`
+
+### Notes
+- This finding had been explicitly deferred by a prior agent (see the "Deliberately NOT touched:
+  has_role() and current_user_is_admin()" note in
+  `supabase/migrations/20260921140000_tighten_security_definer_grants.sql`, Finding 6) because
+  revoking anon's grant outright would have broken the public blogs page. This migration is the
+  follow-up that actually closes the anon-enumeration hole by rerouting the one anon-facing policy
+  through the argument-less `current_user_is_admin()` wrapper instead, rather than leaving `anon`
+  blanket access to `has_role`.
+- Did not touch Task 1/Task 2 fixes, Turnstile, Finding 19/PGlite, `site_chat_logs`/chatbot,
+  `notifyAdminOfLead`, or the intentional admin-credential issue, per task scope.
+- If a future finding wants to revisit `storage.objects` or the remaining `public.*`
+  admin-management policies, note they are already `TO authenticated` only and were not touched
+  here — this migration's scope was strictly anon exposure of `has_role`.
+
+---
+
 ## 2026-09-23 08:45 PKT — AI Agent (Claude)
 
 ### Completed
