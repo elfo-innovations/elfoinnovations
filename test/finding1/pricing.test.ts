@@ -6,48 +6,60 @@
  * never trusts a client-submitted price, and instead always uses the
  * authoritative price from public.services.
  *
- * It is a REAL integration test: it connects to an isolated local
- * PostgreSQL database, installs the actual trigger/function SQL pulled
+ * It is a REAL integration test: it spins up an isolated, in-process
+ * PostgreSQL engine (PGlite — real Postgres compiled to WASM, no external
+ * server required), installs the actual trigger/function SQL pulled
  * verbatim from the live Supabase project, inserts real rows, lets the
  * real AFTER INSERT trigger fire, and asserts on the resulting invoice
  * row. It does NOT reimplement the trigger's logic in JavaScript.
  *
- * This never touches the production Supabase database. Connection info
- * points only at a local test-only PostgreSQL instance/role created for
- * this purpose (see HISTORY.md, Finding 19 entry).
+ * This never touches the production Supabase database, and it never
+ * requires a locally-running PostgreSQL server (no 127.0.0.1:5432
+ * dependency) — PGlite runs the real Postgres/PL/pgSQL engine in-process,
+ * so `npm test` works the same way locally and in CI (see HISTORY.md,
+ * Finding 19 entry).
  */
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { Client } from "pg";
+import { PGlite } from "@electric-sql/pglite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const TEST_DB_URL =
-  process.env.FINDING19_TEST_DATABASE_URL ??
-  "postgresql://finding19_test:finding19_test_local_only@127.0.0.1:5432/finding19_test";
-
-const client = new Client({ connectionString: TEST_DB_URL });
+// Kept the name `client` so the rest of this file's `client.query(...)`
+// calls need no structural changes — PGlite's query() result shape
+// (rows / rowCount) matches the `pg` Client closely enough for this test.
+const client = new PGlite();
 
 async function resetSchema() {
-  await client.query(`
+  // PGlite's query() uses the extended/prepared-statement protocol, which
+  // only accepts one statement at a time. schema.sql/trigger.sql are
+  // multi-statement scripts, so they're loaded with exec() instead, which
+  // supports multi-statement SQL (same engine, simple-query protocol).
+  await client.exec(`
     drop schema public cascade;
     create schema public;
   `);
-  const schemaSql = readFileSync(path.join(__dirname, "schema.sql"), "utf8");
+  let schemaSql = readFileSync(path.join(__dirname, "schema.sql"), "utf8");
+  // gen_random_uuid() has been part of core PostgreSQL since v13, and
+  // PGlite ships Postgres 16, so the pgcrypto extension this line used to
+  // provide it is unnecessary — and PGlite doesn't bundle pgcrypto anyway.
+  schemaSql = schemaSql.replace(
+    /create extension if not exists pgcrypto;.*\n/i,
+    "-- pgcrypto not needed here: gen_random_uuid() is built into PGlite's Postgres 16 core\n",
+  );
   const triggerSql = readFileSync(path.join(__dirname, "trigger.sql"), "utf8");
-  await client.query(schemaSql);
-  await client.query(triggerSql);
+  await client.exec(schemaSql);
+  await client.exec(triggerSql);
 }
 
 beforeAll(async () => {
-  await client.connect();
   await resetSchema();
 });
 
 afterAll(async () => {
-  await client.end();
+  await client.close();
 });
 
 describe("Finding 1 — generate_project_invoice trigger trusts services.price, not the submitted price", () => {

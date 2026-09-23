@@ -147,6 +147,75 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-09-23 — AI Agent (Claude)
+
+### Completed
+- Fixed the GitHub CI failure on `main` introduced by Finding 19's pricing regression test
+  (`test/finding1/pricing.test.ts`): CI's `Test` step was failing with
+  `Error: connect ECONNREFUSED 127.0.0.1:5432` because that test required a real, separately
+  running local PostgreSQL server (documented in the 2026-09-22 14:45 PKT entry below), which
+  does not exist in the GitHub Actions runner and which this project explicitly does not want
+  CI to depend on (the project uses Supabase, not a self-managed Postgres service).
+- Replaced the `pg` `Client` (real TCP connection to `127.0.0.1:5432`) with
+  **`@electric-sql/pglite`** — a real PostgreSQL engine compiled to WebAssembly that runs
+  in-process, with no server, no Docker, and no CI service container required. The test still
+  installs the actual verbatim-pulled `schema.sql`/`trigger.sql`, still lets the real
+  `AFTER INSERT` trigger fire, and still asserts on the resulting invoice row — none of
+  Finding 19's original test intent, trigger SQL, or assertions were weakened, removed, or
+  reimplemented in JavaScript. All 3 `it(...)` blocks and all 12 `expect(...)` assertions are
+  byte-identical to the version already on `origin/main`.
+- Mechanical changes only, confined to `test/finding1/pricing.test.ts`:
+  - `new Client({ connectionString: TEST_DB_URL })` → `new PGlite()` (kept the variable name
+    `client` so every existing `client.query(...)` call site needed no change).
+  - Multi-statement schema/trigger loading switched from `client.query(...)` to
+    `client.exec(...)`, because PGlite's `query()` uses the extended/prepared-statement
+    protocol (one statement at a time) while `exec()` supports multi-statement SQL strings.
+  - `client.connect()` / `client.end()` → dropped `connect()` (PGlite needs no connection
+    step) / `client.close()`.
+  - Stripped the schema's `create extension if not exists pgcrypto;` line at load time via a
+    regex replace (not a hand-edit of `schema.sql` itself) — PGlite doesn't bundle the
+    pgcrypto extension, but `gen_random_uuid()` has been part of core PostgreSQL since v13 and
+    PGlite ships Postgres 16, so it's available natively without the extension.
+- Removed the now-unused `pg` and `@types/pg` from `package.json`/`package-lock.json` after
+  confirming (repo-wide grep) they were imported nowhere else in the codebase. Added
+  `@electric-sql/pglite` as a devDependency.
+- Confirmed no PostgreSQL service/container was added to `.github/workflows/ci.yml` (or any
+  workflow) — the fix removes the external dependency entirely rather than provisioning one in
+  CI, per the task's explicit instructions.
+- Left the Turnstile implementation (`src/lib/turnstile-site-key.ts`, the two modals,
+  `wrangler.toml`) completely untouched — confirmed via `git diff --stat` before committing.
+
+### Verification
+- `npm ci` — clean install from the updated lockfile, no peer-dependency conflicts.
+- `npm run lint` — 0 errors (same pre-existing 11 `react-refresh/only-export-components`
+  warnings as prior sessions, unrelated to this change).
+- `npx tsc --noEmit` (`npm run typecheck`) — clean.
+- `npm run build` — succeeds; Cloudflare Worker output still generates correctly.
+- `npm test` (`vitest run`) — 3/3 tests pass, run twice to rule out flakiness. No
+  `127.0.0.1:5432` connection attempted at any point.
+- Full diff reviewed before committing: only `package.json`, `package-lock.json`, and
+  `test/finding1/pricing.test.ts` changed. `git status` confirmed no other files touched.
+
+### Commit
+- See commit hash recorded by this same session after push.
+
+### Notes
+- **This supersedes the "Local PostgreSQL 16... installed via `apt-get`" approach described in
+  the 2026-09-22 14:45 PKT entry below.** That local-server approach is what caused the CI
+  failure in the first place — it worked in the sandbox that created it but does not exist in
+  GitHub Actions or in any other AI session's/developer's environment. `npm test` now works
+  identically everywhere (local machine, CI, any future AI session) with zero setup beyond
+  `npm ci` — no local Postgres install, no `FINDING19_TEST_DATABASE_URL` env var, no
+  `finding19_test` role/database to create. The `FINDING19_TEST_DATABASE_URL` env var and the
+  local `finding19_test` Postgres role referenced in that earlier entry are no longer used by
+  this test and do not need to be created by anyone continuing this project.
+- If Finding 1's trigger is ever intentionally changed, `test/finding1/trigger.sql` must still
+  be re-pulled from the live `generate_project_invoice()` function (via `pg_get_functiondef`)
+  rather than hand-edited — this guidance from the original Finding 19 entry still applies
+  unchanged.
+
+---
+
 ## 2026-09-22 14:45 PKT — AI Agent (Claude)
 
 ### Completed
