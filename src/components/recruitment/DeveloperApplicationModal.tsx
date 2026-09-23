@@ -14,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
 import { submitDeveloperApplication } from "@/lib/developer-applications.functions";
 import {
   PRIMARY_ROLES,
@@ -59,6 +58,20 @@ const EMPTY: Form = {
   bio: "",
   motivation: "",
 };
+
+// Reads a File and returns its base64 payload (no data: URL prefix), for
+// sending to the server function that performs the authorized upload.
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      resolve(result.split(",")[1] ?? "");
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
 
 function Field({
   label,
@@ -158,16 +171,14 @@ export function DeveloperApplicationModal({
     }
     setBusy(true);
     try {
-      let resume_path: string | null = null;
-      if (file) {
-        const path = `applications/${crypto.randomUUID()}.pdf`;
-        const { error: upErr } = await supabase.storage
-          .from("developer-resumes")
-          .upload(path, file, { contentType: "application/pdf", upsert: false });
-        if (upErr) throw new Error(`Resume upload failed: ${upErr.message}`);
-        resume_path = path;
-      }
-      const res = await submit({ data: { ...payload, resume_path, turnstileToken } });
+      // Resume bytes are sent to the server as base64 and uploaded there,
+      // only after Turnstile verification succeeds — the browser never
+      // writes to the developer-resumes bucket directly (Finding: public
+      // Storage upload bypass).
+      const resume_base64 = file ? await fileToBase64(file) : null;
+      const res = await submit({
+        data: { ...payload, resume_path: null, resume_base64, turnstileToken },
+      });
       setDone(true);
       if (!res?.emailSent) {
         // Application is stored; email delivery just isn't configured yet.

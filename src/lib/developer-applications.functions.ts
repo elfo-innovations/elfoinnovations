@@ -3,11 +3,47 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   validateApplication,
   normalizeUrl,
+  RESUME_MAX_BYTES,
   type ApplicationInput,
 } from "@/lib/application-validation";
 import { verifyTurnstileToken } from "@/lib/turnstile-verify.server";
 
-type ApplicationSubmitInput = ApplicationInput & { turnstileToken: string };
+const PDF_MAGIC = "%PDF-";
+
+/**
+ * Decodes, validates and uploads a base64-encoded resume to the private
+ * developer-resumes bucket using the service-role client. This only ever
+ * runs after Turnstile verification has succeeded, so it's the sole path
+ * that can write to this bucket — the browser has no direct Storage
+ * upload permission (see the accompanying migration removing the old
+ * anon/authenticated INSERT policy).
+ */
+async function uploadResumeServerSide(resumeBase64: string): Promise<string> {
+  let bytes: Buffer;
+  try {
+    bytes = Buffer.from(resumeBase64, "base64");
+  } catch {
+    throw new Error("Resume file could not be read. Please try again.");
+  }
+  if (bytes.length === 0) throw new Error("Resume file appears to be empty.");
+  if (bytes.length > RESUME_MAX_BYTES) throw new Error("Resume must be under 5MB.");
+  if (bytes.subarray(0, PDF_MAGIC.length).toString("latin1") !== PDF_MAGIC) {
+    throw new Error("Resume must be a valid PDF file.");
+  }
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const path = `applications/${crypto.randomUUID()}.pdf`;
+  const { error } = await supabaseAdmin.storage
+    .from("developer-resumes")
+    .upload(path, bytes, { contentType: "application/pdf", upsert: false });
+  if (error) throw new Error(`Resume upload failed: ${error.message}`);
+  return path;
+}
+
+type ApplicationSubmitInput = ApplicationInput & {
+  turnstileToken: string;
+  resume_base64?: string | null;
+};
 
 type DecisionInput = {
   id: string;
@@ -27,6 +63,13 @@ export const submitDeveloperApplication = createServerFn({ method: "POST" })
     // Finding 12: verify Turnstile before touching the DB. Data shape and
     // validation above are unchanged from before this fix.
     await verifyTurnstileToken(data.turnstileToken);
+
+    // Resume upload happens here, server-side, only after the Turnstile
+    // check above has passed — the browser is never granted direct write
+    // access to the developer-resumes bucket.
+    const resume_path = data.resume_base64
+      ? await uploadResumeServerSide(data.resume_base64)
+      : null;
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { applicationReceivedEmail } = await import("@/lib/email-templates");
@@ -57,7 +100,7 @@ export const submitDeveloperApplication = createServerFn({ method: "POST" })
       current_status: data.current_status,
       bio: data.bio.trim(),
       motivation: data.motivation.trim(),
-      resume_path: data.resume_path || null,
+      resume_path,
       resume_name: data.resume_name || null,
     });
     if (error) {

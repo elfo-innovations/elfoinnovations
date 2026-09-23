@@ -48,6 +48,9 @@ export type ApplicationInput = {
   motivation: string;
   resume_path?: string | null;
   resume_name?: string | null;
+  // Base64-encoded resume bytes (no data: URL prefix), sent to the server so
+  // the upload can happen only after Turnstile + validation succeed there.
+  resume_base64?: string | null;
   agreed: boolean;
 };
 

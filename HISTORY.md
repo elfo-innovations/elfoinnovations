@@ -150,6 +150,40 @@ Use this format:
 ## 2026-09-23 — AI Agent (Claude)
 
 ### Completed
+- Security fix: resumes could be uploaded directly to the private `developer-resumes` Supabase
+  Storage bucket from the browser using the public anon key, bypassing Turnstile verification and
+  server-side validation entirely (`storage.objects` had an `INSERT` policy for `anon,
+  authenticated` with no file-type/size check, and the bucket itself had no `file_size_limit` /
+  `allowed_mime_types`, confirmed on the live project via Supabase MCP — not just migration files).
+- Moved the resume upload server-side: the client now base64-encodes the PDF and sends it to
+  `submitDeveloperApplication`; the server verifies Turnstile first, then validates (magic bytes,
+  ≤5MB) and uploads via the service-role client. The browser no longer touches Storage directly.
+- Dropped the `"Applicants can upload resumes"` anon/authenticated INSERT policy on
+  `storage.objects` for this bucket (live + new migration). Left `"Admins can read developer
+  resumes"` and `"Admins can delete developer resumes"` untouched.
+  Set `file_size_limit = 5242880` and `allowed_mime_types = ['application/pdf']` on the
+  `developer-resumes` bucket as defense in depth.
+- Files: `src/components/recruitment/DeveloperApplicationModal.tsx`,
+  `src/lib/developer-applications.functions.ts`, `src/lib/application-validation.ts`,
+  `supabase/migrations/20260923081220_lock_down_developer_resumes_upload.sql`.
+- Verified: `npm run typecheck`, `npm run lint` (0 errors, same pre-existing warnings), `npm test`,
+  `npm run build` all pass.
+
+### Commit
+- Will be recorded once pushed (this entry is written just before the commit in the same
+  session).
+
+### Notes
+- Did not touch `leads`/`developer_applications` RLS, `has_role`, Turnstile implementation,
+  Finding 19/PGlite, or any unrelated lint warnings — out of scope for this fix.
+- Admin resume access (`getResumeDownloadUrl`, signed URLs) is unaffected — it already used the
+  service-role client.
+
+---
+
+## 2026-09-23 — AI Agent (Claude)
+
+### Completed
 - Fixed the GitHub CI failure on `main` introduced by Finding 19's pricing regression test
   (`test/finding1/pricing.test.ts`): CI's `Test` step was failing with
   `Error: connect ECONNREFUSED 127.0.0.1:5432` because that test required a real, separately
