@@ -147,6 +147,50 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-09-23 PKT — AI Agent (Claude)
+
+### Completed
+- Created `src/routes/privacy.tsx`, the second of the two legal pages flagged as
+  missing in the 2026-09-23 13:00 PKT entry below (`/terms` was added first, commit
+  `c5051a0`, confirmed already on `origin/main` at the start of this session).
+  `<Link to="/privacy">` in `DeveloperApplicationForm.tsx`'s agreement checkbox now
+  resolves to a real route instead of a dangling `TS2322` typecheck error.
+- Followed `terms.tsx`'s exact layout/meta/JSON-LD breadcrumb conventions (same
+  `PublicLayout`, prose classes, badge/heading/"Last updated" header block, canonical
+  URL + OG tags). Content covers: what's collected via the contact/lead form and the
+  developer-application form (including resume uploads), how submissions are used,
+  storage/security (Supabase DB + private resume storage, Turnstile-gated), the actual
+  third-party services in use (Cloudflare hosting, Supabase, Cloudflare Turnstile,
+  Google Translate, Google Fonts, transactional email) — verified by grepping the repo
+  for analytics/cookie usage first rather than assuming; no analytics tool is actually
+  wired up, so none is claimed — cookies (Google Translate's `googtrans` cookie only),
+  retention, user rights/requests, policy changes, and contact info.
+- `src/routeTree.gen.ts` also changed — this is the auto-generated route-tree file
+  (AGENTS.md §9); it picked up the new `/privacy` route after running `npx vite build`
+  once to regenerate it (`tsc --noEmit` alone does not regenerate it, and fails with a
+  `keyof FileRoutesByPath` error on `createFileRoute("/privacy")` and on the existing
+  `<Link to="/privacy">` until it's regenerated). Deleted the resulting `.output/` and
+  `.wrangler/` build artifacts afterward — neither is tracked by git, so no cleanup
+  commit was needed.
+- `npx tsc --noEmit`: 0 errors (both the new file and the previously-flagged
+  `DeveloperApplicationForm.tsx` `/privacy` link error are now clean).
+- `git diff --stat` before committing: only `src/routeTree.gen.ts` (regenerated) and
+  the new `src/routes/privacy.tsx` — no `package.json`/`package-lock.json` churn from
+  the `npm install` needed to run the checks.
+
+### Commit
+- `feat: add privacy policy page`
+- Status: committed and pushed to `origin/main`
+
+### Notes
+- Did not touch `DeveloperApplicationForm.tsx`, `terms.tsx`, or any footer/nav
+  component to add a visible `/privacy` link outside the existing developer-application
+  checkbox reference — out of scope per this task's explicit "do not modify unrelated
+  files" instruction. A future agent/owner may want a footer link added.
+- Nothing left unfinished from this session.
+
+---
+
 ## 2026-09-23 13:00 PKT — AI Agent (Claude)
 
 ### Completed
