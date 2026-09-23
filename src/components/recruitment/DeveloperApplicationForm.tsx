@@ -1,7 +1,7 @@
 import { useState, useRef, type ReactNode, type KeyboardEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
-import { Loader2, UploadCloud, FileText, X, CheckCircle2, Rocket, Plus } from "lucide-react";
+import { Loader2, UploadCloud, FileText, X, CheckCircle2, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,13 +17,12 @@ import {
 import { submitDeveloperApplication } from "@/lib/developer-applications.functions";
 import {
   PRIMARY_ROLES,
-  EXPERIENCE_OPTIONS,
   CURRENT_STATUS_OPTIONS,
   RESUME_MAX_BYTES,
   validateApplication,
 } from "@/lib/application-validation";
 import { toast } from "sonner";
-import { getErrorMessage } from "@/lib/utils";
+import { cn, getErrorMessage } from "@/lib/utils";
 import { Turnstile, type TurnstileHandle } from "@/components/Turnstile";
 import { TURNSTILE_SITE_KEY } from "@/lib/turnstile-site-key";
 
@@ -31,15 +30,10 @@ type Form = {
   full_name: string;
   email: string;
   phone: string;
-  country: string;
-  city: string;
   github_url: string;
-  linkedin_url: string;
   portfolio_url: string;
   primary_role: string;
-  years_experience: string;
   current_status: string;
-  bio: string;
   motivation: string;
 };
 
@@ -47,17 +41,22 @@ const EMPTY: Form = {
   full_name: "",
   email: "",
   phone: "",
-  country: "",
-  city: "",
   github_url: "",
-  linkedin_url: "",
   portfolio_url: "",
   primary_role: "",
-  years_experience: "",
   current_status: "",
-  bio: "",
   motivation: "",
 };
+
+// Subtle, professional field border: 1px by default, 2px + destructive color
+// only when that field has a validation error — never a heavy border.
+const fieldBorder = (hasError?: boolean) =>
+  cn(
+    "rounded-xl transition-colors",
+    hasError
+      ? "border-2 border-destructive focus-visible:ring-destructive"
+      : "border border-input",
+  );
 
 // Reads a File and returns its base64 payload (no data: URL prefix), for
 // sending to the server function that performs the authorized upload.
@@ -104,8 +103,6 @@ function Field({
 export function DeveloperApplicationForm() {
   const submit = useServerFn(submitDeveloperApplication);
   const [form, setForm] = useState<Form>(EMPTY);
-  const [skills, setSkills] = useState<string[]>([]);
-  const [skillInput, setSkillInput] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -119,12 +116,12 @@ export function DeveloperApplicationForm() {
     setErrors((e) => ({ ...e, [k]: "" }));
   };
 
-  const addSkill = () => {
-    const v = skillInput.trim().replace(/,$/, "");
-    if (!v) return;
-    if (!skills.includes(v)) setSkills((s) => [...s, v]);
-    setSkillInput("");
-    setErrors((e) => ({ ...e, skills: "" }));
+  // Phone is `type="tel"`, which doesn't block letters on its own — strip
+  // any alphabetic character as it's typed so the field can never hold one.
+  const setPhone = (raw: string) => {
+    const v = raw.replace(/[a-zA-Z]/g, "");
+    setForm((f) => ({ ...f, phone: v }));
+    setErrors((e) => ({ ...e, phone: "" }));
   };
 
   const pickFile = (f: File | null) => {
@@ -142,7 +139,12 @@ export function DeveloperApplicationForm() {
   };
 
   const onSubmit = async () => {
-    const payload = { ...form, skills, agreed, resume_name: file?.name ?? null };
+    const payload = {
+      ...form,
+      agreed,
+      resume_name: file?.name ?? null,
+      resume_size: file?.size ?? null,
+    };
     const errs = validateApplication(payload);
     setErrors(errs);
     if (Object.keys(errs).length) {
@@ -226,7 +228,7 @@ export function DeveloperApplicationForm() {
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Full name" required error={errors.full_name}>
                 <Input
-                  className="rounded-xl"
+                  className={fieldBorder(!!errors.full_name)}
                   value={form.full_name}
                   onChange={(e) => set("full_name", e.target.value)}
                   placeholder="Jane Doe"
@@ -234,7 +236,7 @@ export function DeveloperApplicationForm() {
               </Field>
               <Field label="Email address" required error={errors.email}>
                 <Input
-                  className="rounded-xl"
+                  className={fieldBorder(!!errors.email)}
                   type="email"
                   value={form.email}
                   onChange={(e) => set("email", e.target.value)}
@@ -243,47 +245,27 @@ export function DeveloperApplicationForm() {
               </Field>
               <Field label="Phone number" required error={errors.phone}>
                 <Input
-                  className="rounded-xl"
+                  className={fieldBorder(!!errors.phone)}
+                  type="tel"
+                  inputMode="tel"
                   value={form.phone}
-                  onChange={(e) => set("phone", e.target.value)}
+                  onChange={(e) => setPhone(e.target.value)}
                   placeholder="+1 555 000 1234"
-                />
-              </Field>
-              <Field label="Country" required error={errors.country}>
-                <Input
-                  className="rounded-xl"
-                  value={form.country}
-                  onChange={(e) => set("country", e.target.value)}
-                  placeholder="Pakistan"
-                />
-              </Field>
-              <Field label="City" required error={errors.city}>
-                <Input
-                  className="rounded-xl"
-                  value={form.city}
-                  onChange={(e) => set("city", e.target.value)}
-                  placeholder="Karachi"
                 />
               </Field>
               <Field label="GitHub profile" required error={errors.github_url}>
                 <Input
-                  className="rounded-xl"
+                  className={fieldBorder(!!errors.github_url)}
+                  type="url"
                   value={form.github_url}
                   onChange={(e) => set("github_url", e.target.value)}
                   placeholder="github.com/username"
                 />
               </Field>
-              <Field label="LinkedIn (optional)" error={errors.linkedin_url}>
+              <Field label="Portfolio" required error={errors.portfolio_url}>
                 <Input
-                  className="rounded-xl"
-                  value={form.linkedin_url}
-                  onChange={(e) => set("linkedin_url", e.target.value)}
-                  placeholder="linkedin.com/in/username"
-                />
-              </Field>
-              <Field label="Portfolio (optional)" error={errors.portfolio_url}>
-                <Input
-                  className="rounded-xl"
+                  className={fieldBorder(!!errors.portfolio_url)}
+                  type="url"
                   value={form.portfolio_url}
                   onChange={(e) => set("portfolio_url", e.target.value)}
                   placeholder="yourdomain.com"
@@ -291,7 +273,7 @@ export function DeveloperApplicationForm() {
               </Field>
               <Field label="Primary role" required error={errors.primary_role}>
                 <Select value={form.primary_role} onValueChange={(v) => set("primary_role", v)}>
-                  <SelectTrigger className="rounded-xl">
+                  <SelectTrigger className={fieldBorder(!!errors.primary_role)}>
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
                   <SelectContent>
@@ -303,26 +285,9 @@ export function DeveloperApplicationForm() {
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="Years of experience" required error={errors.years_experience}>
-                <Select
-                  value={form.years_experience}
-                  onValueChange={(v) => set("years_experience", v)}
-                >
-                  <SelectTrigger className="rounded-xl">
-                    <SelectValue placeholder="Select experience" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {EXPERIENCE_OPTIONS.map((r) => (
-                      <SelectItem key={r} value={r}>
-                        {r}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
               <Field label="Current status" required error={errors.current_status}>
                 <Select value={form.current_status} onValueChange={(v) => set("current_status", v)}>
-                  <SelectTrigger className="rounded-xl">
+                  <SelectTrigger className={fieldBorder(!!errors.current_status)}>
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -336,65 +301,13 @@ export function DeveloperApplicationForm() {
               </Field>
             </div>
 
-            <Field label="Skills / technologies" required error={errors.skills}>
-              <div className="flex gap-2">
-                <Input
-                  className="rounded-xl"
-                  value={skillInput}
-                  onChange={(e) => setSkillInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === ",") {
-                      e.preventDefault();
-                      addSkill();
-                    }
-                  }}
-                  placeholder="React, Node.js, PostgreSQL…"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="shrink-0 rounded-xl"
-                  onClick={addSkill}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-              {skills.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {skills.map((s) => (
-                    <span
-                      key={s}
-                      className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"
-                    >
-                      {s}
-                      <button
-                        onClick={() => setSkills((v) => v.filter((x) => x !== s))}
-                        aria-label={`Remove ${s}`}
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </Field>
-
-            <Field label="Short bio" required error={errors.bio}>
-              <Textarea
-                className="min-h-[90px] rounded-xl"
-                value={form.bio}
-                onChange={(e) => set("bio", e.target.value)}
-                placeholder="Tell us about your background and what you build best."
-              />
-            </Field>
-
             <Field
               label="Why do you want to join ELFO Innovations?"
               required
               error={errors.motivation}
             >
               <Textarea
-                className="min-h-[90px] rounded-xl"
+                className={cn("min-h-[90px]", fieldBorder(!!errors.motivation))}
                 value={form.motivation}
                 onChange={(e) => set("motivation", e.target.value)}
                 placeholder="What excites you about working with our team?"
@@ -402,7 +315,14 @@ export function DeveloperApplicationForm() {
             </Field>
 
             <Field label="Resume (PDF, max 5MB)" required error={errors.resume}>
-              <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-primary/30 bg-primary/5 px-4 py-4 transition hover:border-primary/60">
+              <label
+                className={cn(
+                  "flex cursor-pointer items-center gap-3 rounded-xl border border-dashed bg-primary/5 px-4 py-4 transition",
+                  errors.resume
+                    ? "border-2 border-destructive"
+                    : "border-primary/30 hover:border-primary/60",
+                )}
+              >
                 <input
                   type="file"
                   accept="application/pdf,.pdf"
@@ -444,9 +364,19 @@ export function DeveloperApplicationForm() {
                 className="mt-0.5"
               />
               <label htmlFor="dev-agree" className="text-xs leading-relaxed text-muted-foreground">
-                I confirm the information provided is accurate and I agree to ELFO Innovations'
-                confidentiality and professional conduct expectations while my application is
-                reviewed.
+                I confirm the information provided is accurate and I agree to ELFO Innovations'{" "}
+                <Link to="/terms" className="font-medium text-primary underline underline-offset-2">
+                  Terms
+                </Link>{" "}
+                and{" "}
+                <Link
+                  to="/privacy"
+                  className="font-medium text-primary underline underline-offset-2"
+                >
+                  Privacy Policy
+                </Link>
+                , including confidentiality and professional conduct expectations while my
+                application is reviewed.
                 {errors.agreed && (
                   <span className="mt-1 block font-medium text-destructive">{errors.agreed}</span>
                 )}

@@ -89,16 +89,20 @@ export const submitDeveloperApplication = createServerFn({ method: "POST" })
       full_name: data.full_name.trim(),
       email,
       phone: data.phone.trim(),
-      country: data.country.trim(),
-      city: data.city.trim(),
+      // Country/city/bio/years_experience/skills were removed from the
+      // application form (task scope); these columns remain NOT NULL (or
+      // NOT NULL with a default) on developer_applications, so empty
+      // placeholders are written here rather than running a schema
+      // migration, which was out of scope for this change.
+      country: "",
+      city: "",
       github_url: normalizeUrl(data.github_url),
-      linkedin_url: data.linkedin_url?.trim() ? normalizeUrl(data.linkedin_url) : null,
-      portfolio_url: data.portfolio_url?.trim() ? normalizeUrl(data.portfolio_url) : null,
+      portfolio_url: normalizeUrl(data.portfolio_url ?? ""),
       primary_role: data.primary_role,
-      skills: data.skills,
-      years_experience: data.years_experience,
+      skills: [],
+      years_experience: "",
       current_status: data.current_status,
-      bio: data.bio.trim(),
+      bio: "",
       motivation: data.motivation.trim(),
       resume_path,
       resume_name: data.resume_name || null,
@@ -128,13 +132,10 @@ export const submitDeveloperApplication = createServerFn({ method: "POST" })
           <h2>New developer application: ${data.full_name.trim()}</h2>
           <p><b>Email:</b> ${email}<br/>
              <b>Phone:</b> ${data.phone.trim()}<br/>
-             <b>Location:</b> ${data.city.trim()}, ${data.country.trim()}<br/>
              <b>Role:</b> ${data.primary_role}<br/>
-             <b>Experience:</b> ${data.years_experience}<br/>
              <b>Status:</b> ${data.current_status}<br/>
-             <b>Skills:</b> ${data.skills.join(", ")}<br/>
-             <b>GitHub:</b> ${normalizeUrl(data.github_url)}${data.linkedin_url?.trim() ? `<br/><b>LinkedIn:</b> ${normalizeUrl(data.linkedin_url)}` : ""}${data.portfolio_url?.trim() ? `<br/><b>Portfolio:</b> ${normalizeUrl(data.portfolio_url)}` : ""}</p>
-          <p><b>Bio:</b><br/>${data.bio.trim()}</p>
+             <b>GitHub:</b> ${normalizeUrl(data.github_url)}<br/>
+             <b>Portfolio:</b> ${normalizeUrl(data.portfolio_url ?? "")}</p>
           <p><b>Motivation:</b><br/>${data.motivation.trim()}</p>
           <p style="color:#888;font-size:12px">Reply to this email to respond directly to the applicant. Review in the admin dashboard to accept or reject.</p>
         </div>`,

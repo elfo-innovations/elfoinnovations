@@ -35,19 +35,14 @@ export type ApplicationInput = {
   full_name: string;
   email: string;
   phone: string;
-  country: string;
-  city: string;
   github_url: string;
-  linkedin_url?: string;
   portfolio_url?: string;
   primary_role: string;
-  skills: string[];
-  years_experience: string;
   current_status: string;
-  bio: string;
   motivation: string;
   resume_path?: string | null;
   resume_name?: string | null;
+  resume_size?: number | null;
   // Base64-encoded resume bytes (no data: URL prefix), sent to the server so
   // the upload can happen only after Turnstile + validation succeed there.
   resume_base64?: string | null;
@@ -55,7 +50,9 @@ export type ApplicationInput = {
 };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+// Digits only (with an optional leading +); any letter fails this immediately.
 const PHONE_RE = /^\+?[0-9][0-9\s\-().]{6,19}$/;
+const PHONE_ALPHA_RE = /[a-zA-Z]/;
 
 function urlHost(value: string): string | null {
   try {
@@ -88,11 +85,9 @@ export function validateApplication(v: ApplicationInput): Record<string, string>
   else if (!EMAIL_RE.test(v.email.trim())) e.email = "Enter a valid email address";
 
   if (!v.phone?.trim()) e.phone = "Phone number is required";
+  else if (PHONE_ALPHA_RE.test(v.phone)) e.phone = "Phone number can't contain letters";
   else if (!PHONE_RE.test(v.phone.trim()))
     e.phone = "Enter a valid phone number (digits, optional +)";
-
-  req("country", "Country");
-  req("city", "City");
 
   if (!v.github_url?.trim()) e.github_url = "GitHub profile is required";
   else {
@@ -101,22 +96,11 @@ export function validateApplication(v: ApplicationInput): Record<string, string>
     else if (h !== "github.com") e.github_url = "Must be a github.com profile URL";
   }
 
-  if (v.linkedin_url?.trim()) {
-    const h = urlHost(v.linkedin_url);
-    if (!h) e.linkedin_url = "Enter a valid URL";
-    else if (!h.endsWith("linkedin.com")) e.linkedin_url = "Must be a linkedin.com URL";
-  }
-
-  if (v.portfolio_url?.trim() && !urlHost(v.portfolio_url)) e.portfolio_url = "Enter a valid URL";
+  if (!v.portfolio_url?.trim()) e.portfolio_url = "Portfolio URL is required";
+  else if (!urlHost(v.portfolio_url)) e.portfolio_url = "Enter a valid URL";
 
   if (!v.primary_role?.trim()) e.primary_role = "Select your primary role";
-  if (!v.skills || v.skills.length === 0) e.skills = "Add at least one skill";
-  if (!v.years_experience?.trim()) e.years_experience = "Select your experience";
   if (!v.current_status?.trim()) e.current_status = "Select your current status";
-
-  if (!v.bio?.trim()) e.bio = "Short bio is required";
-  else if (v.bio.trim().length < 40) e.bio = "Please write at least 40 characters";
-  else if (v.bio.trim().length > 1000) e.bio = "Keep this under 1000 characters";
 
   if (!v.motivation?.trim()) e.motivation = "This field is required";
   else if (v.motivation.trim().length < 40) e.motivation = "Please write at least 40 characters";
@@ -124,6 +108,8 @@ export function validateApplication(v: ApplicationInput): Record<string, string>
 
   if (!v.resume_name?.trim()) e.resume = "Resume is required";
   else if (!/\.pdf$/i.test(v.resume_name)) e.resume = "Resume must be a PDF file";
+  if (typeof v.resume_size === "number" && v.resume_size > RESUME_MAX_BYTES)
+    e.resume = "Resume must be under 5MB";
 
   if (!v.agreed) e.agreed = "You must accept the agreement";
 
