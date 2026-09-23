@@ -1,433 +1,323 @@
-import { useState, useRef, type ReactNode, type KeyboardEvent } from "react";
-import { useServerFn } from "@tanstack/react-start";
-import { Link } from "@tanstack/react-router";
-import { Loader2, UploadCloud, FileText, X, CheckCircle2, Rocket } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
+import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { submitDeveloperApplication } from "@/lib/developer-applications.functions";
-import {
-  PRIMARY_ROLES,
-  CURRENT_STATUS_OPTIONS,
-  RESUME_MAX_BYTES,
   validateApplication,
+  normalizeUrl,
+  RESUME_MAX_BYTES,
+  type ApplicationInput,
 } from "@/lib/application-validation";
-import { toast } from "sonner";
-import { cn, getErrorMessage } from "@/lib/utils";
-import { Turnstile, type TurnstileHandle } from "@/components/Turnstile";
-import { TURNSTILE_SITE_KEY } from "@/lib/turnstile-site-key";
+import { verifyTurnstileToken } from "@/lib/turnstile-verify.server";
 
-type Form = {
-  full_name: string;
-  email: string;
-  phone: string;
-  github_url: string;
-  portfolio_url: string;
-  primary_role: string;
-  current_status: string;
-  motivation: string;
+const PDF_MAGIC = "%PDF-";
+
+/**
+ * Decodes, validates and uploads a base64-encoded resume to the private
+ * developer-resumes bucket using the service-role client. This only ever
+ * runs after Turnstile verification has succeeded, so it's the sole path
+ * that can write to this bucket — the browser has no direct Storage
+ * upload permission (see the accompanying migration removing the old
+ * anon/authenticated INSERT policy).
+ */
+async function uploadResumeServerSide(resumeBase64: string): Promise<string> {
+  let bytes: Buffer;
+  try {
+    bytes = Buffer.from(resumeBase64, "base64");
+  } catch {
+    throw new Error("Resume file could not be read. Please try again.");
+  }
+  if (bytes.length === 0) throw new Error("Resume file appears to be empty.");
+  if (bytes.length > RESUME_MAX_BYTES) throw new Error("Resume must be under 5MB.");
+  if (bytes.subarray(0, PDF_MAGIC.length).toString("latin1") !== PDF_MAGIC) {
+    throw new Error("Resume must be a valid PDF file.");
+  }
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const path = `applications/${crypto.randomUUID()}.pdf`;
+  const { error } = await supabaseAdmin.storage
+    .from("developer-resumes")
+    .upload(path, bytes, { contentType: "application/pdf", upsert: false });
+  if (error) throw new Error(`Resume upload failed: ${error.message}`);
+  return path;
+}
+
+type ApplicationSubmitInput = ApplicationInput & {
+  turnstileToken: string;
+  resume_base64?: string | null;
 };
 
-const EMPTY: Form = {
-  full_name: "",
-  email: "",
-  phone: "",
-  github_url: "",
-  portfolio_url: "",
-  primary_role: "",
-  current_status: "",
-  motivation: "",
+type DecisionInput = {
+  id: string;
+  subject: string;
+  message: string;
+  username?: string;
+  password?: string;
+  loginUrl?: string;
 };
 
-// Subtle, professional field border: 1px by default, 2px + destructive color
-// only when that field has a validation error — never a heavy border.
-const fieldBorder = (hasError?: boolean) =>
-  cn(
-    "rounded-xl transition-colors",
-    hasError ? "border-2 border-destructive focus-visible:ring-destructive" : "border border-input",
-  );
+export const submitDeveloperApplication = createServerFn({ method: "POST" })
+  .inputValidator((input: ApplicationSubmitInput) => input)
+  .handler(async ({ data }) => {
+    const errors = validateApplication(data);
+    if (Object.keys(errors).length) throw new Error(Object.values(errors)[0]);
 
-// Reads a File and returns its base64 payload (no data: URL prefix), for
-// sending to the server function that performs the authorized upload.
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      resolve(result.split(",")[1] ?? "");
-    };
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
+    // Finding 12: verify Turnstile before touching the DB. Data shape and
+    // validation above are unchanged from before this fix.
+    await verifyTurnstileToken(data.turnstileToken);
+
+    // Resume upload happens here, server-side, only after the Turnstile
+    // check above has passed — the browser is never granted direct write
+    // access to the developer-resumes bucket.
+    const resume_path = data.resume_base64
+      ? await uploadResumeServerSide(data.resume_base64)
+      : null;
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { applicationReceivedEmail } = await import("@/lib/email-templates");
+    const { sendEmail } = await import("@/lib/email.server");
+
+    const email = data.email.trim().toLowerCase();
+
+    const { data: existing } = await supabaseAdmin
+      .from("developer_applications")
+      .select("id")
+      .ilike("email", email)
+      .maybeSingle();
+    if (existing)
+      throw new Error("An application with this email address has already been submitted.");
+
+    const { error } = await supabaseAdmin.from("developer_applications").insert({
+      full_name: data.full_name.trim(),
+      email,
+      phone: data.phone.trim(),
+      github_url: normalizeUrl(data.github_url),
+      portfolio_url: normalizeUrl(data.portfolio_url ?? ""),
+      primary_role: data.primary_role,
+      current_status: data.current_status,
+      motivation: data.motivation.trim(),
+      resume_path,
+      resume_name: data.resume_name || null,
+    });
+    if (error) {
+      if (error.code === "23505")
+        throw new Error("An application with this email address has already been submitted.");
+      throw new Error(error.message);
+    }
+
+    const mail = await sendEmail({
+      to: email,
+      subject: "We received your application — ELFO Innovations",
+      html: applicationReceivedEmail({ name: data.full_name.trim(), role: data.primary_role }),
+    });
+
+    // Notify admin inbox. Must be awaited — in the edge runtime an
+    // un-awaited fire-and-forget call can be killed as soon as the
+    // handler returns, which was silently dropping this email.
+    const adminTo = process.env["ADMIN_NOTIFY_EMAIL"] || "support@elfoinnovations.com";
+    const adminMail = await sendEmail({
+      to: adminTo,
+      replyTo: email,
+      subject: `New developer application — ${data.full_name.trim()} (${data.primary_role})`,
+      html: `
+        <div style="font-family:sans-serif;max-width:560px;margin:0 auto">
+          <h2>New developer application: ${data.full_name.trim()}</h2>
+          <p><b>Email:</b> ${email}<br/>
+             <b>Phone:</b> ${data.phone.trim()}<br/>
+             <b>Role:</b> ${data.primary_role}<br/>
+             <b>Status:</b> ${data.current_status}<br/>
+             <b>GitHub:</b> ${normalizeUrl(data.github_url)}<br/>
+             <b>Portfolio:</b> ${normalizeUrl(data.portfolio_url ?? "")}</p>
+          <p><b>Motivation:</b><br/>${data.motivation.trim()}</p>
+          <p style="color:#888;font-size:12px">Reply to this email to respond directly to the applicant. Review in the admin dashboard to accept or reject.</p>
+        </div>`,
+    }).catch((e) => {
+      console.error("[dev application notify] failed", e);
+      return { sent: false, provider: "error", error: String(e) };
+    });
+    if (!adminMail.sent) {
+      console.error("[dev application] admin notify email not sent:", adminMail.error);
+    }
+
+    return { ok: true, emailSent: mail.sent, emailError: mail.error ?? null };
   });
-}
 
-function Field({
-  label,
-  error,
-  required,
-  children,
-}: {
-  label: string;
-  error?: string;
-  required?: boolean;
-  children: ReactNode;
-}) {
-  return (
-    <div className="min-w-0">
-      <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        {label} {required && <span className="text-primary">*</span>}
-      </Label>
-      <div className="mt-1.5">{children}</div>
-      {error && <p className="mt-1 text-xs font-medium text-destructive">{error}</p>}
-    </div>
-  );
-}
+export const approveDeveloperApplication = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: DecisionInput) => input)
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin, error: roleErr } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (roleErr) throw new Error(roleErr.message);
+    if (!isAdmin) throw new Error("Forbidden: admin only");
+    if (!data.password || data.password.length < 8)
+      throw new Error("Temporary password must be at least 8 characters");
 
-/**
- * The developer application form, standalone (no modal/dialog wrapper) so it
- * can be rendered directly on the dedicated /apply page. Contains all
- * existing fields, validation, Turnstile verification, resume upload, and
- * submission handling — unchanged from the previous in-modal implementation.
- */
-export function DeveloperApplicationForm() {
-  const submit = useServerFn(submitDeveloperApplication);
-  const [form, setForm] = useState<Form>(EMPTY);
-  const [agreed, setAgreed] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [busy, setBusy] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  const turnstileRef = useRef<TurnstileHandle>(null);
-  const [done, setDone] = useState(false);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { acceptanceEmail } = await import("@/lib/email-templates");
+    const { sendEmail } = await import("@/lib/email.server");
 
-  const set = (k: keyof Form, v: string) => {
-    setForm((f) => ({ ...f, [k]: v }));
-    setErrors((e) => ({ ...e, [k]: "" }));
-  };
+    const { data: app, error: appErr } = await supabaseAdmin
+      .from("developer_applications")
+      .select("*")
+      .eq("id", data.id)
+      .single();
+    if (appErr || !app) throw new Error(appErr?.message || "Application not found");
 
-  // Phone is `type="tel"`, which doesn't block letters on its own — strip
-  // any alphabetic character as it's typed so the field can never hold one.
-  const setPhone = (raw: string) => {
-    const v = raw.replace(/[a-zA-Z]/g, "");
-    setForm((f) => ({ ...f, phone: v }));
-    setErrors((e) => ({ ...e, phone: "" }));
-  };
+    const email = app.email.trim().toLowerCase();
+    const username = data.username?.trim() || email.split("@")[0];
 
-  const pickFile = (f: File | null) => {
-    if (!f) return setFile(null);
-    if (!/\.pdf$/i.test(f.name) || f.type !== "application/pdf") {
-      setErrors((e) => ({ ...e, resume: "Resume must be a PDF file" }));
-      return;
-    }
-    if (f.size > RESUME_MAX_BYTES) {
-      setErrors((e) => ({ ...e, resume: "Resume must be under 5MB" }));
-      return;
-    }
-    setErrors((e) => ({ ...e, resume: "" }));
-    setFile(f);
-  };
-
-  const onSubmit = async () => {
-    const payload = {
-      ...form,
-      agreed,
-      resume_name: file?.name ?? null,
-      resume_size: file?.size ?? null,
-    };
-    const errs = validateApplication(payload);
-    setErrors(errs);
-    if (Object.keys(errs).length) {
-      toast.error("Please fix the highlighted fields");
-      return;
-    }
-    if (!turnstileToken) {
-      toast.error("Please complete the verification challenge before submitting");
-      return;
-    }
-    setBusy(true);
-    try {
-      // Resume bytes are sent to the server as base64 and uploaded there,
-      // only after Turnstile verification succeeds — the browser never
-      // writes to the developer-resumes bucket directly (Finding: public
-      // Storage upload bypass).
-      const resume_base64 = file ? await fileToBase64(file) : null;
-      const res = await submit({
-        data: { ...payload, resume_path: null, resume_base64, turnstileToken },
+    // Create the auth user if it does not exist yet.
+    let uid: string | null = null;
+    const { data: created, error: cErr } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password: data.password,
+      email_confirm: true,
+      user_metadata: { full_name: app.full_name, username },
+    });
+    if (created?.user) {
+      uid = created.user.id;
+    } else if (cErr && /already/i.test(cErr.message)) {
+      const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      const found = list?.users.find((u) => u.email?.toLowerCase() === email);
+      if (!found) throw new Error("User already exists but could not be located");
+      uid = found.id;
+      await supabaseAdmin.auth.admin.updateUserById(uid, {
+        password: data.password,
+        email_confirm: true,
       });
-      setDone(true);
-      if (!res?.emailSent) {
-        // Application is stored; email delivery just isn't configured yet.
-        console.warn("Confirmation email not sent:", res?.emailError);
-      }
-    } catch (e) {
-      turnstileRef.current?.reset();
-      setTurnstileToken(null);
-      toast.error(getErrorMessage(e, "Could not submit your application"));
-    } finally {
-      setBusy(false);
+    } else {
+      throw new Error(cErr?.message || "Failed to create developer account");
     }
-  };
 
-  // Let people submit by pressing Enter instead of forcing a mouse click on the
-  // button, even though this dialog intentionally doesn't use a <form> tag.
-  // Enter inside a <textarea> still inserts a newline as expected; the skills
-  // input already calls preventDefault() on Enter to add a skill chip, so that
-  // case is skipped here (e.defaultPrevented is already true by the time this
-  // bubbles up).
-  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key !== "Enter" || e.defaultPrevented) return;
-    const tag = (e.target as HTMLElement).tagName;
-    if (tag === "TEXTAREA" || tag === "BUTTON") return;
-    e.preventDefault();
-    if (!busy) onSubmit();
-  };
+    // Role
+    const { data: roleRow } = await supabaseAdmin
+      .from("user_roles")
+      .select("id")
+      .eq("user_id", uid)
+      .eq("role", "developer")
+      .maybeSingle();
+    if (!roleRow) {
+      const { error: rErr } = await supabaseAdmin
+        .from("user_roles")
+        .insert({ user_id: uid, role: "developer" });
+      if (rErr) throw new Error(rErr.message);
+    }
 
-  return (
-    <div className="mx-auto w-full max-w-2xl overflow-hidden rounded-3xl border border-primary/20 bg-card/95 backdrop-blur-xl">
-      {done ? (
-        <div className="px-6 py-14 text-center sm:px-10">
-          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <CheckCircle2 className="h-8 w-8" />
-          </div>
-          <h2 className="font-display text-2xl font-bold">Application submitted</h2>
-          <p className="mx-auto mt-3 max-w-sm text-sm text-muted-foreground">
-            Thank you for applying to ELFO Innovations. Our engineering team reviews every
-            application — we'll email you with a decision at{" "}
-            <span className="font-semibold text-foreground">{form.email}</span>.
-          </p>
-          <Button asChild className="mt-7 rounded-full electric-glow">
-            <Link to="/">Back to home</Link>
-          </Button>
-        </div>
-      ) : (
-        <div className="px-5 py-8 sm:px-8">
-          <div className="mb-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-primary">
-              <Rocket className="h-3.5 w-3.5" /> Join the team
-            </div>
-            <h2 className="mt-3 font-display text-2xl font-bold tracking-tight sm:text-3xl">
-              Become an <span className="electric-text">ELFO</span> Developer
-            </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Tell us about yourself. Every application is reviewed by our engineering team.
-            </p>
-          </div>
+    // Developer profile row
+    const { data: devRow } = await supabaseAdmin
+      .from("developers")
+      .select("id")
+      .eq("email", email)
+      .maybeSingle();
+    if (!devRow) {
+      const { error: dErr } = await supabaseAdmin.from("developers").insert({
+        user_id: uid,
+        full_name: app.full_name,
+        email,
+        phone: app.phone,
+        skills: [],
+        status: "available",
+        bio: null,
+      });
+      if (dErr) throw new Error(dErr.message);
+    } else {
+      await supabaseAdmin.from("developers").update({ user_id: uid }).eq("id", devRow.id);
+    }
 
-          <div className="space-y-5" onKeyDown={onKeyDown}>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Full name" required error={errors.full_name}>
-                <Input
-                  className={fieldBorder(!!errors.full_name)}
-                  value={form.full_name}
-                  onChange={(e) => set("full_name", e.target.value)}
-                  placeholder="Jane Doe"
-                />
-              </Field>
-              <Field label="Email address" required error={errors.email}>
-                <Input
-                  className={fieldBorder(!!errors.email)}
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => set("email", e.target.value)}
-                  placeholder="you@example.com"
-                />
-              </Field>
-              <Field label="Phone number" required error={errors.phone}>
-                <Input
-                  className={fieldBorder(!!errors.phone)}
-                  type="tel"
-                  inputMode="tel"
-                  value={form.phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+1 555 000 1234"
-                />
-              </Field>
-              <Field label="GitHub profile" required error={errors.github_url}>
-                <Input
-                  className={fieldBorder(!!errors.github_url)}
-                  type="url"
-                  value={form.github_url}
-                  onChange={(e) => set("github_url", e.target.value)}
-                  placeholder="github.com/username"
-                />
-              </Field>
-              <Field label="Portfolio" required error={errors.portfolio_url}>
-                <Input
-                  className={fieldBorder(!!errors.portfolio_url)}
-                  type="url"
-                  value={form.portfolio_url}
-                  onChange={(e) => set("portfolio_url", e.target.value)}
-                  placeholder="yourdomain.com"
-                />
-              </Field>
-              <Field label="Primary role" required error={errors.primary_role}>
-                <Select value={form.primary_role} onValueChange={(v) => set("primary_role", v)}>
-                  <SelectTrigger className={fieldBorder(!!errors.primary_role)}>
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PRIMARY_ROLES.map((r) => (
-                      <SelectItem key={r} value={r}>
-                        {r}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Field label="Current status" required error={errors.current_status}>
-                <Select value={form.current_status} onValueChange={(v) => set("current_status", v)}>
-                  <SelectTrigger className={fieldBorder(!!errors.current_status)}>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CURRENT_STATUS_OPTIONS.map((r) => (
-                      <SelectItem key={r} value={r}>
-                        {r}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-            </div>
+    const { error: uErr } = await supabaseAdmin
+      .from("developer_applications")
+      .update({
+        status: "accepted",
+        decision_subject: data.subject,
+        decision_message: data.message,
+        reviewed_by: context.userId,
+        reviewed_at: new Date().toISOString(),
+        created_user_id: uid,
+      })
+      .eq("id", data.id);
+    if (uErr) throw new Error(uErr.message);
 
-            <Field
-              label="Why do you want to join ELFO Innovations?"
-              required
-              error={errors.motivation}
-            >
-              <Textarea
-                className={cn("min-h-[90px]", fieldBorder(!!errors.motivation))}
-                value={form.motivation}
-                onChange={(e) => set("motivation", e.target.value)}
-                placeholder="What excites you about working with our team?"
-              />
-            </Field>
+    const loginUrl = data.loginUrl || "https://elfoinnovations.com/auth";
+    const mail = await sendEmail({
+      to: email,
+      subject: data.subject || "Welcome to Elfo Innovations",
+      html: acceptanceEmail({
+        name: app.full_name,
+        message: data.message,
+        loginUrl,
+        username,
+        email,
+        password: data.password,
+      }),
+    });
 
-            <Field label="Resume (PDF, max 5MB)" required error={errors.resume}>
-              <label
-                className={cn(
-                  "flex cursor-pointer items-center gap-3 rounded-xl border border-dashed bg-primary/5 px-4 py-4 transition",
-                  errors.resume
-                    ? "border-2 border-destructive"
-                    : "border-primary/30 hover:border-primary/60",
-                )}
-              >
-                <input
-                  type="file"
-                  accept="application/pdf,.pdf"
-                  className="hidden"
-                  onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
-                />
-                {file ? (
-                  <FileText className="h-5 w-5 shrink-0 text-primary" />
-                ) : (
-                  <UploadCloud className="h-5 w-5 shrink-0 text-primary" />
-                )}
-                <span className="min-w-0 flex-1 truncate text-sm">
-                  {file ? file.name : "Click to upload your resume"}
-                </span>
-                {file && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setFile(null);
-                    }}
-                    className="text-muted-foreground hover:text-foreground"
-                    aria-label="Remove file"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </label>
-            </Field>
+    return {
+      ok: true,
+      emailSent: mail.sent,
+      emailError: mail.error ?? null,
+      email,
+      username,
+      password: data.password,
+    };
+  });
 
-            <div className="flex items-start gap-3 rounded-xl border bg-muted/30 p-4">
-              <Checkbox
-                id="dev-agree"
-                checked={agreed}
-                onCheckedChange={(v) => {
-                  setAgreed(!!v);
-                  setErrors((e) => ({ ...e, agreed: "" }));
-                }}
-                className="mt-0.5"
-              />
-              <label htmlFor="dev-agree" className="text-xs leading-relaxed text-muted-foreground">
-                I confirm the information provided is accurate and I agree to ELFO Innovations'{" "}
-                <Link to="/terms" className="font-medium text-primary underline underline-offset-2">
-                  Terms
-                </Link>{" "}
-                and{" "}
-                <Link
-                  to="/privacy"
-                  className="font-medium text-primary underline underline-offset-2"
-                >
-                  Privacy Policy
-                </Link>
-                , including confidentiality and professional conduct expectations while my
-                application is reviewed.
-                {errors.agreed && (
-                  <span className="mt-1 block font-medium text-destructive">{errors.agreed}</span>
-                )}
-              </label>
-            </div>
+export const rejectDeveloperApplication = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: DecisionInput) => input)
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin, error: roleErr } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (roleErr) throw new Error(roleErr.message);
+    if (!isAdmin) throw new Error("Forbidden: admin only");
 
-            {TURNSTILE_SITE_KEY && (
-              <Turnstile
-                ref={turnstileRef}
-                siteKey={TURNSTILE_SITE_KEY}
-                onVerify={setTurnstileToken}
-                onExpire={() => setTurnstileToken(null)}
-                onError={() => setTurnstileToken(null)}
-              />
-            )}
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { rejectionEmail } = await import("@/lib/email-templates");
+    const { sendEmail } = await import("@/lib/email.server");
 
-            <Button
-              onClick={onSubmit}
-              disabled={busy}
-              className="w-full rounded-full electric-glow"
-            >
-              {busy ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting…
-                </>
-              ) : (
-                "Submit application"
-              )}
-            </Button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+    const { data: app, error: appErr } = await supabaseAdmin
+      .from("developer_applications")
+      .select("*")
+      .eq("id", data.id)
+      .single();
+    if (appErr || !app) throw new Error(appErr?.message || "Application not found");
 
-/**
- * Links to the dedicated /apply page instead of opening a modal, so there's
- * a single copy of the application form/submission logic (the page) rather
- * than duplicate forms in a dialog and on the page.
- */
-export function BecomeDeveloperButton({
-  className,
-  variant = "outline",
-}: {
-  className?: string;
-  variant?: "outline" | "default" | "ghost";
-}) {
-  return (
-    <Button asChild variant={variant} className={className ?? "rounded-full"}>
-      <Link to="/apply">
-        <Rocket className="mr-2 h-4 w-4" /> Become a Developer
-      </Link>
-    </Button>
-  );
-}
+    const { error: uErr } = await supabaseAdmin
+      .from("developer_applications")
+      .update({
+        status: "rejected",
+        decision_subject: data.subject,
+        decision_message: data.message,
+        reviewed_by: context.userId,
+        reviewed_at: new Date().toISOString(),
+      })
+      .eq("id", data.id);
+    if (uErr) throw new Error(uErr.message);
+
+    const mail = await sendEmail({
+      to: app.email,
+      subject: data.subject || "Update on your application — ELFO Innovations",
+      html: rejectionEmail({ name: app.full_name, message: data.message }),
+    });
+
+    return { ok: true, emailSent: mail.sent, emailError: mail.error ?? null };
+  });
+
+export const getResumeDownloadUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { path: string }) => input)
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden: admin only");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: signed, error } = await supabaseAdmin.storage
+      .from("developer-resumes")
+      .createSignedUrl(data.path, 300);
+    if (error || !signed) throw new Error(error?.message || "Could not create download link");
+    return { url: signed.signedUrl };
+  });
