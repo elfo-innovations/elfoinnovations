@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useFollowUs } from "@/hooks/use-follow-us";
-import { BecomeDeveloperButton } from "@/components/recruitment/DeveloperApplicationModal";
+import { BecomeDeveloperButton } from "@/components/recruitment/DeveloperApplicationForm";
 
 import profilePdf from "@/assets/Elfo-Innovations-Company-Profile.pdf";
 // 1) Drop your FBR registration PDF into src/assets/ with this exact name

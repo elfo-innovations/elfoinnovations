@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2, Target, Eye, Zap, ExternalLink, Sparkles, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFollowUs } from "@/hooks/use-follow-us";
-import { BecomeDeveloperButton } from "@/components/recruitment/DeveloperApplicationModal";
+import { BecomeDeveloperButton } from "@/components/recruitment/DeveloperApplicationForm";
 import type { Tables } from "@/integrations/supabase/types";
 
 export function AboutSection() {
