@@ -7,9 +7,11 @@ import {
   Search,
   FileText,
   Github,
+  Linkedin,
   Globe,
   Mail,
   Phone,
+  MapPin,
   Check,
   X,
   RefreshCw,
@@ -115,7 +117,7 @@ function AdminDeveloperRequests() {
       .filter(
         (r) =>
           !q ||
-          [r.full_name, r.email, r.primary_role]
+          [r.full_name, r.email, r.primary_role, r.country, r.city, ...(r.skills ?? [])]
             .join(" ")
             .toLowerCase()
             .includes(q),
@@ -226,7 +228,7 @@ function AdminDeveloperRequests() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="rounded-xl pl-9"
-            placeholder="Search name, email, role…"
+            placeholder="Search name, email, skills…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -257,7 +259,7 @@ function AdminDeveloperRequests() {
                   </span>
                 </div>
                 <div className="mt-1 text-sm font-medium text-primary">
-                  {r.primary_role} · {r.current_status}
+                  {r.primary_role} · {r.years_experience} · {r.current_status}
                 </div>
               </div>
               <div className="text-xs text-muted-foreground">
@@ -274,9 +276,30 @@ function AdminDeveloperRequests() {
                 <Phone className="h-4 w-4 shrink-0 text-primary" />
                 {r.phone}
               </div>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <MapPin className="h-4 w-4 shrink-0 text-primary" />
+                {r.city}, {r.country}
+              </div>
             </div>
 
+            {r.skills?.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {r.skills.map((s: string) => (
+                  <span
+                    key={s}
+                    className="rounded-full border bg-muted/40 px-2.5 py-0.5 text-xs font-medium"
+                  >
+                    {s}
+                  </span>
+                ))}
+              </div>
+            )}
+
             <div className="mt-4 space-y-2 text-sm text-muted-foreground">
+              <p>
+                <span className="font-semibold text-foreground">Bio: </span>
+                {r.bio}
+              </p>
               <p>
                 <span className="font-semibold text-foreground">Motivation: </span>
                 {r.motivation}
@@ -292,6 +315,16 @@ function AdminDeveloperRequests() {
               >
                 <Github className="h-3.5 w-3.5" /> GitHub
               </a>
+              {r.linkedin_url && (
+                <a
+                  href={r.linkedin_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium hover:bg-accent"
+                >
+                  <Linkedin className="h-3.5 w-3.5" /> LinkedIn
+                </a>
+              )}
               {r.portfolio_url && (
                 <a
                   href={r.portfolio_url}
