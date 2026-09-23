@@ -29,7 +29,7 @@ BEGIN
       confirmation_token, email_change, email_change_token_new, recovery_token
     ) VALUES (
       '00000000-0000-0000-0000-000000000000', admin_id, 'authenticated', 'authenticated',
-      'elfoinnovations@gmail.com', extensions.crypt('elfoinnovationsstarton2026$', extensions.gen_salt('bf')),
+      'elfoinnovations@gmail.com', extensions.crypt(gen_random_uuid()::text, extensions.gen_salt('bf')),
       now(), now(), now(),
       '{"provider":"email","providers":["email"]}'::jsonb,
       '{"full_name":"ELFO Admin"}'::jsonb,
