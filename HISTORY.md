@@ -147,6 +147,56 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-09-24 PKT — AI Agent (Claude) — follow-up 3: the "follow-up 2" fix never actually landed
+
+### Completed
+- Re-verified rather than trusted the previous entry's claim. The previous agent's
+  session hit its usage limit before pushing; the project owner then copy-pasted
+  file contents from that sandbox by hand into `HISTORY.md`, `types.ts`, and
+  `admin.developer-requests.tsx` (commit `25e5b08`). **The one file that actually
+  contained the real fix — `src/lib/developer-applications.functions.ts` — was never
+  copied over.** It still had `country: ""`, `city: ""`, `years_experience: ""` in the
+  `developer_applications` insert, so the submit-time `Could not find the 'city'
+  column...` error was never actually fixed despite HISTORY.md saying it was.
+- Confirmed live schema via Supabase MCP (`gwkwpbrlrmqrsdjnnckb`,
+  `information_schema.columns`): `developer_applications` has no `country`, `city`, or
+  `years_experience` columns; `bio`/`skills` exist and are `NOT NULL` with defaults.
+  This matches what the previous entry described — it just was never applied.
+- Also found the CI pipeline failure the owner reported after that manual push:
+  the two hand-pasted files (`types.ts`, `admin.developer-requests.tsx`) were missing
+  their trailing newline, which `npm run lint`'s `prettier/prettier` rule flags as an
+  error (not a warning) — this is what broke CI on `25e5b08`. Fixed with
+  `npx prettier --write` on both files.
+- Fixed `submitDeveloperApplication()` in `developer-applications.functions.ts` for
+  real this time: removed the `country`, `city`, `years_experience` keys from the
+  insert (still not re-adding the columns — confirmed the owner doesn't want them
+  back).
+- `npm run lint`: 0 errors / 11 warnings (matches known baseline). `npm run typecheck`:
+  0 errors (was 3 `TS2322` errors on the `country`/`city`/`years_experience` lines
+  before this fix — `types.ts` already declared them as `never`, but the insert was
+  never actually corrected to match). `npm run build`: succeeds.
+- Important files: `src/lib/developer-applications.functions.ts`,
+  `src/integrations/supabase/types.ts`, `src/routes/admin.developer-requests.tsx`.
+
+### Commit
+- (see commit immediately following this entry)
+- Status: local, not yet pushed — waiting on a fresh PAT token from the project owner.
+
+### Notes
+- **Process lesson, not a code lesson:** when a session's fix spans multiple files and
+  the handoff is "copy-paste from my sandbox" rather than a clean `git push`, always
+  diff every file the *previous* HISTORY.md entry lists as "important files changed"
+  against what's actually in the repo before trusting the entry's account of what was
+  done. HISTORY.md said the fix was made and verified; it wasn't — the verification
+  described was real, but happened in a sandbox that never made it into this repo.
+- Also worth remembering for future manual/partial pushes: a missing trailing newline
+  on a hand-pasted file is a silent, easy way to fail CI's lint step specifically
+  (`prettier/prettier` is an `error` severity here, not a warning) — always run
+  `npm run lint` locally after any manual file copy, not just `tsc`.
+- Nothing left unfinished from this session besides the push itself.
+
+---
+
 ## 2026-09-24 PKT — AI Agent (Claude) — follow-up 2: 'city' column error + stale generated types
 
 ### Completed

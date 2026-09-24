@@ -89,20 +89,16 @@ export const submitDeveloperApplication = createServerFn({ method: "POST" })
       full_name: data.full_name.trim(),
       email,
       phone: data.phone.trim(),
-      // Country/city/years_experience were intentionally dropped from the
-      // application form; those columns remain NOT NULL on
-      // developer_applications, so empty placeholders are written for them.
-      // bio and skills ARE collected on the form (see
+      // country/city/years_experience were dropped from developer_applications
+      // (see HISTORY.md 2026-09-24 "follow-up 2") and are intentionally not
+      // written here. bio and skills ARE collected on the form (see
       // DeveloperApplicationForm.tsx) and must be written through, since
       // approveDeveloperApplication() copies them onto the new developers
       // row below.
-      country: "",
-      city: "",
       github_url: normalizeUrl(data.github_url),
       portfolio_url: normalizeUrl(data.portfolio_url ?? ""),
       primary_role: data.primary_role,
       skills: data.skills ?? [],
-      years_experience: "",
       current_status: data.current_status,
       bio: data.bio.trim(),
       motivation: data.motivation.trim(),
