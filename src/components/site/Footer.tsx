@@ -119,7 +119,7 @@ export function Footer() {
               </Link>
             </li>
             <li>
-              <Link to="/" hash="faq" className="hover:text-foreground">
+              <Link to="/faqs" className="hover:text-foreground">
                 FAQ
               </Link>
             </li>

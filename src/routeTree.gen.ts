@@ -16,6 +16,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BlogRouteImport } from './routes/blog'
 import { Route as BlogsRouteImport } from './routes/blogs'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as FaqsRouteImport } from './routes/faqs'
 import { Route as PortfolioRouteImport } from './routes/portfolio'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -87,6 +88,11 @@ const BlogsRoute = BlogsRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqsRoute = FaqsRouteImport.update({
+  id: '/faqs',
+  path: '/faqs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PortfolioRoute = PortfolioRouteImport.update({
@@ -284,6 +290,7 @@ export interface FileRoutesByFullPath {
   '/blog': typeof BlogRoute
   '/blogs': typeof BlogsRoute
   '/contact': typeof ContactRoute
+  '/faqs': typeof FaqsRoute
   '/portfolio': typeof PortfolioRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -330,6 +337,7 @@ export interface FileRoutesByTo {
   '/blog': typeof BlogRoute
   '/blogs': typeof BlogsRoute
   '/contact': typeof ContactRoute
+  '/faqs': typeof FaqsRoute
   '/portfolio': typeof PortfolioRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -377,6 +385,7 @@ export interface FileRoutesById {
   '/blog': typeof BlogRoute
   '/blogs': typeof BlogsRoute
   '/contact': typeof ContactRoute
+  '/faqs': typeof FaqsRoute
   '/portfolio': typeof PortfolioRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -425,6 +434,7 @@ export interface FileRouteTypes {
     | '/blog'
     | '/blogs'
     | '/contact'
+    | '/faqs'
     | '/portfolio'
     | '/pricing'
     | '/privacy'
@@ -471,6 +481,7 @@ export interface FileRouteTypes {
     | '/blog'
     | '/blogs'
     | '/contact'
+    | '/faqs'
     | '/portfolio'
     | '/pricing'
     | '/privacy'
@@ -517,6 +528,7 @@ export interface FileRouteTypes {
     | '/blog'
     | '/blogs'
     | '/contact'
+    | '/faqs'
     | '/portfolio'
     | '/pricing'
     | '/privacy'
@@ -564,6 +576,7 @@ export interface RootRouteChildren {
   BlogRoute: typeof BlogRoute
   BlogsRoute: typeof BlogsRoute
   ContactRoute: typeof ContactRoute
+  FaqsRoute: typeof FaqsRoute
   PortfolioRoute: typeof PortfolioRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -652,6 +665,13 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faqs': {
+      id: '/faqs'
+      path: '/faqs'
+      fullPath: '/faqs'
+      preLoaderRoute: typeof FaqsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/portfolio': {
@@ -924,6 +944,7 @@ const rootRouteChildren: RootRouteChildren = {
   BlogRoute: BlogRoute,
   BlogsRoute: BlogsRoute,
   ContactRoute: ContactRoute,
+  FaqsRoute: FaqsRoute,
   PortfolioRoute: PortfolioRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,

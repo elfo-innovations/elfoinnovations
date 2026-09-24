@@ -17,6 +17,14 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { slugify } from "@/lib/faq";
 import { toast } from "sonner";
 import { MediaPicker } from "@/components/web-portal/MediaPicker";
 import { uploadToWebsiteMedia } from "@/lib/media-upload";
@@ -2111,25 +2119,155 @@ function AboutEditor() {
 
 /* ---------- FAQ ---------- */
 function FaqEditor() {
+  const [sub, setSub] = useState<"questions" | "categories">("questions");
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          variant={sub === "questions" ? "default" : "outline"}
+          onClick={() => setSub("questions")}
+        >
+          Questions
+        </Button>
+        <Button
+          size="sm"
+          variant={sub === "categories" ? "default" : "outline"}
+          onClick={() => setSub("categories")}
+        >
+          Categories
+        </Button>
+      </div>
+      {sub === "questions" ? <FaqQuestionsEditor /> : <FaqCategoriesEditor />}
+    </div>
+  );
+}
+
+function FaqCategoriesEditor() {
+  return (
+    <CrudList<Tables<"faq_categories">>
+      title="FAQ Categories"
+      table="faq_categories"
+      visibilityCol="is_active"
+      empty={{ name: "", slug: "", description: "", sort_order: 100, is_active: true }}
+      columns={[
+        { label: "name", render: (r) => r.name },
+        { label: "desc", render: (r) => `/faqs?category=${r.slug}` },
+      ]}
+      renderForm={(f, set) => (
+        <>
+          <Field
+            label="Name"
+            value={f.name}
+            onChange={(v) =>
+              set({
+                ...f,
+                name: v,
+                // Keep the slug following the name until it is edited by hand or already saved.
+                slug: !f.id && (!f.slug || f.slug === slugify(f.name ?? "")) ? slugify(v) : f.slug,
+              })
+            }
+          />
+          <Field
+            label="Slug (used in the page link, e.g. pricing-payments)"
+            value={f.slug}
+            onChange={(v) => set({ ...f, slug: v.toLowerCase().replace(/[^a-z0-9-]+/g, "-") })}
+          />
+          <TextField
+            label="Description (optional, shown under the category heading)"
+            value={f.description}
+            onChange={(v) => set({ ...f, description: v })}
+          />
+          <Field
+            label="Sort order (lower shows first)"
+            value={f.sort_order}
+            onChange={(v) => set({ ...f, sort_order: Number(v) || 0 })}
+          />
+          <p className="text-xs text-muted-foreground">
+            Deleting a category does not delete its questions; they move to &quot;More
+            Questions&quot; until you file them again. Hiding a category hides its questions from
+            the public page.
+          </p>
+        </>
+      )}
+    />
+  );
+}
+
+function FaqQuestionsEditor() {
+  const { data: categories = [] } = useQuery({
+    queryKey: ["faq_categories", "admin"],
+    queryFn: async () =>
+      (await supabase.from("faq_categories").select("*").order("sort_order")).data ?? [],
+  });
+  const catName = new Map(categories.map((c) => [c.id, c.name] as const));
   return (
     <CrudList<Tables<"faqs">>
       title="FAQs"
       table="faqs"
       visibilityCol="is_active"
-      empty={{ question: "", answer: "", sort_order: 100, is_active: true }}
+      empty={{
+        question: "",
+        answer: "",
+        sort_order: 100,
+        is_active: true,
+        is_featured: false,
+        category_id: categories[0]?.id ?? null,
+      }}
       columns={[
         { label: "q", render: (r) => r.question },
-        { label: "a", render: (r) => (r.answer || "").slice(0, 80) },
+        {
+          label: "a",
+          render: (r) =>
+            `${r.category_id ? (catName.get(r.category_id) ?? "Category") : "No category"}${
+              r.is_featured ? " · On home" : ""
+            } · ${(r.answer || "").slice(0, 60)}`,
+        },
       ]}
       renderForm={(f, set) => (
         <>
+          <div>
+            <Label className="text-xs">Category</Label>
+            <Select
+              value={f.category_id ?? "none"}
+              onValueChange={(v) => set({ ...f, category_id: v === "none" ? null : v })}
+            >
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="Choose a category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No category</SelectItem>
+                {categories.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                    {c.is_active ? "" : " (hidden)"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <Field label="Question" value={f.question} onChange={(v) => set({ ...f, question: v })} />
-          <TextField label="Answer" value={f.answer} onChange={(v) => set({ ...f, answer: v })} />
+          <div>
+            <Label className="text-xs">Answer</Label>
+            <Textarea
+              value={f.answer ?? ""}
+              onChange={(e) => set({ ...f, answer: e.target.value })}
+              className="mt-1"
+              rows={6}
+            />
+          </div>
           <Field
-            label="Sort order"
+            label="Sort order (lower shows first)"
             value={f.sort_order}
             onChange={(v) => set({ ...f, sort_order: Number(v) || 0 })}
           />
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={!!f.is_featured}
+              onCheckedChange={(v) => set({ ...f, is_featured: v })}
+            />
+            <Label className="text-xs">Show on the home page</Label>
+          </div>
         </>
       )}
     />

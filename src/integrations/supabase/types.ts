@@ -603,35 +603,85 @@ export type Database = {
         };
         Relationships: [];
       };
+      faq_categories: {
+        Row: {
+          created_at: string;
+          description: string | null;
+          id: string;
+          is_active: boolean;
+          name: string;
+          slug: string;
+          sort_order: number;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          is_active?: boolean;
+          name: string;
+          slug: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          is_active?: boolean;
+          name?: string;
+          slug?: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       faqs: {
         Row: {
           answer: string;
+          category_id: string | null;
           created_at: string;
           id: string;
           is_active: boolean;
+          is_featured: boolean;
           question: string;
+          slug: string | null;
           sort_order: number;
           updated_at: string;
         };
         Insert: {
           answer: string;
+          category_id?: string | null;
           created_at?: string;
           id?: string;
           is_active?: boolean;
+          is_featured?: boolean;
           question: string;
+          slug?: string | null;
           sort_order?: number;
           updated_at?: string;
         };
         Update: {
           answer?: string;
+          category_id?: string | null;
           created_at?: string;
           id?: string;
           is_active?: boolean;
+          is_featured?: boolean;
           question?: string;
+          slug?: string | null;
           sort_order?: number;
           updated_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "faqs_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "faq_categories";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       hero_content: {
         Row: {
