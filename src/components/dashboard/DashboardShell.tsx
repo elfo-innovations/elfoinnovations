@@ -22,6 +22,7 @@ import {
   UserPlus,
   Home,
   Bot,
+  Mail,
   type LucideIcon,
 } from "lucide-react";
 import { ElfoLogo } from "@/components/brand/Logo";
@@ -53,6 +54,7 @@ const NAVS: Record<"admin" | "developer" | "client", Nav[]> = {
     { to: "/", label: "Back To Home", icon: Home },
     { to: "/admin", label: "Overview", icon: LayoutDashboard },
     { to: "/admin/leads", label: "Leads", icon: FileText },
+    { to: "/admin/contact-messages", label: "Contact Messages", icon: Mail },
     { to: "/admin/clients", label: "Clients", icon: Users },
     { to: "/admin/developers", label: "Developers", icon: Code2 },
     { to: "/admin/developer-requests", label: "Developer Requests", icon: UserPlus },

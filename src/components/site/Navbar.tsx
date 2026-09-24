@@ -50,6 +50,7 @@ export function Navbar() {
     { id: "pr", label: t("nav.pricing"), href: "/pricing" },
     { id: "b", label: t("nav.blog"), href: "/blogs" },
     { id: "a", label: t("nav.about"), href: "/about" },
+    { id: "c", label: t("nav.contact"), href: "/contact" },
   ];
   const links = data && data.length > 0 ? data : FALLBACK;
   const labelFor = (l: { href: string; label: string }) => {

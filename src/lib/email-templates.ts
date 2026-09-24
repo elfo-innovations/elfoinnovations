@@ -160,3 +160,50 @@ export function rejectionEmail(p: { name: string; message: string }) {
      ${button(BRAND.site, "Visit ELFO Innovations")}`,
   );
 }
+
+// Sent to the visitor right after they submit the public /contact form
+// (from the no-reply MAIL_FROM address — see email.server.ts).
+export function contactReceivedEmail(p: { name: string; subject: string; messageCode: string }) {
+  return shell(
+    "Thank you for contacting ELFO Innovations",
+    `<h1 style="margin:0 0 12px;font-size:22px;color:${BRAND.text};">Thank you for reaching out</h1>
+     <p style="margin:0 0 14px;">Hi ${esc(p.name)},</p>
+     <p style="margin:0 0 14px;color:${BRAND.muted};">Thanks for contacting <strong style="color:${BRAND.text};">ELFO Innovations</strong>. We've received your message
+     about <strong style="color:${BRAND.text};">${esc(p.subject)}</strong> (reference <strong style="color:${BRAND.electric};">${esc(p.messageCode)}</strong>).</p>
+     <p style="margin:0 0 14px;color:${BRAND.muted};">Our team will read it and get back to you by email as soon as possible. No action is needed from you right now.</p>
+     <p style="margin:0 0 14px;color:${BRAND.muted};font-size:13px;">This is an automated confirmation from a no-reply address, so please don't reply to this email.</p>
+     ${button(BRAND.site, "Visit ELFO Innovations")}`,
+  );
+}
+
+// Sent to the ELFO inbox for every new /contact submission. All visitor
+// supplied fields are HTML-escaped. The send call sets Reply-To to the
+// visitor, so hitting "Reply" answers them directly.
+export function contactAdminEmail(p: {
+  messageCode: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  subject: string;
+  message: string;
+}) {
+  const row = (k: string, v: string) =>
+    `<tr><td style="padding:6px 0;color:${BRAND.muted};font-size:13px;width:90px;vertical-align:top;">${esc(k)}</td>
+     <td style="padding:6px 0;color:${BRAND.text};font-size:14px;font-weight:600;">${v}</td></tr>`;
+  return shell(
+    `New contact message ${p.messageCode}`,
+    `<h1 style="margin:0 0 12px;font-size:22px;color:${BRAND.text};">New contact message</h1>
+     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 14px;">
+       ${row("Ref", esc(p.messageCode))}
+       ${row("Name", esc(p.name))}
+       ${row("Email", esc(p.email))}
+       ${row("Phone", p.phone ? esc(p.phone) : "—")}
+       ${row("Subject", esc(p.subject))}
+     </table>
+     <div style="background:${BRAND.card};border:1px solid rgba(46,155,255,.25);border-radius:14px;padding:16px 18px;margin:0 0 14px;color:${BRAND.text};">
+       ${nl2br(p.message)}
+     </div>
+     <p style="margin:0;color:${BRAND.muted};font-size:13px;">Hit <strong style="color:${BRAND.text};">Reply</strong> to answer ${esc(p.name)} directly. You can also manage this message in the admin dashboard under Contact Messages.</p>
+     ${button(`${BRAND.site}/admin/contact-messages`, "Open in dashboard")}`,
+  );
+}

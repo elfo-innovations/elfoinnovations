@@ -15,6 +15,7 @@ import { Route as ApplyRouteImport } from './routes/apply'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BlogRouteImport } from './routes/blog'
 import { Route as BlogsRouteImport } from './routes/blogs'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as PortfolioRouteImport } from './routes/portfolio'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -27,6 +28,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminBlogsRouteImport } from './routes/admin.blogs'
 import { Route as AdminClientsRouteImport } from './routes/admin.clients'
+import { Route as AdminContactMessagesRouteImport } from './routes/admin.contact-messages'
 import { Route as AdminDeveloperRequestsRouteImport } from './routes/admin.developer-requests'
 import { Route as AdminDevelopersRouteImport } from './routes/admin.developers'
 import { Route as AdminInvoicesRouteImport } from './routes/admin.invoices'
@@ -80,6 +82,11 @@ const BlogRoute = BlogRouteImport.update({
 const BlogsRoute = BlogsRouteImport.update({
   id: '/blogs',
   path: '/blogs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PortfolioRoute = PortfolioRouteImport.update({
@@ -140,6 +147,11 @@ const AdminBlogsRoute = AdminBlogsRouteImport.update({
 const AdminClientsRoute = AdminClientsRouteImport.update({
   id: '/admin/clients',
   path: '/admin/clients',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminContactMessagesRoute = AdminContactMessagesRouteImport.update({
+  id: '/admin/contact-messages',
+  path: '/admin/contact-messages',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminDeveloperRequestsRoute = AdminDeveloperRequestsRouteImport.update({
@@ -271,6 +283,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/blog': typeof BlogRoute
   '/blogs': typeof BlogsRoute
+  '/contact': typeof ContactRoute
   '/portfolio': typeof PortfolioRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -282,6 +295,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/admin/blogs': typeof AdminBlogsRoute
   '/admin/clients': typeof AdminClientsRoute
+  '/admin/contact-messages': typeof AdminContactMessagesRoute
   '/admin/developer-requests': typeof AdminDeveloperRequestsRoute
   '/admin/developers': typeof AdminDevelopersRoute
   '/admin/invoices': typeof AdminInvoicesRoute
@@ -315,6 +329,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/blog': typeof BlogRoute
   '/blogs': typeof BlogsRoute
+  '/contact': typeof ContactRoute
   '/portfolio': typeof PortfolioRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -326,6 +341,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/admin/blogs': typeof AdminBlogsRoute
   '/admin/clients': typeof AdminClientsRoute
+  '/admin/contact-messages': typeof AdminContactMessagesRoute
   '/admin/developer-requests': typeof AdminDeveloperRequestsRoute
   '/admin/developers': typeof AdminDevelopersRoute
   '/admin/invoices': typeof AdminInvoicesRoute
@@ -360,6 +376,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/blog': typeof BlogRoute
   '/blogs': typeof BlogsRoute
+  '/contact': typeof ContactRoute
   '/portfolio': typeof PortfolioRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -371,6 +388,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/admin/blogs': typeof AdminBlogsRoute
   '/admin/clients': typeof AdminClientsRoute
+  '/admin/contact-messages': typeof AdminContactMessagesRoute
   '/admin/developer-requests': typeof AdminDeveloperRequestsRoute
   '/admin/developers': typeof AdminDevelopersRoute
   '/admin/invoices': typeof AdminInvoicesRoute
@@ -406,6 +424,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/blog'
     | '/blogs'
+    | '/contact'
     | '/portfolio'
     | '/pricing'
     | '/privacy'
@@ -417,6 +436,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/admin/blogs'
     | '/admin/clients'
+    | '/admin/contact-messages'
     | '/admin/developer-requests'
     | '/admin/developers'
     | '/admin/invoices'
@@ -450,6 +470,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/blog'
     | '/blogs'
+    | '/contact'
     | '/portfolio'
     | '/pricing'
     | '/privacy'
@@ -461,6 +482,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/admin/blogs'
     | '/admin/clients'
+    | '/admin/contact-messages'
     | '/admin/developer-requests'
     | '/admin/developers'
     | '/admin/invoices'
@@ -494,6 +516,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/blog'
     | '/blogs'
+    | '/contact'
     | '/portfolio'
     | '/pricing'
     | '/privacy'
@@ -505,6 +528,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/admin/blogs'
     | '/admin/clients'
+    | '/admin/contact-messages'
     | '/admin/developer-requests'
     | '/admin/developers'
     | '/admin/invoices'
@@ -539,6 +563,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BlogRoute: typeof BlogRoute
   BlogsRoute: typeof BlogsRoute
+  ContactRoute: typeof ContactRoute
   PortfolioRoute: typeof PortfolioRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -550,6 +575,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   AdminBlogsRoute: typeof AdminBlogsRoute
   AdminClientsRoute: typeof AdminClientsRoute
+  AdminContactMessagesRoute: typeof AdminContactMessagesRoute
   AdminDeveloperRequestsRoute: typeof AdminDeveloperRequestsRoute
   AdminDevelopersRoute: typeof AdminDevelopersRoute
   AdminInvoicesRoute: typeof AdminInvoicesRoute
@@ -619,6 +645,13 @@ declare module '@tanstack/react-router' {
       path: '/blogs'
       fullPath: '/blogs'
       preLoaderRoute: typeof BlogsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/portfolio': {
@@ -703,6 +736,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/clients'
       fullPath: '/admin/clients'
       preLoaderRoute: typeof AdminClientsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/contact-messages': {
+      id: '/admin/contact-messages'
+      path: '/admin/contact-messages'
+      fullPath: '/admin/contact-messages'
+      preLoaderRoute: typeof AdminContactMessagesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/developer-requests': {
@@ -883,6 +923,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   BlogRoute: BlogRoute,
   BlogsRoute: BlogsRoute,
+  ContactRoute: ContactRoute,
   PortfolioRoute: PortfolioRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
@@ -894,6 +935,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   AdminBlogsRoute: AdminBlogsRoute,
   AdminClientsRoute: AdminClientsRoute,
+  AdminContactMessagesRoute: AdminContactMessagesRoute,
   AdminDeveloperRequestsRoute: AdminDeveloperRequestsRoute,
   AdminDevelopersRoute: AdminDevelopersRoute,
   AdminInvoicesRoute: AdminInvoicesRoute,

@@ -61,6 +61,7 @@ export async function sendEmail(opts: {
           to: [{ email: opts.to }],
           subject: opts.subject,
           htmlContent: opts.html,
+          ...(replyTo ? { replyTo: { email: replyTo } } : {}),
         }),
       });
       if (!r.ok) return { sent: false, provider: "brevo", error: await r.text() };
@@ -77,6 +78,7 @@ export async function sendEmail(opts: {
           to: [opts.to],
           subject: opts.subject,
           html_body: opts.html,
+          ...(replyTo ? { custom_headers: [{ header: "Reply-To", value: replyTo }] } : {}),
         }),
       });
       if (!r.ok) return { sent: false, provider: "smtp2go", error: await r.text() };
@@ -91,6 +93,7 @@ export async function sendEmail(opts: {
         to: opts.to,
         subject: opts.subject,
         html: opts.html,
+        ...(replyTo ? { "h:Reply-To": replyTo } : {}),
       });
       const r = await fetch(`https://api.mailgun.net/v3/${mgDomain}/messages`, {
         method: "POST",
@@ -113,7 +116,13 @@ export async function sendEmail(opts: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ from, to: opts.to, subject: opts.subject, html: opts.html }),
+        body: JSON.stringify({
+          from,
+          to: opts.to,
+          subject: opts.subject,
+          html: opts.html,
+          ...(replyTo ? { replyTo } : {}),
+        }),
       });
       if (!r.ok) return { sent: false, provider: "smtp-relay", error: await r.text() };
       return { sent: true, provider: "smtp-relay" };
