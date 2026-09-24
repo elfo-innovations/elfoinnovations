@@ -451,8 +451,6 @@ export type Database = {
         Row: {
           admin_notes: string | null;
           bio: string;
-          city: string;
-          country: string;
           created_at: string;
           created_user_id: string | null;
           current_status: string;
@@ -474,13 +472,10 @@ export type Database = {
           skills: string[];
           status: Database["public"]["Enums"]["application_status"];
           updated_at: string;
-          years_experience: string;
         };
         Insert: {
           admin_notes?: string | null;
-          bio: string;
-          city: string;
-          country: string;
+          bio?: string;
           created_at?: string;
           created_user_id?: string | null;
           current_status: string;
@@ -502,13 +497,10 @@ export type Database = {
           skills?: string[];
           status?: Database["public"]["Enums"]["application_status"];
           updated_at?: string;
-          years_experience: string;
         };
         Update: {
           admin_notes?: string | null;
           bio?: string;
-          city?: string;
-          country?: string;
           created_at?: string;
           created_user_id?: string | null;
           current_status?: string;
@@ -530,7 +522,6 @@ export type Database = {
           skills?: string[];
           status?: Database["public"]["Enums"]["application_status"];
           updated_at?: string;
-          years_experience?: string;
         };
         Relationships: [];
       };

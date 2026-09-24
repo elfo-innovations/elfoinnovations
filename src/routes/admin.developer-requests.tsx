@@ -11,7 +11,6 @@ import {
   Globe,
   Mail,
   Phone,
-  MapPin,
   Check,
   X,
   RefreshCw,
@@ -117,7 +116,7 @@ function AdminDeveloperRequests() {
       .filter(
         (r) =>
           !q ||
-          [r.full_name, r.email, r.primary_role, r.country, r.city, ...(r.skills ?? [])]
+          [r.full_name, r.email, r.primary_role, ...(r.skills ?? [])]
             .join(" ")
             .toLowerCase()
             .includes(q),
@@ -259,7 +258,7 @@ function AdminDeveloperRequests() {
                   </span>
                 </div>
                 <div className="mt-1 text-sm font-medium text-primary">
-                  {r.primary_role} · {r.years_experience} · {r.current_status}
+                  {r.primary_role} · {r.current_status}
                 </div>
               </div>
               <div className="text-xs text-muted-foreground">
@@ -275,10 +274,6 @@ function AdminDeveloperRequests() {
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Phone className="h-4 w-4 shrink-0 text-primary" />
                 {r.phone}
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <MapPin className="h-4 w-4 shrink-0 text-primary" />
-                {r.city}, {r.country}
               </div>
             </div>
 
