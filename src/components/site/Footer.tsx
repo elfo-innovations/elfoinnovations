@@ -161,6 +161,11 @@ export function Footer() {
                 Refund &amp; Cancellation
               </Link>
             </li>
+            <li>
+              <Link to="/security" className="hover:text-foreground">
+                Security
+              </Link>
+            </li>
           </ul>
         </div>
       </div>
