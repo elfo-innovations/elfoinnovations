@@ -1,75 +1,159 @@
+import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronRight } from "lucide-react";
+import { FaqRow, FaqShell } from "@/components/site/FaqExplorer";
+import { categoryItemClass } from "@/components/site/faq-styles";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { DEFAULT_FAQS } from "@/lib/faq";
+  DEFAULT_FAQS,
+  fetchFaqData,
+  groupFaqs,
+  OTHER_CATEGORY_NAME,
+  type FaqItem,
+} from "@/lib/faq";
 
-// Home / pricing show only the questions the admin marked "Show on home" (falling back to the
-// first few if none are marked); the full, categorised list lives on /faqs.
+// Home / pricing show only the questions the admin marked "Show on the home page" (falling back
+// to the first few if none are marked), in the same look as /faqs. The full, categorised list
+// lives on /faqs.
 const FALLBACK_COUNT = 6;
 
 export function FaqSection() {
   const { data, isPending } = useQuery({
-    queryKey: ["faqs"],
-    queryFn: async () =>
-      (await supabase.from("faqs").select("*").eq("is_active", true).order("sort_order")).data,
+    queryKey: ["faq-data"],
+    queryFn: fetchFaqData,
   });
-  const all =
-    data && data.length > 0
-      ? data
-      : DEFAULT_FAQS.map((f, i) => ({ ...f, id: `d${i}`, is_featured: false }));
-  const featured = all.filter((f) => f.is_featured);
-  const items = featured.length > 0 ? featured : all.slice(0, FALLBACK_COUNT);
+
+  const { categories, items } = useMemo(() => {
+    const all: FaqItem[] =
+      data && data.faqs.length > 0
+        ? data.faqs
+        : DEFAULT_FAQS.map((f, i) => ({
+            id: `default-${i}`,
+            question: f.question,
+            answer: f.answer,
+            slug: null,
+            category_id: null,
+            sort_order: i,
+            is_featured: false,
+          }));
+    const featured = all.filter((f) => f.is_featured);
+    return {
+      categories: data?.categories ?? [],
+      items: featured.length > 0 ? featured : all.slice(0, FALLBACK_COUNT),
+    };
+  }, [data]);
+
+  const groups = useMemo(() => groupFaqs(categories, items), [categories, items]);
+  const [activeId, setActiveId] = useState<string | null>(null); // null = all featured
+  const active = groups.find((g) => g.category?.id === activeId);
+  const shown = active ? active.items : items;
+  const showTabs = groups.filter((g) => g.category).length > 1;
 
   return (
-    <section id="faq" className="border-t bg-muted/20 py-20 sm:py-28">
-      <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <div className="inline-flex rounded-full border bg-card px-3 py-1.5 text-xs font-medium">
-            FAQ
-          </div>
-          <h2 className="mt-4 font-display text-4xl font-bold tracking-tight sm:text-5xl">
-            Questions, <span className="electric-text">answered.</span>
-          </h2>
-        </div>
-        <Accordion type="single" collapsible className="mt-10 space-y-3">
-          {isPending
-            ? Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="glass-card rounded-2xl border-0 px-5 py-4">
+    <section id="faq" className="py-16 sm:py-24">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <FaqShell>
+          {isPending ? (
+            <div className="mt-8 space-y-3 sm:mt-10">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="rounded-2xl border border-border/60 bg-card/50 px-5 py-4">
                   <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
                 </div>
-              ))
-            : items.map((f, i) => (
-                <AccordionItem
-                  key={f.id ?? i}
-                  value={`i${i}`}
-                  className="glass-card rounded-2xl border-0 px-5"
-                >
-                  <AccordionTrigger className="text-left text-base font-semibold hover:no-underline">
-                    {f.question}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground">{f.answer}</AccordionContent>
-                </AccordionItem>
               ))}
-        </Accordion>
-        {!isPending && (
-          <div className="mt-6 flex justify-center">
-            <Link
-              to="/faqs"
-              className="inline-flex items-center gap-1.5 rounded-full border bg-card px-5 py-2.5 text-sm font-semibold text-primary transition hover:bg-accent/40"
+            </div>
+          ) : (
+            <div
+              className={
+                showTabs
+                  ? "mt-8 grid gap-6 sm:mt-10 lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-8"
+                  : "mt-8 sm:mt-10"
+              }
             >
-              View all FAQs
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        )}
+              {showTabs && (
+                <div
+                  role="tablist"
+                  aria-label="FAQ categories"
+                  className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 lg:mx-0 lg:flex-col lg:overflow-visible lg:px-0 lg:pb-0"
+                >
+                  <CategoryTab
+                    label="All Questions"
+                    isActive={!active}
+                    onClick={() => setActiveId(null)}
+                  />
+                  {groups.map((g) =>
+                    g.category ? (
+                      <CategoryTab
+                        key={g.category.id}
+                        label={g.category.name ?? OTHER_CATEGORY_NAME}
+                        isActive={active === g}
+                        onClick={() => setActiveId(g.category!.id)}
+                      />
+                    ) : null,
+                  )}
+                </div>
+              )}
+              <HomeFaqList key={active?.category?.id ?? "all"} items={shown} />
+            </div>
+          )}
+
+          {!isPending && (
+            <div className="mt-8 flex justify-center">
+              <Link
+                to="/faqs"
+                className="inline-flex items-center gap-1.5 rounded-full border bg-card px-5 py-2.5 text-sm font-semibold text-primary transition hover:bg-accent/40"
+              >
+                View all FAQs
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          )}
+        </FaqShell>
       </div>
     </section>
+  );
+}
+
+function CategoryTab({
+  label,
+  isActive,
+  onClick,
+}: {
+  label: string;
+  isActive: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={isActive}
+      onClick={onClick}
+      className={categoryItemClass(isActive)}
+    >
+      <span>{label}</span>
+      <ChevronRight
+        className={
+          isActive
+            ? "hidden h-4 w-4 shrink-0 text-primary lg:block"
+            : "hidden h-4 w-4 shrink-0 opacity-50 lg:block"
+        }
+      />
+    </button>
+  );
+}
+
+function HomeFaqList({ items }: { items: FaqItem[] }) {
+  const [openId, setOpenId] = useState<string | null>(items[0]?.id ?? null);
+  return (
+    <div className="space-y-3">
+      {items.map((f) => (
+        <FaqRow
+          key={f.id}
+          item={f}
+          open={openId === f.id}
+          onToggle={() => setOpenId((cur) => (cur === f.id ? null : f.id))}
+        />
+      ))}
+    </div>
   );
 }

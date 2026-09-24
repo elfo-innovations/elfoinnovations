@@ -147,6 +147,27 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-09-25 PKT — AI Agent (Claude) — Home FAQ section restyled to match /faqs
+
+### Completed
+- The home (and pricing) `FaqSection` still had the old Radix accordion look after the /faqs redesign.
+  It now uses the same look as /faqs and the owner's reference image: glass card with brand gradient
+  wash, category list on the left (tabs; horizontal chips on mobile), + / x accordion on the right.
+- It shows only featured questions (admin "Show on the home page"; falls back to the first 6). Category
+  tabs only list categories that have a featured question; "All Questions" is the default tab.
+  "View all FAQs" button links to `/faqs`. Same data source as /faqs (`fetchFaqData`), with the built-in
+  DEFAULT_FAQS fallback if the table is empty. Section keeps `id="faq"`.
+- Shared pieces: `FaqShell`, `FaqRow` exported from `FaqExplorer.tsx`; `categoryItemClass` in
+  `faq-styles.ts` (separate file to keep the react-refresh lint rule clean).
+- Checks: typecheck 0 errors, lint 0 errors / 11 baseline warnings, tests 7/7, build OK; `/`, `/faqs`,
+  `/pricing` return 200 under `wrangler dev --local` (sandbox cannot reach Supabase, so live data was not
+  rendered locally).
+
+### Commit
+- Pushed to `origin/main`; see `git log`.
+
+---
+
 ## 2026-09-24 PKT — AI Agent (Claude) — Standalone /faqs page, FAQ categories, admin management
 
 ### Completed

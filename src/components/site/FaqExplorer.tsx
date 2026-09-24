@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { categoryItemClass } from "@/components/site/faq-styles";
 import {
   faqAnchor,
   groupFaqs,
@@ -37,27 +38,7 @@ export function FaqExplorer({
   return (
     <section className="py-12 sm:py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden rounded-[2rem] border border-border/60 p-5 shadow-sm sm:p-10">
-          {/* soft brand-coloured wash, built from the site's own theme tokens */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 -z-10 bg-background"
-            style={{
-              backgroundImage:
-                "radial-gradient(60% 55% at 12% 8%, color-mix(in oklab, var(--electric) 16%, transparent), transparent 70%), radial-gradient(55% 50% at 92% 15%, color-mix(in oklab, var(--electric-glow) 14%, transparent), transparent 70%), radial-gradient(50% 45% at 60% 100%, color-mix(in oklab, var(--primary) 10%, transparent), transparent 70%)",
-            }}
-          />
-
-          <header className="mx-auto max-w-2xl text-center">
-            <h1 className="font-display text-3xl font-bold tracking-tight sm:text-5xl">
-              Frequently Asked <span className="electric-text">Questions</span>
-            </h1>
-            <p className="mt-4 text-sm text-muted-foreground sm:text-base">
-              Everything you need to know about working with ELFO Innovations — how we build, how
-              payments work, and how we support you after launch.
-            </p>
-          </header>
-
+        <FaqShell as="h1">
           <div
             className={cn(
               "mt-8 grid gap-6 sm:mt-10",
@@ -92,9 +73,42 @@ export function FaqExplorer({
             </Link>
             .
           </p>
-        </div>
+        </FaqShell>
       </div>
     </section>
+  );
+}
+
+/** Glass card with the brand-coloured wash and the page heading, shared by /faqs and the home section. */
+export function FaqShell({
+  as: Heading = "h2",
+  children,
+}: {
+  as?: "h1" | "h2";
+  children: ReactNode;
+}) {
+  return (
+    <div className="relative overflow-hidden rounded-[2rem] border border-border/60 p-5 shadow-sm sm:p-10">
+      {/* soft brand-coloured wash, built from the site's own theme tokens */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 bg-background"
+        style={{
+          backgroundImage:
+            "radial-gradient(60% 55% at 12% 8%, color-mix(in oklab, var(--electric) 16%, transparent), transparent 70%), radial-gradient(55% 50% at 92% 15%, color-mix(in oklab, var(--electric-glow) 14%, transparent), transparent 70%), radial-gradient(50% 45% at 60% 100%, color-mix(in oklab, var(--primary) 10%, transparent), transparent 70%)",
+        }}
+      />
+      <header className="mx-auto max-w-2xl text-center">
+        <Heading className="font-display text-3xl font-bold tracking-tight sm:text-5xl">
+          Frequently Asked <span className="electric-text">Questions</span>
+        </Heading>
+        <p className="mt-4 text-sm text-muted-foreground sm:text-base">
+          Everything you need to know about working with ELFO Innovations — how we build, how
+          payments work, and how we support you after launch.
+        </p>
+      </header>
+      {children}
+    </div>
   );
 }
 
@@ -109,12 +123,7 @@ function CategoryLink({
   isActive: boolean;
   disabled?: boolean;
 }) {
-  const cls = cn(
-    "flex shrink-0 items-center justify-between gap-3 whitespace-nowrap rounded-2xl border px-4 py-3 text-sm font-medium transition lg:whitespace-normal",
-    isActive
-      ? "border-primary/25 bg-card text-foreground shadow-sm"
-      : "border-transparent bg-card/40 text-muted-foreground hover:bg-card/70 hover:text-foreground",
-  );
+  const cls = categoryItemClass(isActive);
   const chevron = (
     <ChevronRight
       className={cn("hidden h-4 w-4 shrink-0 lg:block", isActive ? "text-primary" : "opacity-50")}
@@ -175,7 +184,15 @@ function FaqList({ groups }: { groups: FaqGroup[] }) {
   );
 }
 
-function FaqRow({ item, open, onToggle }: { item: FaqItem; open: boolean; onToggle: () => void }) {
+export function FaqRow({
+  item,
+  open,
+  onToggle,
+}: {
+  item: FaqItem;
+  open: boolean;
+  onToggle: () => void;
+}) {
   const anchor = faqAnchor(item);
   const buttonId = `faq-q-${anchor}`;
   const panelId = `faq-a-${anchor}`;
