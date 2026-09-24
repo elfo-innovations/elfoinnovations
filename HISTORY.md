@@ -179,8 +179,8 @@ Use this format:
   3/3 pass, `npm run build` OK, `/contact` returns 200 under `wrangler dev --local`.
 
 ### Commit
-- (see commit immediately following this entry)
-- Status: local, not yet pushed — waiting on a fresh PAT from the project owner.
+- Commit: `050b4f9` — `feat: contact page with Supabase storage, owner + visitor emails, admin list, navbar link`
+- Status: Committed and pushed to `main`.
 
 ### Notes
 - Emails only actually send if an email provider secret is configured on the Worker (RESEND_API_KEY,
