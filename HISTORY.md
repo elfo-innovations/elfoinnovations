@@ -147,6 +147,27 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-09-24 PKT — AI Agent (Claude) — follow-up: live schema drift
+
+### Completed
+- User reported the restored form failing at submit time with: `Could not find the 'bio' column of 'developer_applications' in the schema cache`.
+- Root cause was **not** the frontend fix from the earlier entry below — it was undiscovered live-DB schema drift, exactly the class of problem `agents.md` section 14 warns about. Found via Supabase MCP (`gwkwpbrlrmqrsdjnnckb`) that `supabase_migrations.schema_migrations` contains a migration, `20260923130714_drop_obsolete_developer_application_columns`, that was applied directly to the live database and **never committed to this repo** (only 3 `developer_applications`-related `.sql` files exist under `supabase/migrations/` in git; this one isn't among them). It dropped `country`, `city`, `skills`, `years_experience`, and `bio` from the live `developer_applications` table. `public.developers.bio`/`.skills` were confirmed untouched and still present.
+- Per agents.md §14 rule 14 ("if a migration must be applied directly to the live database because of existing drift, record the corresponding forward-only migration in Git afterward"): added back only `bio` (`text NOT NULL DEFAULT ''`) and `skills` (`text[] NOT NULL DEFAULT '{}'`) — **not** `country`/`city`/`years_experience`, which the project owner does not want back and which no code reads.
+- Applied via Supabase MCP `apply_migration` (migration name `restore_developer_applications_bio_skills`) directly against project `gwkwpbrlrmqrsdjnnckb`, then verified live via `information_schema.columns` that both columns exist with the expected `NOT NULL`/defaults.
+- Added the matching migration file to the repo so history stays in sync: `supabase/migrations/20260924071500_restore_developer_applications_bio_skills.sql`.
+- `npx tsc --noEmit` re-verified clean (no code changes needed beyond the earlier entry's fix — this was purely a DB-side gap).
+
+### Commit
+- (see commit immediately following this entry)
+- Status: Committed and pushed to `main`
+
+### Notes
+- **Important for future agents:** `supabase/migrations/` in this repo is not a complete record of the live schema. At least one destructive migration (`20260923130714`) was run directly against Supabase and never committed. Before trusting `src/integrations/supabase/types.ts` or the migration files as ground truth, cross-check `select * from supabase_migrations.schema_migrations order by version desc` against `ls supabase/migrations/` — a live migration with no matching file is a sign of exactly this class of drift.
+- If a "column not found in schema cache" (PostgREST) error ever recurs on this project, check for this same pattern first — a column that exists in `types.ts`/git migrations but was dropped live — before assuming it's an application code bug.
+- Nothing left unfinished from this session.
+
+---
+
 ## 2026-09-24 PKT — AI Agent (Claude)
 
 ### Completed
