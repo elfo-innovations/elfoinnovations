@@ -89,20 +89,22 @@ export const submitDeveloperApplication = createServerFn({ method: "POST" })
       full_name: data.full_name.trim(),
       email,
       phone: data.phone.trim(),
-      // Country/city/bio/years_experience/skills were removed from the
-      // application form (task scope); these columns remain NOT NULL (or
-      // NOT NULL with a default) on developer_applications, so empty
-      // placeholders are written here rather than running a schema
-      // migration, which was out of scope for this change.
+      // Country/city/years_experience were intentionally dropped from the
+      // application form; those columns remain NOT NULL on
+      // developer_applications, so empty placeholders are written for them.
+      // bio and skills ARE collected on the form (see
+      // DeveloperApplicationForm.tsx) and must be written through, since
+      // approveDeveloperApplication() copies them onto the new developers
+      // row below.
       country: "",
       city: "",
       github_url: normalizeUrl(data.github_url),
       portfolio_url: normalizeUrl(data.portfolio_url ?? ""),
       primary_role: data.primary_role,
-      skills: [],
+      skills: data.skills ?? [],
       years_experience: "",
       current_status: data.current_status,
-      bio: "",
+      bio: data.bio.trim(),
       motivation: data.motivation.trim(),
       resume_path,
       resume_name: data.resume_name || null,

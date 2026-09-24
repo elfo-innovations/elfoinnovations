@@ -1,7 +1,7 @@
 import { useState, useRef, type ReactNode, type KeyboardEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
-import { Loader2, UploadCloud, FileText, X, CheckCircle2, Rocket } from "lucide-react";
+import { Loader2, UploadCloud, FileText, X, CheckCircle2, Rocket, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,6 +34,7 @@ type Form = {
   portfolio_url: string;
   primary_role: string;
   current_status: string;
+  bio: string;
   motivation: string;
 };
 
@@ -45,6 +46,7 @@ const EMPTY: Form = {
   portfolio_url: "",
   primary_role: "",
   current_status: "",
+  bio: "",
   motivation: "",
 };
 
@@ -101,6 +103,8 @@ function Field({
 export function DeveloperApplicationForm() {
   const submit = useServerFn(submitDeveloperApplication);
   const [form, setForm] = useState<Form>(EMPTY);
+  const [skills, setSkills] = useState<string[]>([]);
+  const [skillInput, setSkillInput] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -122,6 +126,14 @@ export function DeveloperApplicationForm() {
     setErrors((e) => ({ ...e, phone: "" }));
   };
 
+  const addSkill = () => {
+    const v = skillInput.trim().replace(/,$/, "");
+    if (!v) return;
+    if (!skills.includes(v)) setSkills((s) => [...s, v]);
+    setSkillInput("");
+    setErrors((e) => ({ ...e, skills: "" }));
+  };
+
   const pickFile = (f: File | null) => {
     if (!f) return setFile(null);
     if (!/\.pdf$/i.test(f.name) || f.type !== "application/pdf") {
@@ -139,6 +151,7 @@ export function DeveloperApplicationForm() {
   const onSubmit = async () => {
     const payload = {
       ...form,
+      skills,
       agreed,
       resume_name: file?.name ?? null,
       resume_size: file?.size ?? null,
@@ -298,6 +311,59 @@ export function DeveloperApplicationForm() {
                 </Select>
               </Field>
             </div>
+
+            <Field label="Skills / technologies" required error={errors.skills}>
+              <div className="flex gap-2">
+                <Input
+                  className="rounded-xl"
+                  value={skillInput}
+                  onChange={(e) => setSkillInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === ",") {
+                      e.preventDefault();
+                      addSkill();
+                    }
+                  }}
+                  placeholder="React, Node.js, PostgreSQL…"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="shrink-0 rounded-xl"
+                  onClick={addSkill}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              {skills.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {skills.map((s) => (
+                    <span
+                      key={s}
+                      className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"
+                    >
+                      {s}
+                      <button
+                        type="button"
+                        onClick={() => setSkills((v) => v.filter((x) => x !== s))}
+                        aria-label={`Remove ${s}`}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </Field>
+
+            <Field label="Short bio" required error={errors.bio}>
+              <Textarea
+                className={cn("min-h-[90px]", fieldBorder(!!errors.bio))}
+                value={form.bio}
+                onChange={(e) => set("bio", e.target.value)}
+                placeholder="Tell us about your background and what you build best."
+              />
+            </Field>
 
             <Field
               label="Why do you want to join ELFO Innovations?"

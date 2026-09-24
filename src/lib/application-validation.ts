@@ -38,7 +38,9 @@ export type ApplicationInput = {
   github_url: string;
   portfolio_url?: string;
   primary_role: string;
+  skills: string[];
   current_status: string;
+  bio: string;
   motivation: string;
   resume_path?: string | null;
   resume_name?: string | null;
@@ -100,7 +102,12 @@ export function validateApplication(v: ApplicationInput): Record<string, string>
   else if (!urlHost(v.portfolio_url)) e.portfolio_url = "Enter a valid URL";
 
   if (!v.primary_role?.trim()) e.primary_role = "Select your primary role";
+  if (!v.skills || v.skills.length === 0) e.skills = "Add at least one skill";
   if (!v.current_status?.trim()) e.current_status = "Select your current status";
+
+  if (!v.bio?.trim()) e.bio = "Short bio is required";
+  else if (v.bio.trim().length < 40) e.bio = "Please write at least 40 characters";
+  else if (v.bio.trim().length > 1000) e.bio = "Keep this under 1000 characters";
 
   if (!v.motivation?.trim()) e.motivation = "This field is required";
   else if (v.motivation.trim().length < 40) e.motivation = "Please write at least 40 characters";

@@ -147,6 +147,30 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-09-24 PKT — AI Agent (Claude)
+
+### Completed
+- Investigated then fixed a regression from commit `9e4fdf4` ("half completed work done by agent...") which had silently stripped `bio` and `skills` out of the developer application form, its validation, and the submit call — while leaving the `developer_applications`/`developers` DB columns and the `approveDeveloperApplication()` copy-to-`developers` logic untouched. Net effect: every application was being submitted with `bio: ""` and `skills: []`, and those empties were what got copied onto the new `developers` row on approval.
+- Confirmed via `git log -p` that commit `6836820` ("feat: dedicated /apply page...") was the last commit with a working `bio`/skills-chip UI; restored that UI and logic (not a blind revert — deliberately did NOT restore `country`/`city`/`linkedin_url`/`years_experience`, which the project owner does not want back and which the rest of the flow doesn't depend on).
+- Confirmed the Supabase schema itself was never broken — `developer_applications.bio`/`.skills` and `developers.bio`/`.skills` already exist as live columns (`supabase/migrations/20260806134946_...sql`). This was a pure frontend/server-fn regression, not a schema issue — **no migration was needed or created**.
+- Important files changed:
+  - `src/lib/application-validation.ts` — re-added `skills: string[]` and `bio: string` to `ApplicationInput`, plus validation (skills: at least one required; bio: required, 40–1000 chars).
+  - `src/components/recruitment/DeveloperApplicationForm.tsx` — restored the skills chip input (Enter/comma/+ button to add, removable tags) and the "Short bio" textarea; wired into form state, validation, and the submit payload.
+  - `src/lib/developer-applications.functions.ts` — `submitDeveloperApplication` now inserts `skills: data.skills ?? []` and `bio: data.bio.trim()` instead of the hardcoded `[]`/`""` placeholders that `9e4fdf4` left behind.
+- Verified `npx tsc --noEmit` and `npx eslint` on the three changed files both pass clean (0 errors).
+- Confirmed downstream consumers needed no changes: `/admin/developer-requests` (displays `r.bio`/`r.skills`) and `approveDeveloperApplication()` (copies `app.bio`/`app.skills ?? []` onto the new `developers` row) were already correct — they were just receiving empty data due to the form regression above.
+
+### Commit
+- `6ec6e57` — `fix: restore bio/skills fields on developer application form`
+- Status: Committed and pushed to `main`
+
+### Notes
+- **Lesson for future agents:** before "simplifying" or removing form fields on `/apply`, check whether `approveDeveloperApplication()` in `src/lib/developer-applications.functions.ts` reads that field off the application row to seed the `developers` table (currently true for `bio` and `skills`). Removing a field from the form without also updating that copy step (or the DB schema) silently produces empty developer profiles on every approval — exactly what happened here.
+- If another simplification of `developer_applications` is ever wanted again (e.g. genuinely dropping `bio`/`skills` for good), that requires a real migration to relax/drop the `NOT NULL` constraints plus removing the three code references above — see the investigation notes from earlier in this session for the full breakdown of every usage site.
+- Nothing left unfinished from this session.
+
+---
+
 ## 2026-09-23 PKT — AI Agent (Claude)
 
 ### Completed
