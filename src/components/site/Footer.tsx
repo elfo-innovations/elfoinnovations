@@ -123,6 +123,11 @@ export function Footer() {
                 FAQ
               </Link>
             </li>
+            <li>
+              <Link to="/apply" className="hover:text-foreground">
+                Careers
+              </Link>
+            </li>
           </ul>
         </div>
         <div>
@@ -136,6 +141,19 @@ export function Footer() {
             <li>
               <Link to="/client" className="hover:text-foreground">
                 {t("footer.clientPortal")}
+              </Link>
+            </li>
+          </ul>
+          <h4 className="mt-6 text-sm font-semibold">Legal</h4>
+          <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
+            <li>
+              <Link to="/terms" className="hover:text-foreground">
+                Terms &amp; Conditions
+              </Link>
+            </li>
+            <li>
+              <Link to="/privacy" className="hover:text-foreground">
+                Privacy Policy
               </Link>
             </li>
           </ul>
