@@ -156,6 +156,11 @@ export function Footer() {
                 Privacy Policy
               </Link>
             </li>
+            <li>
+              <Link to="/refund-policy" className="hover:text-foreground">
+                Refund &amp; Cancellation
+              </Link>
+            </li>
           </ul>
         </div>
       </div>
