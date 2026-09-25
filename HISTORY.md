@@ -147,6 +147,24 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-09-25 PKT — AI Agent (Claude) — Google Analytics (gtag.js) added site-wide
+
+### Completed
+- Added the owner's GA4 gtag.js snippet (measurement id `G-F6XNJQ18GP`) to `src/routes/__root.tsx`,
+  in the root route's `head().scripts` array, right before the existing Organization/WebSite JSON-LD
+  scripts. The root route's head renders on every route (it's the top of the route tree), so this
+  loads on every page, not just the homepage.
+- Verified in the rendered HTML for both `/` and `/faqs` under `wrangler dev --local`: the
+  `googletagmanager.com/gtag/js?id=G-F6XNJQ18GP` script tag and the inline `gtag('config',
+  'G-F6XNJQ18GP')` call are both present.
+- No Supabase changes. Checks: typecheck 0 errors, lint 0 errors / 11 baseline warnings, tests
+  7/7, build OK.
+
+### Commit
+- Pushed to `origin/main`; see `git log`.
+
+---
+
 ## 2026-09-25 PKT — AI Agent (Claude) — Home FAQ section restyled to match /faqs
 
 ### Completed

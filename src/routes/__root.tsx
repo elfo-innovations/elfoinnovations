@@ -122,6 +122,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
     ],
     scripts: [
+      // Google Analytics (gtag.js) — loaded on every route via the root head so all page
+      // views/events are tracked site-wide. `async` on the tag manager script itself is what
+      // TanStack Start's <Scripts/head> honors here.
+      { src: "https://www.googletagmanager.com/gtag/js?id=G-F6XNJQ18GP", async: true },
+      {
+        children: `window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-F6XNJQ18GP');`,
+      },
       {
         type: "application/ld+json",
         children: JSON.stringify({
