@@ -147,6 +147,79 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-09-26 PKT — AI Agent (Claude) — CSP was blocking GA4 (googletagmanager.com)
+
+### Completed
+- Root cause: GA4's gtag.js was added to `src/routes/__root.tsx` on 2026-09-25 (see the entry
+  below), but the site's Content-Security-Policy — a real HTTP response header set in
+  `src/server.ts` via `applySecurityHeaders()`, applied to every response — was never updated to
+  allow it. There is no CSP `<meta>` tag anywhere in this repo and no `_headers` file/Cloudflare
+  Transform Rule in-repo either; `src/server.ts` is the sole place CSP is defined. Confirmed via
+  repo-wide grep before changing anything.
+- Appended (did not replace) two allowances to the existing `CONTENT_SECURITY_POLICY` array in
+  `src/server.ts`:
+  - `script-src`: added `https://www.googletagmanager.com` (the gtag.js loader script's origin).
+  - `connect-src`: added `https://www.google-analytics.com https://*.google-analytics.com
+    https://*.analytics.google.com https://*.googletagmanager.com` (GA4's hit/collect and
+    config-follow-up requests).
+  All prior entries in both directives (Google Translate, Google Fonts, Cloudflare Turnstile) are
+  untouched.
+- Verified with `npm run typecheck` (0 errors) and `npm run build` (OK), then ran the actual
+  built Worker locally via `wrangler dev --local` and `curl -D -` against `http://127.0.0.1:8787/`
+  — confirmed the live response's `Content-Security-Policy` header contains both the new and all
+  pre-existing directives. `npm run lint`: 0 errors, same 11 pre-existing warnings as baseline.
+- Important file: `src/server.ts` only.
+
+### Commit
+- `37964db` — `fix(security): whitelist Google Analytics (GA4) domains in CSP script-src/connect-src`
+- Status: pushed directly to `main` (project owner's explicit instruction — a teammate is also
+  working against `main` but had not pushed anything new as of this push; verified with
+  `git fetch` immediately beforehand that `origin/main` had not moved since this branch was cut,
+  so this was a clean fast-forward, not a forced/rewriting push).
+
+### Exact change — for conflict resolution
+Only **one file's content changed**: `src/server.ts`. (`HISTORY.md` also changed, but that's this
+entry — a plain append, never a source of conflicts.) If you hit a merge/rebase conflict touching
+`src/server.ts`, this is the **entire diff** — every other line in the file, and every other CSP
+directive, is untouched:
+
+```diff
+--- a/src/server.ts
++++ b/src/server.ts
+@@ (inside the CONTENT_SECURITY_POLICY comment block, before the array)
++// Google Analytics (GA4, gtag.js — src/routes/__root.tsx) loads its
++// loader script from googletagmanager.com and then sends hit/collect
++// requests to google-analytics.com and its regional analytics.google.com
++// subdomains, plus config/loader follow-up requests back to
++// googletagmanager.com subdomains — hence the wildcard connect-src
++// entries below rather than single hostnames.
+ const CONTENT_SECURITY_POLICY = [
+   "default-src 'self'",
+-  "connect-src 'self' https://gwkwpbrlrmqrsdjnnckb.supabase.co wss://gwkwpbrlrmqrsdjnnckb.supabase.co https://translate.googleapis.com https://translate.google.com",
+-  "script-src 'self' 'unsafe-inline' https://translate.google.com https://www.gstatic.com https://challenges.cloudflare.com",
++  "connect-src 'self' https://gwkwpbrlrmqrsdjnnckb.supabase.co wss://gwkwpbrlrmqrsdjnnckb.supabase.co https://translate.googleapis.com https://translate.google.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com",
++  "script-src 'self' 'unsafe-inline' https://translate.google.com https://www.gstatic.com https://challenges.cloudflare.com https://www.googletagmanager.com",
+   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com",
+   "font-src 'self' data: https://fonts.gstatic.com",
+   "img-src 'self' data: https:",
+```
+
+**If a conflict marker appears on the `connect-src` or `script-src` lines**: the correct merged
+line is whichever version has the *longest* URL list for that directive — every entry from both
+sides should be present, space-separated, inside the same quoted string. Do not pick one side and
+discard the other; these two lines are meant to keep growing as more third-party scripts get
+added (Translate, Fonts, Turnstile, now GA4). If in doubt, the full current `connect-src` and
+`script-src` strings are the two lines quoted above, post-fix — use those as the source of truth
+for what must remain present.
+
+### Notes
+- Nothing else in the CSP was touched. `frame-src`, `style-src`, `font-src`, `img-src`,
+  `frame-ancestors`, and `default-src` are unchanged from before this fix.
+- This was pushed straight to `main` rather than via PR, per explicit project-owner instruction
+  this session, after confirming `origin/main` had no new commits since the branch point.
+
+---
+
 ## 2026-09-25 PKT — AI Agent (Claude) — Google Analytics (gtag.js) added site-wide
 
 ### Completed
