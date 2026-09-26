@@ -147,6 +147,46 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-09-26 PKT — AI Agent (Claude) — CSP was blocking GA4 (googletagmanager.com)
+
+### Completed
+- Root cause: GA4's gtag.js was added to `src/routes/__root.tsx` on 2026-09-25 (see the entry
+  below), but the site's Content-Security-Policy — a real HTTP response header set in
+  `src/server.ts` via `applySecurityHeaders()`, applied to every response — was never updated to
+  allow it. There is no CSP `<meta>` tag anywhere in this repo and no `_headers` file/Cloudflare
+  Transform Rule in-repo either; `src/server.ts` is the sole place CSP is defined. Confirmed via
+  repo-wide grep before changing anything.
+- Appended (did not replace) two allowances to the existing `CONTENT_SECURITY_POLICY` array in
+  `src/server.ts`:
+  - `script-src`: added `https://www.googletagmanager.com` (the gtag.js loader script's origin).
+  - `connect-src`: added `https://www.google-analytics.com https://*.google-analytics.com
+    https://*.analytics.google.com https://*.googletagmanager.com` (GA4's hit/collect and
+    config-follow-up requests).
+  All prior entries in both directives (Google Translate, Google Fonts, Cloudflare Turnstile) are
+  untouched.
+- Verified with `npm run typecheck` (0 errors) and `npm run build` (OK), then ran the actual
+  built Worker locally via `wrangler dev --local` and `curl -D -` against `http://127.0.0.1:8787/`
+  — confirmed the live response's `Content-Security-Policy` header contains both the new and all
+  pre-existing directives. `npm run lint`: 0 errors, same 11 pre-existing warnings as baseline.
+- Important file: `src/server.ts` only.
+
+### Commit
+- Committed locally on branch `fix/csp-allow-ga4` (not `main` — a teammate is actively pushing to
+  `main`, so this is going up as a PR to avoid stepping on that work, per the project owner's
+  explicit instruction this session).
+- Status: local commit only as of this entry — **not yet pushed**, no PR opened yet. Waiting on a
+  GitHub PAT from the project owner to push the branch and open the PR against `main`. If you are
+  the next agent and this still says "not yet pushed," check whether the branch
+  `fix/csp-allow-ga4` exists on `origin` / whether a PR is already open before redoing this work.
+
+### Notes
+- Do not merge this into `main` directly — open it as a PR and let the project owner (or the
+  teammate currently on `main`) merge once their in-flight work lands, to avoid a conflict.
+- Nothing else in the CSP was touched. `frame-src`, `style-src`, `font-src`, `img-src`,
+  `frame-ancestors`, and `default-src` are unchanged.
+
+---
+
 ## 2026-09-25 PKT — AI Agent (Claude) — Google Analytics (gtag.js) added site-wide
 
 ### Completed

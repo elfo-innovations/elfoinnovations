@@ -66,10 +66,16 @@ function isH3SwallowedErrorBody(body: string): boolean {
 // frame-src need it. siteverify itself is a server-to-server call from
 // src/lib/turnstile-verify.server.ts and never touches the browser, so no
 // connect-src entry is needed for it.
+// Google Analytics (GA4, gtag.js — src/routes/__root.tsx) loads its
+// loader script from googletagmanager.com and then sends hit/collect
+// requests to google-analytics.com and its regional analytics.google.com
+// subdomains, plus config/loader follow-up requests back to
+// googletagmanager.com subdomains — hence the wildcard connect-src
+// entries below rather than single hostnames.
 const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
-  "connect-src 'self' https://gwkwpbrlrmqrsdjnnckb.supabase.co wss://gwkwpbrlrmqrsdjnnckb.supabase.co https://translate.googleapis.com https://translate.google.com",
-  "script-src 'self' 'unsafe-inline' https://translate.google.com https://www.gstatic.com https://challenges.cloudflare.com",
+  "connect-src 'self' https://gwkwpbrlrmqrsdjnnckb.supabase.co wss://gwkwpbrlrmqrsdjnnckb.supabase.co https://translate.googleapis.com https://translate.google.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com",
+  "script-src 'self' 'unsafe-inline' https://translate.google.com https://www.gstatic.com https://challenges.cloudflare.com https://www.googletagmanager.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com",
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: https:",
