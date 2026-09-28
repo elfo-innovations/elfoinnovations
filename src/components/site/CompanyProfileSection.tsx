@@ -51,9 +51,6 @@ export function CompanyProfileSection() {
         <div className="grid gap-12 lg:grid-cols-[1.15fr_1fr] lg:gap-16">
           {/* Left: About copy */}
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1.5 text-xs font-medium">
-              <Sparkles className="h-3.5 w-3.5 text-primary" /> About the Company
-            </div>
             <h2 className="mt-4 font-display text-4xl font-bold tracking-tight sm:text-5xl">
               Turning ideas into <span className="electric-text">powerful software</span>
             </h2>
@@ -133,7 +130,6 @@ export function CompanyProfileSection() {
             <div className="absolute inset-0 opacity-40 circuit-pattern" />
             <div className="relative flex h-full flex-col">
               <div className="inline-flex w-fit items-center gap-2 rounded-full border bg-card px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-primary">
-                <FileText className="h-3.5 w-3.5" /> Company Profile
               </div>
               <h3 className="mt-4 font-display text-2xl font-bold sm:text-3xl">
                 See our full company profile

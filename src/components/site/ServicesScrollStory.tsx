@@ -1,4 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Link } from "@tanstack/react-router";
 import {
   ArrowRight,
   Github,
@@ -8,77 +11,222 @@ import {
   Palette,
   Sparkles,
   Megaphone,
+  Cloud,
+  Building2,
+  ShoppingBag,
+  Puzzle,
+  Database,
+  Server,
+  LifeBuoy,
+  type LucideIcon,
 } from "lucide-react";
 import { useInquiry } from "@/hooks/use-inquiry";
 import { cn } from "@/lib/utils";
+import { useEdgeColors } from "@/lib/image-edge-colors";
 
 /**
  * Configurable brand constants — replace when the real assets/URL are ready.
  */
 export const GITHUB_REPO_URL = "https://github.com/elfo-innovations";
 
-type Card = {
-  n: string;
-  title: string;
-  description: string;
-  icon: typeof Code2;
-  /** Placeholder: drop the real service image URL here (leave null for the animated fallback). */
-  image: string | null;
+const ICONS: Record<string, LucideIcon> = {
+  Bot,
+  Code2,
+  Smartphone,
+  Palette,
+  Sparkles,
+  Megaphone,
+  Cloud,
+  Building2,
+  ShoppingBag,
+  Puzzle,
+  Database,
+  Server,
+  LifeBuoy,
 };
 
-const CARDS: Card[] = [
+// Shown only if no services are configured yet in /admin/web-portal?tab=services,
+// so the page never looks broken/empty for a first-time setup.
+// Typed loosely because the layout columns are added by migrations that may
+// not have been reflected into the generated Supabase types yet.
+const DEFAULTS: any[] = [
   {
-    n: "01",
+    id: "default-1",
     title: "AI Automation",
-    description:
-      "Agents, copilots and workflow automation that remove busywork and compound your team's output.",
-    icon: Bot,
-    image: null,
+    description: "Agents, copilots and workflow automation that remove busywork and compound your team's output.",
+    icon: "Bot",
+    image_url: null,
+    image_display_mode: "full",
+    image_fit: "auto",
+    show_text: true,
+    cta_label: null,
+    cta_href: null,
   },
   {
-    n: "02",
+    id: "default-2",
     title: "Web Development",
-    description:
-      "Blazing-fast, accessible web platforms engineered on modern stacks and built to scale.",
-    icon: Code2,
-    image: null,
+    description: "Blazing-fast, accessible web platforms engineered on modern stacks and built to scale.",
+    icon: "Code2",
+    image_url: null,
+    image_display_mode: "full",
+    image_fit: "auto",
+    show_text: true,
+    cta_label: null,
+    cta_href: null,
   },
   {
-    n: "03",
+    id: "default-3",
     title: "Mobile Apps",
-    description:
-      "Native-feeling iOS and Android products with offline-first architecture and buttery motion.",
-    icon: Smartphone,
-    image: null,
+    description: "Native-feeling iOS and Android products with offline-first architecture and buttery motion.",
+    icon: "Smartphone",
+    image_url: null,
+    image_display_mode: "full",
+    image_fit: "auto",
+    show_text: true,
+    cta_label: null,
+    cta_href: null,
   },
   {
-    n: "04",
+    id: "default-4",
     title: "UI/UX Design",
-    description:
-      "Interface systems with luxury typography, deliberate spacing and conversion-first flows.",
-    icon: Palette,
-    image: null,
-  },
-  {
-    n: "05",
-    title: "Branding",
-    description:
-      "Identity, tone and visual language that makes your product feel inevitable in its market.",
-    icon: Sparkles,
-    image: null,
-  },
-  {
-    n: "06",
-    title: "Digital Marketing",
-    description:
-      "Performance campaigns, SEO and content engineered around measurable pipeline growth.",
-    icon: Megaphone,
-    image: null,
+    description: "Interface systems with luxury typography, deliberate spacing and conversion-first flows.",
+    icon: "Palette",
+    image_url: null,
+    image_display_mode: "full",
+    image_fit: "auto",
+    show_text: true,
+    cta_label: null,
+    cta_href: null,
   },
 ];
 
+type Layout = "classic" | "half" | "full" | "imageOnly";
+
+const isExternal = (href: string) => /^https?:\/\//i.test(href);
+
+/** Internal paths use the router; full URLs open in a new tab. */
+function CardLink({
+  href,
+  className,
+  label,
+  children,
+}: {
+  href: string;
+  className?: string;
+  label?: string;
+  children?: React.ReactNode;
+}) {
+  if (isExternal(href)) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className={className} aria-label={label}>
+        {children}
+      </a>
+    );
+  }
+  return (
+    <Link to={href as any} className={className} aria-label={label}>
+      {children}
+    </Link>
+  );
+}
+
+/** CSS gradient stops placed at the centre of each sampled segment. */
+const stops = (cols: string[]) =>
+  cols.map((c, i) => `${c} ${(((i + 0.5) / cols.length) * 100).toFixed(1)}%`).join(", ");
+
+/**
+ * Card image.
+ *  - "cover"   fills the area (edges may crop).
+ *  - "contain" always shows the WHOLE image. The leftover space around it is
+ *    filled with the image's own edge colours, so the picture looks like it
+ *    continues to the edges of the frame. If the browser can't read the image
+ *    colours, it falls back to a soft blurred copy of the picture.
+ */
+function CardImage({ src, alt, fit }: { src: string; alt: string; fit: "cover" | "contain" }) {
+  const boxRef = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState<{ w: number; h: number } | null>(null);
+  const edges = useEdgeColors(fit === "contain" ? src : null);
+
+  useEffect(() => {
+    const el = boxRef.current;
+    if (!el || fit !== "contain") return;
+    const ro = new ResizeObserver(([entry]) =>
+      setBox({ w: entry.contentRect.width, h: entry.contentRect.height }),
+    );
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [fit]);
+
+  if (fit === "cover") {
+    return (
+      <div className="absolute inset-0">
+        <img
+          src={src}
+          alt={alt}
+          loading="lazy"
+          decoding="async"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      </div>
+    );
+  }
+
+  // Container wider than the image -> the image is limited by height -> gaps on the left/right.
+  const gapsOnSides = !!(box && edges && box.w / box.h > edges.ratio);
+
+  return (
+    <div ref={boxRef} className="absolute inset-0">
+      {edges && box ? (
+        gapsOnSides ? (
+          <>
+            <div
+              aria-hidden
+              className="absolute inset-y-0 left-0 w-1/2"
+              style={{ background: `linear-gradient(to bottom, ${stops(edges.left)})` }}
+            />
+            <div
+              aria-hidden
+              className="absolute inset-y-0 right-0 w-1/2"
+              style={{ background: `linear-gradient(to bottom, ${stops(edges.right)})` }}
+            />
+          </>
+        ) : (
+          <>
+            <div
+              aria-hidden
+              className="absolute inset-x-0 top-0 h-1/2"
+              style={{ background: `linear-gradient(to right, ${stops(edges.top)})` }}
+            />
+            <div
+              aria-hidden
+              className="absolute inset-x-0 bottom-0 h-1/2"
+              style={{ background: `linear-gradient(to right, ${stops(edges.bottom)})` }}
+            />
+          </>
+        )
+      ) : (
+        <img
+          src={src}
+          alt=""
+          aria-hidden
+          loading="lazy"
+          decoding="async"
+          className="absolute inset-0 h-full w-full scale-110 object-cover opacity-70 blur-2xl"
+        />
+      )}
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        className="absolute inset-0 h-full w-full object-contain"
+      />
+    </div>
+  );
+}
+
 /** Magnetic, glowing CTA used across the story cards. */
-function MagneticCta({ label, onClick }: { label: string; onClick: () => void }) {
+function MagneticCta({ label, onClick, href }: { label: string; onClick?: () => void; href?: string | null }) {
   const ref = useRef<HTMLButtonElement>(null);
 
   const onMove = (e: React.MouseEvent) => {
@@ -91,7 +239,7 @@ function MagneticCta({ label, onClick }: { label: string; onClick: () => void })
     if (ref.current) ref.current.style.transform = "translate(0,0)";
   };
 
-  return (
+  const btn = (
     <button
       ref={ref}
       onClick={onClick}
@@ -104,11 +252,29 @@ function MagneticCta({ label, onClick }: { label: string; onClick: () => void })
       <ArrowRight className="relative h-4 w-4 transition-transform duration-300 group-hover/cta:translate-x-1" />
     </button>
   );
+
+  // A link set from the admin navigates directly; otherwise it opens the inquiry modal.
+  if (href) return <CardLink href={href}>{btn}</CardLink>;
+  return btn;
 }
 
 export function ServicesScrollStory() {
   const { open } = useInquiry();
   const rootRef = useRef<HTMLDivElement>(null);
+
+  const { data } = useQuery({
+    queryKey: ["services", "scroll-story"],
+    queryFn: async () =>
+      (
+        await supabase
+          .from("services")
+          .select("*")
+          .eq("is_active", true)
+          .eq("show_in_story", true)
+          .order("sort_order")
+      ).data,
+  });
+  const CARDS = (data && data.length > 0 ? data : DEFAULTS) as any[];
 
   // GSAP ScrollTrigger: pin the stage and stack cards cinematically.
   useEffect(() => {
@@ -176,7 +342,7 @@ export function ServicesScrollStory() {
       cancelled = true;
       ctx?.revert();
     };
-  }, []);
+  }, [CARDS.length]);
 
   return (
     <section
@@ -236,10 +402,31 @@ export function ServicesScrollStory() {
       >
         <div className="relative mx-auto h-[74vh] w-full max-w-6xl overflow-hidden rounded-[32px]">
           {CARDS.map((c, i) => {
-            const Icon = c.icon;
+            const Icon = (c.icon && ICONS[c.icon]) || Code2;
+            const n = String(i + 1).padStart(2, "0");
+
+            // ---- Work out how this card should be laid out ----
+            const hasImage = !!c.image_url;
+            const showText = c.show_text !== false;
+            // classic   : no image yet -> text + gradient placeholder
+            // half      : image covers the right half of the card, text on the left
+            // full      : image covers the whole card, text sits on top of it
+            // imageOnly : text hidden -> the image is the whole card
+            const layout: Layout = !hasImage
+              ? "classic"
+              : !showText
+                ? "imageOnly"
+                : c.image_display_mode === "half"
+                  ? "half"
+                  : "full";
+            const fitPref = c.image_fit === "contain" || c.image_fit === "cover" ? c.image_fit : "auto";
+            const fit: "cover" | "contain" =
+              fitPref === "auto" ? (layout === "half" ? "contain" : "cover") : fitPref;
+            const onImage = layout === "full";
+
             return (
               <article
-                key={c.n}
+                key={c.id ?? i}
                 data-story-card
                 style={{ zIndex: i + 1, willChange: "transform, opacity" }}
                 className={cn(
@@ -247,50 +434,103 @@ export function ServicesScrollStory() {
                   "grid-rows-[auto_1fr] lg:grid-cols-2 lg:grid-rows-1",
                 )}
               >
-                {/* Copy */}
-                <div className="relative flex flex-col justify-center gap-5 p-7 sm:p-10 lg:p-14">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                    <Icon className="h-5 w-5" />
+                {/* Whole-card image (full + image-only layouts) */}
+                {(layout === "full" || layout === "imageOnly") && (
+                  <div className="absolute inset-0">
+                    <CardImage src={c.image_url} alt={`${c.title} at ELFO Innovations`} fit={fit} />
+                    {layout === "full" && (
+                      // Dark scrim so the text on top stays readable on any picture.
+                      <div className="absolute inset-0 bg-black/55 lg:bg-transparent lg:bg-gradient-to-r lg:from-black/80 lg:via-black/45 lg:to-transparent" />
+                    )}
                   </div>
-                  <h3 className="font-display text-3xl font-bold tracking-tight sm:text-5xl">
-                    {c.title}
-                  </h3>
-                  <p className="max-w-md text-base leading-relaxed text-muted-foreground sm:text-lg">
-                    {c.description}
-                  </p>
-                  <div className="pt-1">
-                    <MagneticCta label="Start a project" onClick={open} />
-                  </div>
-                </div>
+                )}
 
-                {/* Visual — replace `image` above with the real asset when available */}
-                <div className="relative hidden overflow-hidden lg:block">
-                  {c.image ? (
-                    <img
-                      src={c.image}
-                      alt={`${c.title} at ELFO Innovations`}
-                      loading="lazy"
-                      decoding="async"
-                      className="h-full w-full object-cover transition-transform duration-700 hover:scale-[1.04]"
-                    />
-                  ) : (
+                {/* Copy */}
+                {layout !== "imageOnly" && (
+                  <div
+                    className={cn(
+                      "relative z-10 flex flex-col justify-center gap-5 p-7 sm:p-10 lg:p-14",
+                      (layout === "classic" || layout === "full") && "row-span-2 lg:row-span-1",
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "flex h-12 w-12 items-center justify-center rounded-2xl",
+                        onImage ? "bg-white/15 text-white backdrop-blur" : "bg-primary/10 text-primary",
+                      )}
+                    >
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <h3
+                      className={cn(
+                        "font-display text-3xl font-bold tracking-tight sm:text-5xl",
+                        onImage && "text-white drop-shadow-lg",
+                      )}
+                    >
+                      {c.title}
+                    </h3>
+                    <p
+                      className={cn(
+                        "max-w-md text-base leading-relaxed sm:text-lg",
+                        onImage ? "text-white/85" : "text-muted-foreground",
+                      )}
+                    >
+                      {c.description}
+                    </p>
+                    <div className="pt-1">
+                      <MagneticCta
+                        label={c.cta_label || "Start a project"}
+                        href={c.cta_href}
+                        onClick={c.cta_href ? undefined : open}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Right-hand visual (placeholder when there is no image, or the half-card image) */}
+                {(layout === "classic" || layout === "half") && (
+                  <div
+                    className={cn(
+                      "relative overflow-hidden",
+                      layout === "half" ? "min-h-[200px]" : "hidden lg:block",
+                    )}
+                  >
                     <div
                       aria-hidden
-                      className="relative h-full w-full bg-gradient-to-br from-primary/20 via-transparent to-primary/35"
+                      className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-primary/35"
                     >
                       <div className="absolute inset-0 opacity-50 circuit-pattern" />
                       <div className="absolute -right-10 top-1/3 h-56 w-56 rounded-full bg-primary/40 blur-3xl" />
-                      <div className="absolute bottom-8 left-8 text-[11px] uppercase tracking-[0.3em] text-foreground/40">
-                        Image placeholder
-                      </div>
+                      {layout === "classic" && (
+                        <div className="absolute bottom-8 left-8 text-[11px] uppercase tracking-[0.3em] text-foreground/40">
+                          Image placeholder
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                    {layout === "half" && (
+                      <CardImage src={c.image_url} alt={`${c.title} at ELFO Innovations`} fit={fit} />
+                    )}
+                  </div>
+                )}
+
+                {/* Image-only card: optional link over the whole card */}
+                {layout === "imageOnly" && c.cta_href && (
+                  <CardLink href={c.cta_href} label={c.title} className="absolute inset-0 z-20" />
+                )}
 
                 {/* Card number */}
-                <span className="pointer-events-none absolute right-6 top-5 font-display text-sm font-semibold tracking-[0.3em] text-foreground/40 sm:right-9 sm:top-8">
-                  {c.n}
-                </span>
+                {layout !== "imageOnly" && (
+                  <span
+                    className={cn(
+                      "pointer-events-none absolute z-10 font-display font-semibold tracking-[0.3em]",
+                      layout === "classic"
+                        ? "right-6 top-5 text-sm text-foreground/40 sm:right-9 sm:top-8"
+                        : "right-5 top-4 rounded-full bg-black/40 px-3 py-1 text-xs text-white backdrop-blur sm:right-8 sm:top-7",
+                    )}
+                  >
+                    {n}
+                  </span>
+                )}
               </article>
             );
           })}

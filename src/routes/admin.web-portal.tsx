@@ -905,6 +905,11 @@ function ServicesEditor() {
         sort_order: 100,
         is_active: true,
         price: 0,
+        image_display_mode: "full",
+        image_fit: "auto",
+        show_text: true,
+        show_in_grid: true,
+        show_in_story: true,
       }}
       columns={[
         { label: "title", render: (r) => r.title },
@@ -912,6 +917,11 @@ function ServicesEditor() {
         {
           label: "price",
           render: (r) => (r.price ? `PKR ${Number(r.price).toLocaleString()}` : "—"),
+        },
+        {
+          label: "sections",
+          render: (r: any) =>
+            [r.show_in_grid !== false && "Grid", r.show_in_story !== false && "Story"].filter(Boolean).join(" + ") || "Hidden from both",
         },
       ]}
       renderForm={(f, set) => (
@@ -954,6 +964,66 @@ function ServicesEditor() {
             value={f.image_url}
             onChange={(v) => set({ ...f, image_url: v })}
           />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <Label className="text-xs">Image layout on /services scroll-story</Label>
+              <Select
+                value={(f as any).image_display_mode || "full"}
+                onValueChange={(v) => set({ ...f, image_display_mode: v } as any)}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="half">Half — image on the right half, text on the left</SelectItem>
+                  <SelectItem value="full">Full — image covers the whole card, text on top</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Image fit</Label>
+              <Select
+                value={(f as any).image_fit || "auto"}
+                onValueChange={(v) => set({ ...f, image_fit: v } as any)}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">Auto (Half = whole image, Full = fill card)</SelectItem>
+                  <SelectItem value="contain">Show whole image — never cropped</SelectItem>
+                  <SelectItem value="cover">Fill the area — edges may crop</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 rounded-xl border p-3">
+            <Switch
+              checked={(f as any).show_text !== false}
+              onCheckedChange={(v) => set({ ...f, show_text: v } as any)}
+            />
+            <Label>
+              Show text on the card (icon, title, description, button). Turn off for an image-only card — needs an image
+              uploaded above.
+            </Label>
+          </div>
+          <div className="rounded-xl border p-3">
+            <div className="text-xs font-semibold text-muted-foreground">Where should this appear?</div>
+            <div className="mt-2 flex items-center gap-2">
+              <Switch
+                checked={(f as any).show_in_grid !== false}
+                onCheckedChange={(v) => set({ ...f, show_in_grid: v } as any)}
+              />
+              <Label>Services grid (the card grid under "Everything you need to ship software")</Label>
+            </div>
+            <div className="mt-2 flex items-center gap-2">
+              <Switch
+                checked={(f as any).show_in_story !== false}
+                onCheckedChange={(v) => set({ ...f, show_in_story: v } as any)}
+              />
+              <Label>Services scroll-story (the pinned full-screen cards)</Label>
+            </div>
+          </div>
         </>
       )}
     />
