@@ -96,10 +96,7 @@ export function ServicesSection() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div className="max-w-2xl">
-            <div className="inline-flex rounded-full border bg-card px-3 py-1.5 text-xs font-medium">
-              Services
-            </div>
-            <h2 className="mt-4 font-display text-4xl font-bold tracking-tight sm:text-5xl">
+            <h2 className="font-display text-4xl font-bold tracking-tight sm:text-5xl">
               Everything you need to <span className="electric-text">ship software</span>
             </h2>
           </div>

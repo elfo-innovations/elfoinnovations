@@ -15,3 +15,14 @@ export function sanitizeHtml(html: string): string {
   });
   return doc.body.innerHTML;
 }
+
+/**
+ * Removes all HTML tags, leaving plain text. Pure regex — no DOMParser — so this is safe
+ * to call from server-only code (RSS feed, schema.org JSON) as well as the browser.
+ */
+export function stripHtmlTags(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}

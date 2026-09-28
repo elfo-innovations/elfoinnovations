@@ -75,7 +75,8 @@ function isH3SwallowedErrorBody(body: string): boolean {
 const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
   "connect-src 'self' https://gwkwpbrlrmqrsdjnnckb.supabase.co wss://gwkwpbrlrmqrsdjnnckb.supabase.co https://translate.googleapis.com https://translate.google.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com",
-  "script-src 'self' 'unsafe-inline' https://translate.google.com https://www.gstatic.com https://challenges.cloudflare.com https://www.googletagmanager.com",
+  "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://translate.google.com https://translate.googleapis.com https://www.gstatic.com https://challenges.cloudflare.com https://www.googletagmanager.com",
+  "worker-src 'self' blob:",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com",
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: https:",

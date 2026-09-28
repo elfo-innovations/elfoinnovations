@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle2, Target, Eye, Zap, ExternalLink, Sparkles, Heart } from "lucide-react";
+import { CheckCircle2, Target, Eye, Zap, ExternalLink, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFollowUs } from "@/hooks/use-follow-us";
 import { BecomeDeveloperButton } from "@/components/recruitment/DeveloperApplicationForm";
@@ -18,10 +18,7 @@ export function AboutSection() {
     <section id="about" className="border-t bg-background py-20 sm:py-28">
       <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:px-8">
         <div>
-          <div className="inline-flex rounded-full border bg-card px-3 py-1.5 text-xs font-medium">
-            {a.eyebrow || "About ELFO"}
-          </div>
-          <h2 className="mt-4 font-display text-4xl font-bold tracking-tight sm:text-5xl">
+          <h2 className="font-display text-4xl font-bold tracking-tight sm:text-5xl">
             {a.title}
           </h2>
           <p className="mt-5 text-muted-foreground">{a.description}</p>
@@ -71,10 +68,7 @@ export function AboutSection() {
             <div className="relative flex flex-col justify-center gap-3 p-8 sm:p-10">
               <div className="absolute inset-0 opacity-40 circuit-pattern" />
               <div className="relative">
-                <div className="inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1.5 text-xs font-medium">
-                  <Sparkles className="h-3.5 w-3.5 text-primary" /> Founder portfolio
-                </div>
-                <h3 className="mt-4 font-display text-2xl font-bold sm:text-3xl">
+                <h3 className="font-display text-2xl font-bold sm:text-3xl">
                   Meet the builder behind <span className="electric-text">ELFO</span>
                 </h3>
                 <p className="mt-2 text-sm text-muted-foreground">
@@ -88,13 +82,13 @@ export function AboutSection() {
                 {
                   name: "Aaban Syed",
                   url: "https://aabansyed.netlify.app",
-                  role: "Founder & CEO",
+                  role: "Co-Founder & Co-CEO",
                   host: "aabansyed.netlify.app",
                 },
                 {
                   name: "Shehriyal Aziz",
                   url: "https://shehriyalaziz.vercel.app",
-                  role: "Founder & CEO & CTO",
+                  role: "Co-Founder & Co-CEO & CTO",
                   host: "shehriyalaziz.vercel.app",
                 },
                 {

@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
-import { Gift } from "lucide-react";
+
 
 export function OffersSection() {
   const { data } = useQuery({
@@ -22,10 +22,7 @@ export function OffersSection() {
     <section id="offers" className="border-t bg-background py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1.5 text-xs font-medium">
-            <Gift className="h-3.5 w-3.5 text-primary" /> Special offers
-          </div>
-          <h2 className="mt-4 font-display text-4xl font-bold tracking-tight sm:text-5xl">
+          <h2 className="font-display text-4xl font-bold tracking-tight sm:text-5xl">
             Limited-time <span className="electric-text">offers.</span>
           </h2>
         </div>

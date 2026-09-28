@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Navbar } from "@/components/site/Navbar";
+import { BackToTopButton } from "@/components/site/BackToTopButton";
 import { Footer } from "@/components/site/Footer";
 import { PromoMarquee } from "@/components/site/PromoMarquee";
 import { supabase } from "@/integrations/supabase/client";
@@ -93,6 +94,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
       <Navbar />
       <main className="flex-1">{children}</main>
       <Footer />
+       <BackToTopButton /> 
       <SiteChatWidget />
     </div>
   );

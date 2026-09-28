@@ -53,6 +53,7 @@ const CATEGORIES = [
 const EMPTY = {
   id: "" as string,
   slug: "",
+  original_slug: "" as string,
   title: "",
   excerpt: "",
   content_md: "",
@@ -76,6 +77,7 @@ function AdminBlogs() {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState<typeof EMPTY>({ ...EMPTY });
+  const [customCategory, setCustomCategory] = useState(false);
 
   const { data } = useQuery({
     queryKey: ["admin-blogs"],
@@ -84,14 +86,23 @@ function AdminBlogs() {
       [],
   });
 
+  // Categories admins have actually used, merged with the curated starting list — so a
+  // custom category someone types once shows up as a normal pick from then on.
+  const existingCategories = Array.from(
+    new Set((data ?? []).map((b) => b.category).filter((c): c is string => !!c)),
+  );
+  const allCategories = Array.from(new Set([...CATEGORIES, ...existingCategories])).sort();
+
   const startNew = () => {
     setForm({ ...EMPTY });
+    setCustomCategory(false);
     setOpen(true);
   };
   const edit = (b: Tables<"blogs">) => {
     setForm({
       id: b.id,
       slug: b.slug,
+      original_slug: b.slug,
       title: b.title,
       excerpt: b.excerpt ?? "",
       content_md: b.content_md ?? "",
@@ -109,6 +120,7 @@ function AdminBlogs() {
       original_is_published: !!b.is_published,
       original_published_at: b.published_at ?? null,
     });
+    setCustomCategory(false);
     setOpen(true);
   };
 
@@ -158,6 +170,16 @@ function AdminBlogs() {
       : await supabase.from("blogs").insert(payload);
     setBusy(false);
     if (error) return toast.error(error.message);
+
+    // Slug changed on an existing post: remember the old URL so it 301s to the new one
+    // instead of just 404ing (which would throw away any SEO ranking it had built up).
+    if (form.id && form.original_slug && form.original_slug !== payload.slug) {
+      const { error: redirectError } = await supabase
+        .from("blog_redirects")
+        .upsert({ old_slug: form.original_slug, blog_id: form.id }, { onConflict: "old_slug" });
+      if (redirectError) console.error("Failed to record slug redirect:", redirectError);
+    }
+
     toast.success(form.id ? "Article updated" : "Article created");
     setOpen(false);
     qc.invalidateQueries({ queryKey: ["admin-blogs"] });
@@ -325,18 +347,48 @@ function AdminBlogs() {
             </div>
             <div className="grid gap-1.5">
               <Label>Category</Label>
-              <select
-                value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              >
-                <option value="">— No category —</option>
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
+              {customCategory || (form.category && !allCategories.includes(form.category)) ? (
+                <div className="flex gap-2">
+                  <Input
+                    autoFocus
+                    value={form.category}
+                    onChange={(e) => setForm({ ...form, category: e.target.value })}
+                    placeholder="Type a new category name"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setCustomCategory(false);
+                      setForm({ ...form, category: "" });
+                    }}
+                  >
+                    Choose existing
+                  </Button>
+                </div>
+              ) : (
+                <select
+                  value={form.category}
+                  onChange={(e) => {
+                    if (e.target.value === "__new__") {
+                      setCustomCategory(true);
+                      setForm({ ...form, category: "" });
+                    } else {
+                      setForm({ ...form, category: e.target.value });
+                    }
+                  }}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  <option value="">— No category —</option>
+                  {allCategories.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                  <option value="__new__">+ Add new category…</option>
+                </select>
+              )}
               <p className="text-xs text-muted-foreground">
                 One category per article. Use Tags below for finer-grained topics.
               </p>
@@ -366,10 +418,11 @@ function AdminBlogs() {
             />
             <div className="grid gap-1.5">
               <Label>Excerpt (1–2 sentence summary)</Label>
-              <Textarea
-                rows={2}
+              <RichTextEditor
+                variant="inline"
                 value={form.excerpt}
-                onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
+                onChange={(html) => setForm({ ...form, excerpt: html })}
+                placeholder="A short summary shown on the blog listing and in search results…"
               />
             </div>
             <div className="grid gap-1.5">
@@ -458,12 +511,12 @@ function AdminBlogs() {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                    <Textarea
-                      rows={2}
+                    <RichTextEditor
+                      variant="inline"
                       value={f.answer}
-                      onChange={(e) => {
+                      onChange={(html) => {
                         const n = [...form.faqs];
-                        n[i] = { ...n[i], answer: e.target.value };
+                        n[i] = { ...n[i], answer: html };
                         setForm({ ...form, faqs: n });
                       }}
                       placeholder="Answer"

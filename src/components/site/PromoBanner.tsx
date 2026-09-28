@@ -30,7 +30,7 @@ export function PromoBanner({ position, theme }: { position: string; theme: "lig
   const { data } = useQuery({
     queryKey: ["promo_banners", position],
     queryFn: async () =>
-      (
+      ((
         await supabase
           .from("promo_banners")
           .select("*")
@@ -38,7 +38,7 @@ export function PromoBanner({ position, theme }: { position: string; theme: "lig
           .eq("is_active", true)
           .order("sort_order")
           .limit(1)
-      ).data?.[0] as BannerRow | undefined,
+      ).data?.[0] ?? null) as BannerRow | null,
   });
 
   if (!data) return null;

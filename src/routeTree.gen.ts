@@ -22,6 +22,7 @@ import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as RefundPolicyRouteImport } from './routes/refund-policy'
+import { Route as RssDotxmlRouteImport } from './routes/rss[.]xml'
 import { Route as SecurityRouteImport } from './routes/security'
 import { Route as ServicesRouteImport } from './routes/services'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
@@ -51,6 +52,7 @@ import { Route as DeveloperIndexRouteImport } from './routes/developer.index'
 import { Route as DeveloperMessagesRouteImport } from './routes/developer.messages'
 import { Route as DeveloperProjectsRouteImport } from './routes/developer.projects'
 import { Route as AdminProjectIdRouteImport } from './routes/admin.project.$id'
+import { Route as BlogsCategoryCategoryRouteImport } from './routes/blogs_.category.$category'
 import { Route as ClientProjectIdRouteImport } from './routes/client.project.$id'
 import { Route as DeveloperProjectIdRouteImport } from './routes/developer.project.$id'
 import { Route as ApiPublicHooksDispatchPushRouteImport } from './routes/api/public/hooks/dispatch-push'
@@ -118,6 +120,11 @@ const ProfileRoute = ProfileRouteImport.update({
 const RefundPolicyRoute = RefundPolicyRouteImport.update({
   id: '/refund-policy',
   path: '/refund-policy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RssDotxmlRoute = RssDotxmlRouteImport.update({
+  id: '/rss.xml',
+  path: '/rss.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SecurityRoute = SecurityRouteImport.update({
@@ -265,6 +272,11 @@ const AdminProjectIdRoute = AdminProjectIdRouteImport.update({
   path: '/admin/project/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogsCategoryCategoryRoute = BlogsCategoryCategoryRouteImport.update({
+  id: '/blogs_/category/$category',
+  path: '/blogs/category/$category',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ClientProjectIdRoute = ClientProjectIdRouteImport.update({
   id: '/client/project/$id',
   path: '/client/project/$id',
@@ -296,6 +308,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/refund-policy': typeof RefundPolicyRoute
+  '/rss.xml': typeof RssDotxmlRoute
   '/security': typeof SecurityRoute
   '/services': typeof ServicesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -325,6 +338,7 @@ export interface FileRoutesByFullPath {
   '/client/': typeof ClientIndexRoute
   '/developer/': typeof DeveloperIndexRoute
   '/admin/project/$id': typeof AdminProjectIdRoute
+  '/blogs/category/$category': typeof BlogsCategoryCategoryRoute
   '/client/project/$id': typeof ClientProjectIdRoute
   '/developer/project/$id': typeof DeveloperProjectIdRoute
   '/api/public/hooks/dispatch-push': typeof ApiPublicHooksDispatchPushRoute
@@ -343,6 +357,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/refund-policy': typeof RefundPolicyRoute
+  '/rss.xml': typeof RssDotxmlRoute
   '/security': typeof SecurityRoute
   '/services': typeof ServicesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -372,6 +387,7 @@ export interface FileRoutesByTo {
   '/client': typeof ClientIndexRoute
   '/developer': typeof DeveloperIndexRoute
   '/admin/project/$id': typeof AdminProjectIdRoute
+  '/blogs/category/$category': typeof BlogsCategoryCategoryRoute
   '/client/project/$id': typeof ClientProjectIdRoute
   '/developer/project/$id': typeof DeveloperProjectIdRoute
   '/api/public/hooks/dispatch-push': typeof ApiPublicHooksDispatchPushRoute
@@ -391,6 +407,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/refund-policy': typeof RefundPolicyRoute
+  '/rss.xml': typeof RssDotxmlRoute
   '/security': typeof SecurityRoute
   '/services': typeof ServicesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -420,6 +437,7 @@ export interface FileRoutesById {
   '/client/': typeof ClientIndexRoute
   '/developer/': typeof DeveloperIndexRoute
   '/admin/project/$id': typeof AdminProjectIdRoute
+  '/blogs_/category/$category': typeof BlogsCategoryCategoryRoute
   '/client/project/$id': typeof ClientProjectIdRoute
   '/developer/project/$id': typeof DeveloperProjectIdRoute
   '/api/public/hooks/dispatch-push': typeof ApiPublicHooksDispatchPushRoute
@@ -440,6 +458,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/profile'
     | '/refund-policy'
+    | '/rss.xml'
     | '/security'
     | '/services'
     | '/sitemap.xml'
@@ -469,6 +488,7 @@ export interface FileRouteTypes {
     | '/client/'
     | '/developer/'
     | '/admin/project/$id'
+    | '/blogs/category/$category'
     | '/client/project/$id'
     | '/developer/project/$id'
     | '/api/public/hooks/dispatch-push'
@@ -487,6 +507,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/profile'
     | '/refund-policy'
+    | '/rss.xml'
     | '/security'
     | '/services'
     | '/sitemap.xml'
@@ -516,6 +537,7 @@ export interface FileRouteTypes {
     | '/client'
     | '/developer'
     | '/admin/project/$id'
+    | '/blogs/category/$category'
     | '/client/project/$id'
     | '/developer/project/$id'
     | '/api/public/hooks/dispatch-push'
@@ -534,6 +556,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/profile'
     | '/refund-policy'
+    | '/rss.xml'
     | '/security'
     | '/services'
     | '/sitemap.xml'
@@ -563,6 +586,7 @@ export interface FileRouteTypes {
     | '/client/'
     | '/developer/'
     | '/admin/project/$id'
+    | '/blogs_/category/$category'
     | '/client/project/$id'
     | '/developer/project/$id'
     | '/api/public/hooks/dispatch-push'
@@ -582,6 +606,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
   RefundPolicyRoute: typeof RefundPolicyRoute
+  RssDotxmlRoute: typeof RssDotxmlRoute
   SecurityRoute: typeof SecurityRoute
   ServicesRoute: typeof ServicesRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -611,6 +636,7 @@ export interface RootRouteChildren {
   ClientIndexRoute: typeof ClientIndexRoute
   DeveloperIndexRoute: typeof DeveloperIndexRoute
   AdminProjectIdRoute: typeof AdminProjectIdRoute
+  BlogsCategoryCategoryRoute: typeof BlogsCategoryCategoryRoute
   ClientProjectIdRoute: typeof ClientProjectIdRoute
   DeveloperProjectIdRoute: typeof DeveloperProjectIdRoute
   ApiPublicHooksDispatchPushRoute: typeof ApiPublicHooksDispatchPushRoute
@@ -707,6 +733,13 @@ declare module '@tanstack/react-router' {
       path: '/refund-policy'
       fullPath: '/refund-policy'
       preLoaderRoute: typeof RefundPolicyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rss.xml': {
+      id: '/rss.xml'
+      path: '/rss.xml'
+      fullPath: '/rss.xml'
+      preLoaderRoute: typeof RssDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/security': {
@@ -912,6 +945,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminProjectIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blogs_/category/$category': {
+      id: '/blogs_/category/$category'
+      path: '/blogs/category/$category'
+      fullPath: '/blogs/category/$category'
+      preLoaderRoute: typeof BlogsCategoryCategoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/client/project/$id': {
       id: '/client/project/$id'
       path: '/client/project/$id'
@@ -950,6 +990,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
   RefundPolicyRoute: RefundPolicyRoute,
+  RssDotxmlRoute: RssDotxmlRoute,
   SecurityRoute: SecurityRoute,
   ServicesRoute: ServicesRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
@@ -979,6 +1020,7 @@ const rootRouteChildren: RootRouteChildren = {
   ClientIndexRoute: ClientIndexRoute,
   DeveloperIndexRoute: DeveloperIndexRoute,
   AdminProjectIdRoute: AdminProjectIdRoute,
+  BlogsCategoryCategoryRoute: BlogsCategoryCategoryRoute,
   ClientProjectIdRoute: ClientProjectIdRoute,
   DeveloperProjectIdRoute: DeveloperProjectIdRoute,
   ApiPublicHooksDispatchPushRoute: ApiPublicHooksDispatchPushRoute,

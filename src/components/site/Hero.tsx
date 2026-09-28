@@ -1,4 +1,4 @@
-import { ArrowRight, ShieldCheck, Sparkles, Check } from "lucide-react";
+import { ArrowRight, ShieldCheck, Check } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -145,13 +145,9 @@ export function Hero() {
       </div>
       <div className="mx-auto grid max-w-7xl gap-12 px-4 pb-20 pt-16 sm:px-6 lg:grid-cols-2 lg:gap-8 lg:px-8 lg:pt-24">
         <div className="max-w-2xl">
-          <div className="inline-flex items-center gap-2 rounded-full border bg-card/60 px-3 py-1.5 text-xs font-medium backdrop-blur">
-            <Sparkles className="h-3.5 w-3.5 text-primary" />
-            <span>{h.eyebrow || "Premium software delivery"}</span>
-          </div>
           <h1
             style={headingStyle}
-            className="mt-6 font-display text-5xl font-bold leading-[1.05] tracking-tight text-foreground sm:text-6xl lg:text-7xl"
+            className="font-display text-5xl font-bold leading-[1.05] tracking-tight text-foreground sm:text-6xl lg:text-7xl"
           >
             {segments.map((seg, i) =>
               pattern && highlights.some((hl) => hl.toLowerCase() === seg.toLowerCase()) ? (

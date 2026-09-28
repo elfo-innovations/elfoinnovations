@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { slugify } from "@/lib/faq-utils";
 
 const BASE_URL = "https://elfoinnovations.com";
 
@@ -34,15 +35,20 @@ export const Route = createFileRoute("/sitemap.xml")({
         try {
           const { data } = await supabase
             .from("blogs")
-            .select("slug, updated_at, published_at")
+            .select("slug, category, updated_at, published_at")
             .eq("is_published", true);
+          const categories = new Set<string>();
           for (const b of data ?? []) {
+            if (b.category) categories.add(b.category);
             entries.push({
               path: `/blogs/${b.slug}`,
               lastmod: (b.updated_at || b.published_at || "").slice(0, 10) || undefined,
               changefreq: "monthly",
               priority: "0.6",
             });
+          }
+          for (const c of categories) {
+            entries.push({ path: `/blogs/category/${slugify(c)}`, changefreq: "weekly", priority: "0.5" });
           }
         } catch {
           // Blog lookup failed; still serve the sitemap with the static routes.

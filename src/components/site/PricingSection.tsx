@@ -100,10 +100,7 @@ export function PricingSection() {
     <section id="pricing" className="border-t bg-background py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <div className="inline-flex rounded-full border bg-card px-3 py-1.5 text-xs font-medium">
-            Pricing
-          </div>
-          <h2 className="mt-4 font-display text-4xl font-bold tracking-tight sm:text-5xl">
+          <h2 className="font-display text-4xl font-bold tracking-tight sm:text-5xl">
             Transparent, <span className="electric-text">honest pricing.</span>
           </h2>
           <p className="mt-4 text-muted-foreground">No hidden fees. See it live before you pay.</p>
