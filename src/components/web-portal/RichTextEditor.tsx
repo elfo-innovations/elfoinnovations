@@ -111,7 +111,8 @@ export function RichTextEditor({
         if (signed?.signedUrl) {
           const suggestedAlt = file.name.replace(/\.[a-z0-9]+$/i, "").replace(/[-_]/g, " ");
           const altText =
-            window.prompt("Alt text (describe the image for accessibility & SEO):", suggestedAlt) ?? "";
+            window.prompt("Alt text (describe the image for accessibility & SEO):", suggestedAlt) ??
+            "";
           ref.current?.focus();
           document.execCommand("insertImage", false, signed.signedUrl);
           // execCommand("insertImage") has no way to set alt directly — tag the element
@@ -146,7 +147,10 @@ export function RichTextEditor({
 
   const editSelectedImageAlt = () => {
     if (!selectedImg) return;
-    const alt = window.prompt("Alt text (describe the image for accessibility & SEO):", selectedImg.alt || "");
+    const alt = window.prompt(
+      "Alt text (describe the image for accessibility & SEO):",
+      selectedImg.alt || "",
+    );
     if (alt === null) return;
     selectedImg.alt = alt;
     emit();

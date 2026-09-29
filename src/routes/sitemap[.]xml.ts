@@ -48,7 +48,11 @@ export const Route = createFileRoute("/sitemap.xml")({
             });
           }
           for (const c of categories) {
-            entries.push({ path: `/blogs/category/${slugify(c)}`, changefreq: "weekly", priority: "0.5" });
+            entries.push({
+              path: `/blogs/category/${slugify(c)}`,
+              changefreq: "weekly",
+              priority: "0.5",
+            });
           }
         } catch {
           // Blog lookup failed; still serve the sitemap with the static routes.

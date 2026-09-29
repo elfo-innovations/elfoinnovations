@@ -94,7 +94,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
       <Navbar />
       <main className="flex-1">{children}</main>
       <Footer />
-       <BackToTopButton /> 
+      <BackToTopButton />
       <SiteChatWidget />
     </div>
   );

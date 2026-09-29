@@ -147,6 +147,88 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-09-29 PKT — AI Agent (Claude) — Reviewed + fixed friend's push (blog SEO overhaul)
+
+### Context
+A teammate pushed a large blog/SEO feature push directly to `main` (commit `6a846f9`, 27 files,
+~2090 insertions) covering: alt text + resizable images in the rich text editor, a proper
+category picker (add-new), rich text (bold/links) in FAQ + TL;DR fields, the RichTextEditor
+edit-not-loading bug, an RSS feed, blog category archive pages, and a `blog_redirects` table with
+301-redirect logic for changed slugs — plus some unrelated homepage UI work (TestimonialsSection
+redesign, ServicesScrollStory, a BackToTopButton). Project owner asked for a full review: fix
+every real issue, but remove anything added that had no discoverable justification (not "wrong"
+code — code with no understandable reason to exist).
+
+### Completed
+- **Verified the feature work is real and correct** — spot-checked each of the 5 originally
+  reported issues (alt text, image resize, category add-new, edit-bug, FAQ/TL;DR rich text) plus
+  RSS and the redirect table; all implemented soundly.
+- **Removed one genuinely unexplained addition**: `'wasm-unsafe-eval'` and `worker-src 'self'
+  blob:` had been added to the CSP in `src/server.ts`. Repo-wide search found no WebAssembly,
+  Worker, or blob: usage anywhere that would need them — removed both, nothing else in the CSP
+  touched.
+- **Fixed real CI-breaking regressions the push introduced**:
+  - `typecheck` was at 22 errors (baseline: 0). Root causes: (1) `/blogs` route's `page` search
+    param was required, breaking every `<Link to="/blogs">` (Footer, blog pages) — made it
+    optional with a `page ?? 1` default; (2) `blog_redirects`, `services.show_in_story`,
+    `services.image_display_mode` exist live but `src/integrations/supabase/types.ts` was never
+    regenerated, so a lot of code was working around it with `as any` — regenerated
+    `types.ts` from the live schema (project `gwkwpbrlrmqrsdjnnckb`) instead of patching around
+    it; (3) `head: ({ search }: { search: BlogSearch })` on `/blogs` and `head: ({ ...,
+    search }: any)` on `/blogs/category/$category` don't match TanStack Start's actual `head`
+    context shape (search lives at `ctx.match.search`, not `ctx.search`) — fixed both, and the
+    `any` on the category route is gone with it.
+  - `lint` was at 15 errors (baseline: 0, all `no-explicit-any` — now that `types.ts` is
+    correct, ~10 `as any` casts in `admin.web-portal.tsx` and the `DEFAULTS`/`CARDS` typing +
+    one `<Link to={... as any}>` in `ServicesScrollStory.tsx` were removed outright rather than
+    re-typed, since the real types now satisfy them without a cast. Two remaining `string | null`
+    vs `string` mismatches on `CardImage`'s `src` prop were resolved with a non-null assertion
+    (`c.image_url!`), safe because the surrounding `layout` derivation already guarantees
+    `image_url` is truthy before `CardImage` renders. `lint` is now 0 errors (11 pre-existing,
+    unrelated `react-refresh` warnings remain, same as before this push).
+  - Sanitized the new `/blogs` search-box query before it's interpolated into a PostgREST
+    `.or()` filter string (`,()%*\` stripped) — untrusted input was going straight into a filter
+    expression.
+  - Moved the friend's new full blog-post page implementation from `blog_.$slug.tsx` (the old
+    route, which used to be a 7-line redirect-to-`/blogs/$slug` shim) into `blogs_.$slug.tsx`
+    (the real canonical route) and restored the redirect shim at `blog_.$slug.tsx` — the push had
+    them backwards, which would have made `/blog/<slug>` the canonical URL instead of
+    `/blogs/<slug>`.
+- **Wrote the missing migration files** (3 catch-up migrations, all `IF NOT EXISTS`/`DO` guarded
+  so they're safe to run against the already-patched live DB) — schema confirmed via
+  `information_schema` + `pg_constraint` against the live project, not guessed:
+  - `20260929080100_catchup_blogs_content_html_category_tldr.sql`
+  - `20260929080200_catchup_services_display_columns.sql` (`image_display_mode`, `image_fit`,
+    `show_in_story`, `show_in_grid`, `show_text` — all five existed live with no migration file)
+  - `20260929080300_catchup_blog_redirects.sql` (table + both RLS policies, reproduced exactly
+    from the live `pg_policies`/`pg_constraint` output)
+- **Verified end-to-end**: `npm run typecheck` — 0 errors. `npm run lint` — 0 errors (11
+  pre-existing warnings). `npm run build` — succeeds. Ran the actual built Worker locally via
+  `wrangler dev --local` and confirmed `/`, `/blogs`, `/rss.xml`, `/sitemap.xml` all return 200.
+
+### Files changed by this review (on top of the friend's push)
+`src/server.ts`, `src/routes/blogs.tsx`, `src/routes/blogs_.$slug.tsx`, `src/routes/blog_.$slug.tsx`,
+`src/routes/blogs_.category.$category.tsx`, `src/routes/admin.web-portal.tsx`,
+`src/components/site/ServicesScrollStory.tsx`, `src/integrations/supabase/types.ts` (regenerated),
+plus the 3 new migration files above.
+
+### Commit
+- Committed locally (not pushed yet) — waiting on the project owner to say push, and on whether
+  to push straight to `main` or via a branch/PR (teammate may still be actively working on `main`
+  — check with them before choosing).
+
+### Notes
+- The unrelated homepage UI changes in the same push (TestimonialsSection redesign,
+  ServicesScrollStory, BackToTopButton) were left as-is — they're coherent, well-built, explicable
+  features, just out of scope for the blog/SEO task. "Remove unexplained extras" was interpreted
+  as removing code with no discoverable purpose (like the wasm/worker CSP entries), not reverting
+  unrelated-but-legitimate work.
+- `image_fit` on `services` also had no migration file despite predating this specific push (it
+  was already live) — included in the same catch-up migration since it's the same class of drift
+  as the columns this push added.
+
+---
+
 ## 2026-09-26 PKT — AI Agent (Claude) — CSP was blocking GA4 (googletagmanager.com)
 
 ### Completed

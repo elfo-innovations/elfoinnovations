@@ -3,7 +3,15 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PublicLayout } from "@/components/site/PublicLayout";
-import { ArrowRight, Calendar, ChevronLeft, ChevronRight, Newspaper, Search, X } from "lucide-react";
+import {
+  ArrowRight,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Newspaper,
+  Search,
+  X,
+} from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 import { stripHtmlTags } from "@/lib/sanitize-html";
 import { slugify } from "@/lib/faq-utils";
@@ -15,28 +23,32 @@ const DESC =
   "Deep-dive articles on custom software development, web and mobile engineering, SaaS architecture, and product strategy from the ELFO Innovations team.";
 const PAGE_SIZE = 10;
 
-type BlogSearch = { page: number; category?: string; q?: string };
+type BlogSearch = { page?: number; category?: string; q?: string };
 
-async function fetchBlogsPage({ page, category, q }: BlogSearch) {
+async function fetchBlogsPage({ page = 1, category, q }: BlogSearch) {
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
   let query = supabase.from("blogs").select("*", { count: "exact" }).eq("is_published", true);
   if (category) query = query.eq("category", category);
-  if (q) query = query.or(`title.ilike.%${q}%,excerpt.ilike.%${q}%`);
-  const { data, count, error } = await query.order("published_at", { ascending: false }).range(from, to);
+  const safeQ = q?.replace(/[,()%*\\]/g, " ").trim();
+  if (safeQ) query = query.or(`title.ilike.%${safeQ}%,excerpt.ilike.%${safeQ}%`);
+  const { data, count, error } = await query
+    .order("published_at", { ascending: false })
+    .range(from, to);
   if (error) console.error("[blogs loader] supabase error:", JSON.stringify(error));
   return { posts: data ?? [], total: count ?? 0 };
 }
 
 export const Route = createFileRoute("/blogs")({
   validateSearch: (s: Record<string, unknown>): BlogSearch => ({
-    page: Math.max(1, Number(s.page) || 1),
+    page: Number(s.page) > 1 ? Math.floor(Number(s.page)) : undefined,
     category: typeof s.category === "string" && s.category ? s.category : undefined,
     q: typeof s.q === "string" && s.q ? s.q : undefined,
   }),
   loaderDeps: ({ search }) => ({ page: search.page, category: search.category, q: search.q }),
   loader: async ({ deps }) => fetchBlogsPage(deps),
-  head: ({ search }: { search: BlogSearch }) => {
+  head: (ctx) => {
+    const search = ctx.match.search as BlogSearch;
     const isFiltered = !!(search?.q || (search?.page && search.page > 1));
     const canonical = search?.category
       ? `${URL}?category=${encodeURIComponent(search.category)}`
@@ -54,7 +66,12 @@ export const Route = createFileRoute("/blogs")({
       ],
       links: [
         { rel: "canonical", href: canonical },
-        { rel: "alternate", type: "application/rss+xml", title: "ELFO Innovations Blog RSS Feed", href: `${SITE_ORIGIN}/rss.xml` },
+        {
+          rel: "alternate",
+          type: "application/rss+xml",
+          title: "ELFO Innovations Blog RSS Feed",
+          href: `${SITE_ORIGIN}/rss.xml`,
+        },
       ],
       scripts: [
         {
@@ -63,7 +80,12 @@ export const Route = createFileRoute("/blogs")({
             "@context": "https://schema.org",
             "@type": "BreadcrumbList",
             itemListElement: [
-              { "@type": "ListItem", position: 1, name: "Home", item: "https://elfoinnovations.com/" },
+              {
+                "@type": "ListItem",
+                position: 1,
+                name: "Home",
+                item: "https://elfoinnovations.com/",
+              },
               { "@type": "ListItem", position: 2, name: "Blog", item: URL },
             ],
           }),
@@ -76,10 +98,11 @@ export const Route = createFileRoute("/blogs")({
 
 function BlogIndex() {
   const loaderData = Route.useLoaderData();
-  const { page, category, q } = Route.useSearch();
+  const { page: pageParam, category, q } = Route.useSearch();
+  const page = pageParam ?? 1;
   const navigate = useNavigate({ from: Route.fullPath });
   const [searchInput, setSearchInput] = useState(q ?? "");
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const { data, isLoading } = useQuery({
     queryKey: ["public-blogs", page, category, q],
@@ -182,7 +205,9 @@ function BlogIndex() {
             <p className="text-sm text-muted-foreground">Loading…</p>
           ) : posts.length === 0 ? (
             <div className="rounded-2xl border border-dashed p-12 text-center text-sm text-muted-foreground">
-              {q || category ? "No articles match your filters." : "No articles published yet — check back soon."}
+              {q || category
+                ? "No articles match your filters."
+                : "No articles published yet — check back soon."}
             </div>
           ) : (
             <div className="grid gap-8 md:grid-cols-2">
@@ -230,7 +255,8 @@ function BlogIndex() {
                       </p>
                     )}
                     <div className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-primary">
-                      Read article <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                      Read article{" "}
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </div>
                   </div>
                 </Link>
@@ -261,7 +287,9 @@ function BlogIndex() {
                   to="/blogs"
                   search={(prev: BlogSearch) => ({ ...prev, page: n })}
                   className={`flex h-9 w-9 items-center justify-center rounded-full border text-sm font-semibold ${
-                    n === page ? "border-primary bg-primary text-primary-foreground" : "hover:bg-accent/40"
+                    n === page
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "hover:bg-accent/40"
                   }`}
                 >
                   {n}

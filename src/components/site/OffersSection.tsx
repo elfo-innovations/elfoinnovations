@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
 
-
 export function OffersSection() {
   const { data } = useQuery({
     queryKey: ["offers", "public"],

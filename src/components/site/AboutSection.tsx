@@ -18,9 +18,7 @@ export function AboutSection() {
     <section id="about" className="border-t bg-background py-20 sm:py-28">
       <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:px-8">
         <div>
-          <h2 className="font-display text-4xl font-bold tracking-tight sm:text-5xl">
-            {a.title}
-          </h2>
+          <h2 className="font-display text-4xl font-bold tracking-tight sm:text-5xl">{a.title}</h2>
           <p className="mt-5 text-muted-foreground">{a.description}</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Button onClick={openFollow} variant="outline" className="rounded-full">

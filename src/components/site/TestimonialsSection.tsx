@@ -75,7 +75,8 @@ export function TestimonialsSection() {
   const current = items.length ? Math.min(active, items.length - 1) : 0;
   const t = items[current];
 
-  const go = (dir: 1 | -1) => setActive((i) => (Math.min(i, items.length - 1) + dir + items.length) % items.length);
+  const go = (dir: 1 | -1) =>
+    setActive((i) => (Math.min(i, items.length - 1) + dir + items.length) % items.length);
 
   useEffect(() => {
     if (items.length < 2 || paused) return;
@@ -90,10 +91,16 @@ export function TestimonialsSection() {
     const btn = tabRefs.current[current];
     if (!list || !btn) return;
     if (list.scrollHeight > list.clientHeight + 1) {
-      list.scrollTo({ top: btn.offsetTop - (list.clientHeight - btn.clientHeight) / 2, behavior: "smooth" });
+      list.scrollTo({
+        top: btn.offsetTop - (list.clientHeight - btn.clientHeight) / 2,
+        behavior: "smooth",
+      });
     }
     if (list.scrollWidth > list.clientWidth + 1) {
-      list.scrollTo({ left: btn.offsetLeft - (list.clientWidth - btn.clientWidth) / 2, behavior: "smooth" });
+      list.scrollTo({
+        left: btn.offsetLeft - (list.clientWidth - btn.clientWidth) / 2,
+        behavior: "smooth",
+      });
     }
   }, [current]);
 
@@ -147,7 +154,10 @@ export function TestimonialsSection() {
                 aria-hidden
                 className="absolute right-6 top-6 h-16 w-16 text-primary/10 sm:right-10 sm:top-8 sm:h-24 sm:w-24"
               />
-              <div key={t.id} className="relative flex flex-1 flex-col animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <div
+                key={t.id}
+                className="relative flex flex-1 flex-col animate-in fade-in slide-in-from-bottom-2 duration-500"
+              >
                 <Stars value={t.rating} className="h-5 w-5" />
                 <blockquote className="mt-6 flex-1 text-lg font-medium leading-relaxed text-foreground sm:text-2xl sm:leading-relaxed">
                   “{t.review}”
@@ -155,8 +165,12 @@ export function TestimonialsSection() {
                 <div className="mt-8 flex flex-wrap items-center gap-4 border-t pt-6">
                   <Avatar t={t} className="h-14 w-14 text-xl" />
                   <div className="min-w-0 flex-1">
-                    <div className="truncate font-display text-lg font-semibold">{t.client_name}</div>
-                    {t.company && <div className="truncate text-sm text-muted-foreground">{t.company}</div>}
+                    <div className="truncate font-display text-lg font-semibold">
+                      {t.client_name}
+                    </div>
+                    {t.company && (
+                      <div className="truncate text-sm text-muted-foreground">{t.company}</div>
+                    )}
                   </div>
                   {t.project_name && (
                     <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">

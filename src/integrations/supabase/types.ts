@@ -1,8 +1,6 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.5";
   };
@@ -118,6 +116,35 @@ export type Database = {
           updated_at?: string;
         };
         Relationships: [];
+      };
+      blog_redirects: {
+        Row: {
+          blog_id: string;
+          created_at: string;
+          id: string;
+          old_slug: string;
+        };
+        Insert: {
+          blog_id: string;
+          created_at?: string;
+          id?: string;
+          old_slug: string;
+        };
+        Update: {
+          blog_id?: string;
+          created_at?: string;
+          id?: string;
+          old_slug?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "blog_redirects_blog_id_fkey";
+            columns: ["blog_id"];
+            isOneToOne: false;
+            referencedRelation: "blogs";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       blogs: {
         Row: {
@@ -1661,9 +1688,14 @@ export type Database = {
           description: string | null;
           icon: string | null;
           id: string;
+          image_display_mode: string;
+          image_fit: string;
           image_url: string | null;
           is_active: boolean;
           price: number;
+          show_in_grid: boolean;
+          show_in_story: boolean;
+          show_text: boolean;
           sort_order: number;
           title: string;
           updated_at: string;
@@ -1675,9 +1707,14 @@ export type Database = {
           description?: string | null;
           icon?: string | null;
           id?: string;
+          image_display_mode?: string;
+          image_fit?: string;
           image_url?: string | null;
           is_active?: boolean;
           price?: number;
+          show_in_grid?: boolean;
+          show_in_story?: boolean;
+          show_text?: boolean;
           sort_order?: number;
           title: string;
           updated_at?: string;
@@ -1689,9 +1726,14 @@ export type Database = {
           description?: string | null;
           icon?: string | null;
           id?: string;
+          image_display_mode?: string;
+          image_fit?: string;
           image_url?: string | null;
           is_active?: boolean;
           price?: number;
+          show_in_grid?: boolean;
+          show_in_story?: boolean;
+          show_text?: boolean;
           sort_order?: number;
           title?: string;
           updated_at?: string;

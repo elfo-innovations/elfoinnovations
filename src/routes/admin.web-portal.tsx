@@ -920,8 +920,10 @@ function ServicesEditor() {
         },
         {
           label: "sections",
-          render: (r: any) =>
-            [r.show_in_grid !== false && "Grid", r.show_in_story !== false && "Story"].filter(Boolean).join(" + ") || "Hidden from both",
+          render: (r) =>
+            [r.show_in_grid !== false && "Grid", r.show_in_story !== false && "Story"]
+              .filter(Boolean)
+              .join(" + ") || "Hidden from both",
         },
       ]}
       renderForm={(f, set) => (
@@ -968,23 +970,27 @@ function ServicesEditor() {
             <div>
               <Label className="text-xs">Image layout on /services scroll-story</Label>
               <Select
-                value={(f as any).image_display_mode || "full"}
-                onValueChange={(v) => set({ ...f, image_display_mode: v } as any)}
+                value={f.image_display_mode || "full"}
+                onValueChange={(v) => set({ ...f, image_display_mode: v })}
               >
                 <SelectTrigger className="mt-1">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="half">Half — image on the right half, text on the left</SelectItem>
-                  <SelectItem value="full">Full — image covers the whole card, text on top</SelectItem>
+                  <SelectItem value="half">
+                    Half — image on the right half, text on the left
+                  </SelectItem>
+                  <SelectItem value="full">
+                    Full — image covers the whole card, text on top
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
               <Label className="text-xs">Image fit</Label>
               <Select
-                value={(f as any).image_fit || "auto"}
-                onValueChange={(v) => set({ ...f, image_fit: v } as any)}
+                value={f.image_fit || "auto"}
+                onValueChange={(v) => set({ ...f, image_fit: v })}
               >
                 <SelectTrigger className="mt-1">
                   <SelectValue />
@@ -999,27 +1005,31 @@ function ServicesEditor() {
           </div>
           <div className="flex items-center gap-2 rounded-xl border p-3">
             <Switch
-              checked={(f as any).show_text !== false}
-              onCheckedChange={(v) => set({ ...f, show_text: v } as any)}
+              checked={f.show_text !== false}
+              onCheckedChange={(v) => set({ ...f, show_text: v })}
             />
             <Label>
-              Show text on the card (icon, title, description, button). Turn off for an image-only card — needs an image
-              uploaded above.
+              Show text on the card (icon, title, description, button). Turn off for an image-only
+              card — needs an image uploaded above.
             </Label>
           </div>
           <div className="rounded-xl border p-3">
-            <div className="text-xs font-semibold text-muted-foreground">Where should this appear?</div>
-            <div className="mt-2 flex items-center gap-2">
-              <Switch
-                checked={(f as any).show_in_grid !== false}
-                onCheckedChange={(v) => set({ ...f, show_in_grid: v } as any)}
-              />
-              <Label>Services grid (the card grid under "Everything you need to ship software")</Label>
+            <div className="text-xs font-semibold text-muted-foreground">
+              Where should this appear?
             </div>
             <div className="mt-2 flex items-center gap-2">
               <Switch
-                checked={(f as any).show_in_story !== false}
-                onCheckedChange={(v) => set({ ...f, show_in_story: v } as any)}
+                checked={f.show_in_grid !== false}
+                onCheckedChange={(v) => set({ ...f, show_in_grid: v })}
+              />
+              <Label>
+                Services grid (the card grid under "Everything you need to ship software")
+              </Label>
+            </div>
+            <div className="mt-2 flex items-center gap-2">
+              <Switch
+                checked={f.show_in_story !== false}
+                onCheckedChange={(v) => set({ ...f, show_in_story: v })}
               />
               <Label>Services scroll-story (the pinned full-screen cards)</Label>
             </div>

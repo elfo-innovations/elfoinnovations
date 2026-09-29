@@ -23,6 +23,21 @@ import {
 import { useInquiry } from "@/hooks/use-inquiry";
 import { cn } from "@/lib/utils";
 import { useEdgeColors } from "@/lib/image-edge-colors";
+import type { Tables } from "@/integrations/supabase/types";
+
+type ServiceCard = Pick<
+  Tables<"services">,
+  | "id"
+  | "title"
+  | "description"
+  | "icon"
+  | "image_url"
+  | "image_display_mode"
+  | "image_fit"
+  | "show_text"
+  | "cta_label"
+  | "cta_href"
+>;
 
 /**
  * Configurable brand constants — replace when the real assets/URL are ready.
@@ -47,13 +62,12 @@ const ICONS: Record<string, LucideIcon> = {
 
 // Shown only if no services are configured yet in /admin/web-portal?tab=services,
 // so the page never looks broken/empty for a first-time setup.
-// Typed loosely because the layout columns are added by migrations that may
-// not have been reflected into the generated Supabase types yet.
-const DEFAULTS: any[] = [
+const DEFAULTS: ServiceCard[] = [
   {
     id: "default-1",
     title: "AI Automation",
-    description: "Agents, copilots and workflow automation that remove busywork and compound your team's output.",
+    description:
+      "Agents, copilots and workflow automation that remove busywork and compound your team's output.",
     icon: "Bot",
     image_url: null,
     image_display_mode: "full",
@@ -65,7 +79,8 @@ const DEFAULTS: any[] = [
   {
     id: "default-2",
     title: "Web Development",
-    description: "Blazing-fast, accessible web platforms engineered on modern stacks and built to scale.",
+    description:
+      "Blazing-fast, accessible web platforms engineered on modern stacks and built to scale.",
     icon: "Code2",
     image_url: null,
     image_display_mode: "full",
@@ -77,7 +92,8 @@ const DEFAULTS: any[] = [
   {
     id: "default-3",
     title: "Mobile Apps",
-    description: "Native-feeling iOS and Android products with offline-first architecture and buttery motion.",
+    description:
+      "Native-feeling iOS and Android products with offline-first architecture and buttery motion.",
     icon: "Smartphone",
     image_url: null,
     image_display_mode: "full",
@@ -89,7 +105,8 @@ const DEFAULTS: any[] = [
   {
     id: "default-4",
     title: "UI/UX Design",
-    description: "Interface systems with luxury typography, deliberate spacing and conversion-first flows.",
+    description:
+      "Interface systems with luxury typography, deliberate spacing and conversion-first flows.",
     icon: "Palette",
     image_url: null,
     image_display_mode: "full",
@@ -118,13 +135,19 @@ function CardLink({
 }) {
   if (isExternal(href)) {
     return (
-      <a href={href} target="_blank" rel="noopener noreferrer" className={className} aria-label={label}>
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={className}
+        aria-label={label}
+      >
         {children}
       </a>
     );
   }
   return (
-    <Link to={href as any} className={className} aria-label={label}>
+    <Link to={href} className={className} aria-label={label}>
       {children}
     </Link>
   );
@@ -226,7 +249,15 @@ function CardImage({ src, alt, fit }: { src: string; alt: string; fit: "cover" |
 }
 
 /** Magnetic, glowing CTA used across the story cards. */
-function MagneticCta({ label, onClick, href }: { label: string; onClick?: () => void; href?: string | null }) {
+function MagneticCta({
+  label,
+  onClick,
+  href,
+}: {
+  label: string;
+  onClick?: () => void;
+  href?: string | null;
+}) {
   const ref = useRef<HTMLButtonElement>(null);
 
   const onMove = (e: React.MouseEvent) => {
@@ -274,7 +305,7 @@ export function ServicesScrollStory() {
           .order("sort_order")
       ).data,
   });
-  const CARDS = (data && data.length > 0 ? data : DEFAULTS) as any[];
+  const CARDS: ServiceCard[] = data && data.length > 0 ? data : DEFAULTS;
 
   // GSAP ScrollTrigger: pin the stage and stack cards cinematically.
   useEffect(() => {
@@ -419,7 +450,8 @@ export function ServicesScrollStory() {
                 : c.image_display_mode === "half"
                   ? "half"
                   : "full";
-            const fitPref = c.image_fit === "contain" || c.image_fit === "cover" ? c.image_fit : "auto";
+            const fitPref =
+              c.image_fit === "contain" || c.image_fit === "cover" ? c.image_fit : "auto";
             const fit: "cover" | "contain" =
               fitPref === "auto" ? (layout === "half" ? "contain" : "cover") : fitPref;
             const onImage = layout === "full";
@@ -437,7 +469,11 @@ export function ServicesScrollStory() {
                 {/* Whole-card image (full + image-only layouts) */}
                 {(layout === "full" || layout === "imageOnly") && (
                   <div className="absolute inset-0">
-                    <CardImage src={c.image_url} alt={`${c.title} at ELFO Innovations`} fit={fit} />
+                    <CardImage
+                      src={c.image_url!}
+                      alt={`${c.title} at ELFO Innovations`}
+                      fit={fit}
+                    />
                     {layout === "full" && (
                       // Dark scrim so the text on top stays readable on any picture.
                       <div className="absolute inset-0 bg-black/55 lg:bg-transparent lg:bg-gradient-to-r lg:from-black/80 lg:via-black/45 lg:to-transparent" />
@@ -456,7 +492,9 @@ export function ServicesScrollStory() {
                     <div
                       className={cn(
                         "flex h-12 w-12 items-center justify-center rounded-2xl",
-                        onImage ? "bg-white/15 text-white backdrop-blur" : "bg-primary/10 text-primary",
+                        onImage
+                          ? "bg-white/15 text-white backdrop-blur"
+                          : "bg-primary/10 text-primary",
                       )}
                     >
                       <Icon className="h-5 w-5" />
@@ -508,7 +546,11 @@ export function ServicesScrollStory() {
                       )}
                     </div>
                     {layout === "half" && (
-                      <CardImage src={c.image_url} alt={`${c.title} at ELFO Innovations`} fit={fit} />
+                      <CardImage
+                        src={c.image_url!}
+                        alt={`${c.title} at ELFO Innovations`}
+                        fit={fit}
+                      />
                     )}
                   </div>
                 )}

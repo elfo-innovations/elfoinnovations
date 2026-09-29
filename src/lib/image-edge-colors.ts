@@ -32,7 +32,10 @@ export function segmentColors(
   for (let s = 0; s < segments; s++) {
     const from = Math.floor((s / segments) * len);
     const to = Math.max(from + 1, Math.floor(((s + 1) / segments) * len));
-    let r = 0, g = 0, b = 0, n = 0;
+    let r = 0,
+      g = 0,
+      b = 0,
+      n = 0;
 
     for (let a = from; a < to; a++) {
       for (let d = 0; d < depth; d++) {

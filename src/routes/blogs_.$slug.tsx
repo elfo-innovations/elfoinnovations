@@ -1,11 +1,11 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PublicLayout } from "@/components/site/PublicLayout";
 import { ArrowLeft, Calendar, ListTree } from "lucide-react";
 import type { ReactNode } from "react";
-import { sanitizeHtml } from "@/lib/sanitize-html";
+import { sanitizeHtml, stripHtmlTags } from "@/lib/sanitize-html";
 import {
   Accordion,
   AccordionContent,
@@ -26,7 +26,9 @@ export const Route = createFileRoute("/blogs_/$slug")({
       b?.meta_title ||
       (b?.title ? `${b.title} | ELFO Innovations Blog` : "Article — ELFO Innovations");
     const desc =
-      b?.meta_description || b?.excerpt || "Insights from the ELFO Innovations engineering team.";
+      b?.meta_description ||
+      (b?.excerpt ? stripHtmlTags(b.excerpt) : "") ||
+      "Insights from the ELFO Innovations engineering team.";
     const img = b?.cover_image || undefined;
     return {
       meta: [
@@ -52,7 +54,7 @@ export const Route = createFileRoute("/blogs_/$slug")({
                 "@context": "https://schema.org",
                 "@type": "BlogPosting",
                 headline: b.title,
-                description: b.excerpt || desc,
+                description: b.excerpt ? stripHtmlTags(b.excerpt) : desc,
                 image: img,
                 datePublished: b.published_at,
                 dateModified: b.updated_at || b.published_at,
@@ -87,7 +89,7 @@ export const Route = createFileRoute("/blogs_/$slug")({
                       mainEntity: (b.faqs as BlogFaq[]).map((f) => ({
                         "@type": "Question",
                         name: f.question,
-                        acceptedAnswer: { "@type": "Answer", text: f.answer },
+                        acceptedAnswer: { "@type": "Answer", text: stripHtmlTags(f.answer) },
                       })),
                     }),
                   },
@@ -105,8 +107,22 @@ export const Route = createFileRoute("/blogs_/$slug")({
       .eq("slug", params.slug)
       .eq("is_published", true)
       .maybeSingle();
-    if (!data) throw notFound();
-    return data;
+    if (data) return data;
+
+    // Not found under this slug — maybe it used to live here and was renamed. If so,
+    // 301 to the current slug instead of just 404ing, which would throw away any SEO
+    // ranking / backlinks the old URL had built up.
+    const { data: redirectRow } = await supabase
+      .from("blog_redirects")
+      .select("blogs(slug, is_published)")
+      .eq("old_slug", params.slug)
+      .maybeSingle();
+    const target = (redirectRow as { blogs: { slug: string; is_published: boolean } | null } | null)
+      ?.blogs;
+    if (target?.slug && target.is_published) {
+      throw redirect({ to: "/blogs/$slug", params: { slug: target.slug }, statusCode: 301 });
+    }
+    throw notFound();
   },
   component: BlogPost,
   errorComponent: () => (
@@ -357,7 +373,12 @@ function BlogPost() {
         <h1 className="mt-3 font-display text-4xl font-bold tracking-tight sm:text-5xl">
           {b.title}
         </h1>
-        {b.excerpt && <p className="mt-4 text-lg text-muted-foreground">{b.excerpt}</p>}
+        {b.excerpt && (
+          <div
+            className="mt-4 text-lg text-muted-foreground [&_a]:text-primary [&_a]:underline [&_strong]:text-foreground"
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(b.excerpt) }}
+          />
+        )}
 
         {b.cover_image && (
           <div className="mt-8 overflow-hidden rounded-2xl border">
@@ -408,7 +429,10 @@ function BlogPost() {
               {(b.faqs as BlogFaq[]).map((f, i) => (
                 <AccordionItem key={i} value={`faq-${i}`}>
                   <AccordionTrigger>{f.question}</AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground">{f.answer}</AccordionContent>
+                  <AccordionContent
+                    className="prose prose-sm max-w-none text-muted-foreground [&_a]:text-primary [&_a]:underline [&_strong]:text-foreground"
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(f.answer) }}
+                  />
                 </AccordionItem>
               ))}
             </Accordion>

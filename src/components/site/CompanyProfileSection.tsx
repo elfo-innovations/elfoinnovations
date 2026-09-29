@@ -129,8 +129,7 @@ export function CompanyProfileSection() {
           <div className="glass-card relative overflow-hidden rounded-3xl p-6 sm:p-8">
             <div className="absolute inset-0 opacity-40 circuit-pattern" />
             <div className="relative flex h-full flex-col">
-              <div className="inline-flex w-fit items-center gap-2 rounded-full border bg-card px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-primary">
-              </div>
+              <div className="inline-flex w-fit items-center gap-2 rounded-full border bg-card px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-primary"></div>
               <h3 className="mt-4 font-display text-2xl font-bold sm:text-3xl">
                 See our full company profile
               </h3>

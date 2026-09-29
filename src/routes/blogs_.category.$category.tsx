@@ -20,7 +20,9 @@ async function loadArchive(categorySlug: string, page: number) {
     .select("category")
     .eq("is_published", true)
     .not("category", "is", null);
-  const names = Array.from(new Set((catRows ?? []).map((r) => r.category).filter(Boolean))) as string[];
+  const names = Array.from(
+    new Set((catRows ?? []).map((r) => r.category).filter(Boolean)),
+  ) as string[];
   const name = names.find((n) => slugify(n) === categorySlug);
   if (!name) throw notFound();
 
@@ -42,7 +44,9 @@ export const Route = createFileRoute("/blogs_/category/$category")({
   }),
   loaderDeps: ({ search }) => ({ page: search.page }),
   loader: ({ params, deps }) => loadArchive(params.category, deps.page),
-  head: ({ loaderData, params, search }: any) => {
+  head: (ctx) => {
+    const { loaderData, params } = ctx;
+    const search = ctx.match.search as ArchiveSearch;
     const name = loaderData?.name ?? "Category";
     const url = `${SITE}/blogs/category/${params.category}`;
     const title = `${name} Articles | ELFO Innovations Blog`;
@@ -78,7 +82,10 @@ export const Route = createFileRoute("/blogs_/category/$category")({
     <PublicLayout>
       <div className="mx-auto max-w-2xl px-4 py-32 text-center">
         <h1 className="font-display text-3xl font-bold">Category not found</h1>
-        <Link to="/blogs" className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-primary">
+        <Link
+          to="/blogs"
+          className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-primary"
+        >
           <ArrowLeft className="h-4 w-4" /> Back to all articles
         </Link>
       </div>
@@ -104,7 +111,10 @@ function CategoryArchive() {
     <PublicLayout>
       <section className="border-b bg-hero-radial">
         <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
-          <Link to="/blogs" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary">
+          <Link
+            to="/blogs"
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"
+          >
             <ArrowLeft className="h-4 w-4" /> All articles
           </Link>
           <h1 className="mt-4 font-display text-4xl font-bold tracking-tight sm:text-5xl">
@@ -152,10 +162,13 @@ function CategoryArchive() {
                   {b.title}
                 </h2>
                 {b.excerpt && (
-                  <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{stripHtmlTags(b.excerpt)}</p>
+                  <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+                    {stripHtmlTags(b.excerpt)}
+                  </p>
                 )}
                 <div className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-primary">
-                  Read article <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  Read article{" "}
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </div>
               </div>
             </Link>
@@ -183,7 +196,9 @@ function CategoryArchive() {
                 params={{ category }}
                 search={{ page: i + 1 }}
                 className={`flex h-9 w-9 items-center justify-center rounded-full border text-sm font-semibold ${
-                  i + 1 === page ? "border-primary bg-primary text-primary-foreground" : "hover:bg-accent/40"
+                  i + 1 === page
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "hover:bg-accent/40"
                 }`}
               >
                 {i + 1}
