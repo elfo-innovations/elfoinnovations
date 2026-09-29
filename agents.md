@@ -258,3 +258,104 @@ Do not attempt a full migration-history cleanup unless the project owner explici
 Until then, treat the existing drift as a known project constraint and follow the safe workflow above.
 
 Owner approval is required before any deliberate migration-history repair, migration repair command, database reset, or full drift cleanup.
+
+## 15. Supabase Drift Fix — Ask First, Do Not Auto-Run Per Task
+
+Fixing/registering Supabase migration drift (writing catch-up migrations, registering existing
+live objects in `schema_migrations`, etc.) is **expensive in agent time/tokens** and must **not**
+be attempted automatically as a side-effect of every unrelated task.
+
+* Do not go fix migration drift just because you happened to notice it while working on something
+  else.
+* If drift is noticed during an unrelated task, **note it and ask the project owner** whether to
+  fix it now or leave it — do not just do it.
+* The project owner will batch this: they will finish all other website issues/tasks first, and
+  only then explicitly say something like "now fix the Supabase drift."
+* When that explicit instruction comes, follow the **same audit + forward-only-migration workflow**
+  already established in section 14 ("Standard workflow for future database changes") and as
+  actually executed in the `2026-09-29` catch-up-migrations session (`HISTORY.md`) — inspect repo +
+  live DB, write forward-only `IF NOT EXISTS`/`DO $$ ... $$` guarded migrations, verify, update
+  `HISTORY.md`, commit, push. Do not reinvent the approach from scratch each time; do not treat it
+  as a brand-new investigation every session.
+
+## 16. Code Style — No `any`, Prettier-Formatted, Zero Lint Errors
+
+Every AI writing code in this repo must, without being reminded each time:
+
+* Never use the `any` type (including `as any` casts). If a type is genuinely unknown, define or
+  import the correct type — do not escape-hatch around it. If live schema drift is the reason a
+  cast seemed necessary, regenerate `src/integrations/supabase/types.ts` from the live schema
+  instead of casting (see the "catch-up migration" lesson below).
+* All code must already be Prettier-formatted (this repo has a `.prettierrc`) before it is
+  committed — run the formatter, don't hand-format and hope it matches.
+* Zero lint errors, no exceptions, before committing. Pre-existing baseline warnings (currently 11
+  `react-refresh` warnings, documented in `HISTORY.md`) are the only acceptable non-zero lint
+  output — do not introduce new errors or new warnings.
+
+## 17. CI/CD Must Pass on the First Push — Standalone Rule
+
+The single most common source of wasted follow-up sessions in this repo's `HISTORY.md` is: agent
+pushes code → CI fails → a second (sometimes third) message/session is spent just fixing CI. This
+is not acceptable as normal workflow. Before ever pushing:
+
+* Run the full local equivalent of what CI checks, in this order, and confirm all pass:
+  `npm run lint` → `npm run typecheck` → `npm run build` → `npm test --if-present`.
+* **Do not stop at the first one that passes and assume the rest are fine.** CI's own `Lint` step
+  gates `Typecheck`/`Build`/`Test` (they get skipped if `Lint` fails) — that means a real
+  typecheck-breaking change can hide behind a lint failure and only surface on the *next* CI run.
+  Run all four locally yourself every time, regardless of CI's own short-circuiting.
+* Treat a CI failure after push as a process failure to avoid next time, not a normal follow-up
+  step. If it happens anyway, fix it, then also add the root cause to section 18 below so it
+  doesn't recur.
+
+## 18. Common Recurring Errors — Read Before Writing Code
+
+These are errors that have already happened in this repo and had to be fixed in a *separate*
+follow-up session (wasting a full extra round-trip). Read this before writing code so you don't
+repeat them. Full detail for each is in the dated `HISTORY.md` entry referenced.
+
+* **Stale generated types after a live schema change.** If a column/table exists live but
+  `src/integrations/supabase/types.ts` wasn't regenerated, code ends up littered with `as any`
+  workarounds instead of real types, and `tsc --noEmit` breaks the moment anyone tries to remove
+  them. Regenerate `types.ts` from the live schema (project `gwkwpbrlrmqrsdjnnckb`) whenever schema
+  changes, rather than casting around it. (2026-09-29 entry.)
+* **Prettier formatting drift on hand-pasted/hand-edited files fails CI's `Lint` step**, which then
+  blocks `Typecheck`/`Build`/`Test` from running at all in that CI run — run the formatter, don't
+  eyeball it. (commit `9e4fdf4` / CI run `35863844721`.)
+* **TanStack Start's `head()` context does not put search params at `ctx.search`** — they live at
+  `ctx.match.search`. Using the wrong shape silently type-checks as `any` or breaks at runtime.
+  (2026-09-29 entry.)
+* **Making a route's search param required breaks every existing `<Link to="...">` that omits it.**
+  Prefer optional search params with a sane default (e.g. `page ?? 1`) unless the param is truly
+  mandatory everywhere it's linked from. (2026-09-29 entry.)
+* **Tightening CSP (`script-src`/`style-src`/`connect-src`/`worker-src`) without grepping `src/`
+  first breaks real, already-shipped features** — this repo loads Google Translate, Google Fonts,
+  GA4 (`googletagmanager.com`), and Cloudflare Turnstile from third-party hosts. Also: don't add
+  CSP directives like `'wasm-unsafe-eval'`/`worker-src blob:` speculatively — only add what the
+  code actually uses, and remove additions that have no discoverable justification in the repo.
+  (2026-09-22 / 2026-09-26 / 2026-09-29 entries.)
+* **`wrangler.toml [vars]` never reaches `import.meta.env.VITE_*` in the browser bundle** — it's a
+  Worker *runtime* binding only. Non-secret `VITE_*` values need a hardcoded literal fallback at
+  the point of use (see `src/integrations/supabase/client.ts`, `src/lib/turnstile-site-key.ts`).
+  Verify by grepping the actual built bundle, not by reading `wrangler.toml` and assuming.
+* **A committed catch-up migration for an already-live object does not register itself in Supabase's
+  migration history** — and re-running its DDL against production will error since the object
+  already exists. Register it explicitly; verify with `list_migrations` by name, not by diffing
+  schemas.
+* **Don't stand up a real/local Postgres server for tests in CI.** Use PGlite (in-process, WASM
+  Postgres — see `test/finding1/pricing.test.ts`) so tests run identically on any machine and in CI
+  with just `npm ci` / `npm test`, no service container, no env var.
+
+## 19. Minimize Redundant Command Runs (Token Usage)
+
+Once sections 16–18 above are being followed, do not still burn tool calls re-verifying the same
+thing repeatedly:
+
+* Run `npm run lint`, `npm run typecheck`, `npm run build`, `npm test --if-present` **once**, as a
+  final consolidated check right before committing/pushing — not after every small edit.
+* Don't run an npm command "just to see" if it's not something section 17 actually requires before
+  a push. If a command isn't needed to satisfy the CI-equivalent check above, don't run it.
+* If a check fails, fix and re-run only that check, not the full set again from scratch, unless the
+  fix could plausibly affect the others too (e.g. a type change can affect lint as well as
+  typecheck — rerun both in that case, but don't reflexively rerun build/test too if the change was
+  purely a type annotation with no logic change).

@@ -213,9 +213,8 @@ code — code with no understandable reason to exist).
 plus the 3 new migration files above.
 
 ### Commit
-- Committed locally (not pushed yet) — waiting on the project owner to say push, and on whether
-  to push straight to `main` or via a branch/PR (teammate may still be actively working on `main`
-  — check with them before choosing).
+- `a053506` — `fix(blog): review + fix friend's blog SEO push, catch-up migrations, remove unexplained CSP extras`
+- Status: Committed and pushed to `main` (confirmed present on `origin/main` as of 2026-09-29).
 
 ### Notes
 - The unrelated homepage UI changes in the same push (TestimonialsSection redesign,
