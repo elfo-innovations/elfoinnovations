@@ -306,7 +306,7 @@ is not acceptable as normal workflow. Before ever pushing:
   Run all four locally yourself every time, regardless of CI's own short-circuiting.
 * Treat a CI failure after push as a process failure to avoid next time, not a normal follow-up
   step. If it happens anyway, fix it, then also add the root cause to section 18 below so it
-  doesn't recur.
+  doesn't recur. and also dont even wait to check and run commands for check code itself should be that much optimize that it should not do such mistakes
 
 ## 18. Common Recurring Errors — Read Before Writing Code
 
