@@ -22,6 +22,8 @@ import { RichTextEditor } from "@/components/web-portal/RichTextEditor";
 import { CoverImageSuggestions } from "@/components/web-portal/CoverImageSuggestions";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 import { requireRole } from "@/lib/route-guards";
+import { deleteBlogContentImagesFromR2 } from "@/lib/media-upload.functions";
+import { extractBlogContentImageKeys } from "@/lib/blog-content-images";
 
 export const Route = createFileRoute("/admin/blogs")({
   beforeLoad: requireRole(["admin"]),
@@ -185,10 +187,24 @@ function AdminBlogs() {
     qc.invalidateQueries({ queryKey: ["admin-blogs"] });
   };
 
-  const del = async (id: string) => {
+  const del = async (b: Tables<"blogs">) => {
     if (!confirm("Delete this article?")) return;
-    const { error } = await supabase.from("blogs").delete().eq("id", id);
+    const { error } = await supabase.from("blogs").delete().eq("id", b.id);
     if (error) return toast.error(error.message);
+
+    // Best-effort cleanup of this post's inline blog-content images — don't
+    // block/fail the delete on this, the post row is already gone either way.
+    const { r2Keys, supabasePaths } = extractBlogContentImageKeys(b.content_html);
+    if (r2Keys.length) {
+      deleteBlogContentImagesFromR2({ data: { paths: r2Keys } }).catch(() => null);
+    }
+    if (supabasePaths.length) {
+      supabase.storage
+        .from("website-media")
+        .remove(supabasePaths)
+        .catch(() => null);
+    }
+
     toast.success("Deleted");
     qc.invalidateQueries({ queryKey: ["admin-blogs"] });
   };
@@ -305,7 +321,7 @@ function AdminBlogs() {
                   size="sm"
                   variant="ghost"
                   className="ml-auto text-destructive hover:bg-destructive/10"
-                  onClick={() => del(b.id)}
+                  onClick={() => del(b)}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>

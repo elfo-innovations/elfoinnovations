@@ -147,6 +147,48 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-10-01 PKT — AI Agent (Claude)
+
+### Context
+Follow-up to the R2 migration: Kabeer reported that deleting a blog post (and
+separately, deleting a Media Library item) left the underlying image still live
+at its `media.elfoinnovations.com` URL. The Media Library case turned out to be
+Cloudflare edge caching (resolved by a manual cache purge, not a code issue) —
+but blog-content images had no delete path at all, before or after the R2
+migration (same as the 76 pre-existing orphaned `blog-content/*` objects found
+earlier). This entry adds that missing cleanup.
+
+### Completed
+- New `src/lib/blog-content-images.ts` — pure regex helper
+  `extractBlogContentImageKeys(content_html)` that finds inline `blog-content/*`
+  image references in a blog's HTML, split into R2 keys (`media.elfoinnovations.com/...`)
+  and legacy Supabase signed-URL paths (`/object/sign/website-media/blog-content/...`,
+  URL-decoded). Does NOT touch `cover_image` — that's a separate media_library
+  asset with its own (already-existing) delete path.
+- New `deleteBlogContentImagesFromR2` server function in
+  `src/lib/media-upload.functions.ts` — same `requireSupabaseAuth` + `has_role
+  admin` pattern as the other upload/delete functions, best-effort per key
+  (one failed key doesn't block the others).
+- `src/routes/admin.blogs.tsx`: blog `del()` now takes the full blog row (was
+  just the id) so it has `content_html` available; after the `blogs` row is
+  deleted, it fires-and-forgets cleanup of any R2 and/or legacy Supabase
+  blog-content images that post referenced. Cleanup failure never blocks or
+  rolls back the actual post deletion (row is already gone either way).
+- Verified: `tsc --noEmit` clean, `eslint` clean, `prettier` applied, `npm run
+  build` succeeds.
+
+### Commit
+- Status: committed locally, pushed to `main` (see commit hash in `git log`).
+
+### Notes
+- This only cleans up images for *future* blog deletions — it does not
+  retroactively clean the 76 pre-existing orphaned `blog-content/*` objects
+  (still untouched, as instructed in earlier sessions).
+- Kabeer mentioned one more blog-related fix is pending — not yet described/
+  started as of this entry.
+
+---
+
 ## 2026-10-01 11:53 PKT — AI Agent (Claude)
 
 ### Context

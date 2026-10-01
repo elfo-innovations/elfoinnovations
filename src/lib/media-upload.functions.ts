@@ -85,6 +85,33 @@ export const deleteMediaLibraryR2Object = createServerFn({ method: "POST" })
   });
 
 /**
+ * Deletes a batch of blog-content images from R2 (called when a blog post
+ * that referenced them is deleted). Best-effort per key — one missing/failed
+ * key does not block the others; failures are reported back, not thrown.
+ */
+export const deleteBlogContentImagesFromR2 = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { paths: string[] }) => input)
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden");
+
+    const { deleteFromR2 } = await import("@/lib/r2.server");
+    const failed: string[] = [];
+    for (const path of data.paths) {
+      try {
+        await deleteFromR2(path);
+      } catch {
+        failed.push(path);
+      }
+    }
+    return { ok: failed.length === 0, failed };
+  });
+
+/**
  * Blog RichTextEditor inline image upload — replaces the old direct
  * Supabase Storage upload. Preserves the exact existing
  * `blog-content/{timestamp}-{filename}` key format. No media_library row
