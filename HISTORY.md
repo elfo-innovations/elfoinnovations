@@ -147,6 +147,47 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-10-01 PKT — AI Agent (Claude) — Full R2 URL migration completed (media_library + blog-content)
+
+### Context
+Project owner visually confirmed all 6 trial URLs (3 `media_library` + 3 of 4 `seo-services`
+blog-content images) load correctly live. Cleared to run the rest of the migration queued since
+the 2026-10-01 11:53 PKT session.
+
+### Completed
+- **`media_library`**: all remaining 70 rows updated via the same deterministic
+  `public_url = 'https://media.elfoinnovations.com/' || storage_path`. Verified via `RETURNING`
+  (70 rows) and a post-check count = 0 old rows remaining.
+- **`blogs.content_html`**: all remaining old-URL occurrences across 22 posts (89 new + the 4th,
+  deliberately-skipped `seo-services` image from the trial = 90 total) updated via a single
+  `regexp_replace(..., 'g')` UPDATE, NOT per-row string replacement this time — scaled up from the
+  trial's method after confirming via a SELECT-only dry run first (inspected full before/after
+  `content_html` for 3 posts) that the regex only touches the `<img src="...">` URL itself and
+  leaves everything else in the HTML byte-identical. Confirmed the old-URL `<key>` substring as it
+  appears in the signed URL (which can contain `%20`, commas, parens — original ChatGPT-generated
+  filenames) is already in the correct encoded form to become the new R2 URL path directly, with
+  no manual decode/re-encode needed — this is the same encoding the already-verified trial URLs
+  used. Verified total occurrence count = 90 before running, `RETURNING slug` showed 22 blogs
+  updated, and post-check count of blogs still matching the old URL pattern = 0.
+- Did NOT touch the 76 known-orphaned `blog-content/*` objects (never referenced by any blog) —
+  still explicitly out of scope, same as every prior session.
+
+### Commit
+- No application code changed — these were direct Supabase SQL writes via the MCP connector, not
+  a git commit.
+
+### Notes — what's left
+- **Spot-check a sample of the newly-migrated URLs** (a handful of `media_library` images + a few
+  of the 22 blog posts) — this sandbox cannot reach `media.elfoinnovations.com` to verify directly
+  (network egress restricted), same limitation as every prior R2 session.
+- **Real upload-through-the-app test** (new image via admin Media Library, new inline image via
+  the blog editor) to confirm the R2 Cloudflare Secrets work end-to-end for NEW uploads — still
+  not independently verified from any sandbox session so far.
+- The migration described in this entry is now fully complete for existing/historical media —
+  only future uploads and the orphaned-object cleanup (if ever requested) remain open.
+
+---
+
 ## 2026-10-01 14:13 PKT — AI Agent (Claude) — Real root cause of npm ci failure found + fixed (previous lockfile regen was incomplete)
 
 ### Context
