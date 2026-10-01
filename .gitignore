@@ -35,3 +35,6 @@ dist-ssr
 .env
 .env.local
 .env.*.local
+
+# R2 media migration script logs (may reference file names/paths, keep local-only)
+scripts/migration-log*.json
