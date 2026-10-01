@@ -1,23 +1,22 @@
-import { supabase } from "@/integrations/supabase/client";
+import { uploadMediaLibraryFile } from "@/lib/media-upload.functions";
+import { fileToBase64 } from "@/lib/file-to-base64";
 
+/**
+ * Uploads a file for the Media Library. Future uploads go to Cloudflare R2
+ * (see media-upload.functions.ts + r2.server.ts) instead of Supabase
+ * Storage; the public_url returned now points at the R2 custom domain.
+ * Existing media_library rows created before this change keep their old
+ * Supabase signed URLs untouched — this function only affects new uploads.
+ */
 export async function uploadToWebsiteMedia(file: File): Promise<string> {
-  const ext = file.name.split(".").pop() || "png";
-  const path = `${crypto.randomUUID()}.${ext}`;
-  const { error } = await supabase.storage
-    .from("website-media")
-    .upload(path, file, { upsert: false });
-  if (error) throw error;
-  const { data: signed } = await supabase.storage
-    .from("website-media")
-    .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
-  const url = signed?.signedUrl || "";
-  await supabase.from("media_library").insert({
-    file_name: file.name,
-    storage_path: path,
-    public_url: url,
-    file_type: file.type,
-    file_size: file.size,
-    folder: "website",
+  const file_base64 = await fileToBase64(file);
+  const { publicUrl } = await uploadMediaLibraryFile({
+    data: {
+      file_base64,
+      file_name: file.name,
+      file_type: file.type,
+      file_size: file.size,
+    },
   });
-  return url;
+  return publicUrl;
 }

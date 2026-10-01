@@ -28,6 +28,8 @@ import { slugify } from "@/lib/faq";
 import { toast } from "sonner";
 import { MediaPicker } from "@/components/web-portal/MediaPicker";
 import { uploadToWebsiteMedia } from "@/lib/media-upload";
+import { deleteMediaLibraryR2Object } from "@/lib/media-upload.functions";
+import { isR2Url } from "@/lib/r2-url";
 import { DateTimeField } from "@/components/web-portal/DateTimeField";
 import {
   DndContext,
@@ -2435,7 +2437,13 @@ function MediaLibrary() {
   };
   const del = async (m: Tables<"media_library">) => {
     if (!confirm("Delete media?")) return;
-    if (m.storage_path) await supabase.storage.from("website-media").remove([m.storage_path]);
+    if (isR2Url(m.public_url)) {
+      // Post-migration upload — lives in R2.
+      if (m.storage_path) await deleteMediaLibraryR2Object({ data: { path: m.storage_path } });
+    } else if (m.storage_path) {
+      // Legacy upload — still lives in Supabase Storage.
+      await supabase.storage.from("website-media").remove([m.storage_path]);
+    }
     await supabase.from("media_library").delete().eq("id", m.id);
     qc.invalidateQueries({ queryKey: ["media_library"] });
   };

@@ -147,6 +147,63 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-10-01 11:53 PKT — AI Agent (Claude)
+
+### Context
+Started a Supabase Storage → Cloudflare R2 migration for website/blog media (bucket
+`website-media`). This session covers ONLY the application-code half: routing FUTURE
+uploads to R2. The object-level copy of the 240 existing Supabase Storage objects into R2,
+and the custom domain `media.elfoinnovations.com` → R2 binding, were done separately
+(live infra, not from this sandbox) — not verifiable from here beyond independently
+confirming via SQL that Supabase still reports 240 objects / 73 `media_library` rows
+unchanged. No existing DB URLs were touched.
+
+### Completed
+- Added `aws4fetch` dependency and a new server-only R2 (S3-compatible) helper:
+  `src/lib/r2.server.ts` — `uploadToR2`, `deleteFromR2`. Reads `R2_ACCOUNT_ID`,
+  `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` from `process.env` (same convention as
+  `SUPABASE_SERVICE_ROLE_KEY` etc. — must be set as Cloudflare Secrets, never committed).
+- New server functions in `src/lib/media-upload.functions.ts`
+  (`uploadMediaLibraryFile`, `deleteMediaLibraryR2Object`, `uploadBlogContentImage`),
+  all behind `requireSupabaseAuth` + an inline `has_role admin` check (same pattern as
+  `account.functions.ts`). These are the only code paths with R2 credential access.
+- `src/lib/media-upload.ts`: `uploadToWebsiteMedia()` now base64-encodes the file and
+  calls `uploadMediaLibraryFile` instead of uploading to Supabase Storage directly.
+  Same function signature, same caller (`admin.web-portal.tsx`) — no call-site change.
+- `src/components/web-portal/RichTextEditor.tsx`: inline blog image upload now calls
+  `uploadBlogContentImage` instead of Supabase Storage. Exact same
+  `blog-content/{timestamp}-{filename}` key format preserved. No `media_library` row
+  created (matches prior behavior — inline blog images were never tracked there).
+- `src/routes/admin.web-portal.tsx` Media Library delete: now branches on
+  `isR2Url(m.public_url)` (new `src/lib/r2-url.ts`, pure/client-safe) — R2-hosted rows
+  delete via `deleteMediaLibraryR2Object`, legacy Supabase-hosted rows still delete via
+  the old `supabase.storage.remove()` path. Existing Supabase objects/URLs untouched.
+- New shared client helper `src/lib/file-to-base64.ts` (mirrors the existing local
+  helper in `DeveloperApplicationForm.tsx`) used by both upload call sites.
+- `wrangler.toml`: added a comment documenting the three new required secrets
+  (no actual values committed).
+- Verified: `tsc --noEmit` clean, `eslint` clean on changed files (and whole-project
+  lint still only has the same pre-existing unrelated warnings), `prettier --write` run
+  on all changed files.
+
+### Commit
+- Status: Changes are local and NOT pushed yet (no GitHub PAT available this session).
+
+### Notes
+- Legacy/existing Supabase-hosted media (71 `media_library` rows, 93 blog-content image
+  references) is untouched and must keep working as-is — do NOT run any URL rewrite
+  against `media_library.public_url` or `blogs.content_html` without explicit instruction.
+- The 76 orphaned `blog-content/*` objects (never referenced by any blog) were likewise
+  left alone — no delete logic exists for them, same as before this change.
+- R2 credentials (`R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`) still need
+  to be set as Cloudflare Worker Secrets (`wrangler secret put ...`) before a deploy will
+  actually work — they were not set during this session.
+- Next AI: do not assume the live R2 bucket's object count/contents match this repo's
+  state — that data lives outside this sandbox. Re-verify via Supabase SQL
+  (`storage.objects` / `media_library` counts) rather than trusting a prior summary.
+
+---
+
 ## 2026-09-29 PKT — AI Agent (Claude) — Reviewed + fixed friend's push (blog SEO overhaul)
 
 ### Context

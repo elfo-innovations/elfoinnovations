@@ -39,6 +39,13 @@ VITE_TURNSTILE_SITE_KEY = "0x4AAAAAAFAEFl_2o7TbU47Z"
 # Secrets persist across deploys automatically and should never be committed to the repo.
 # TURNSTILE_SECRET_KEY (Finding 12) follows the same rule: it belongs only in
 # Cloudflare Secrets, never in this file — see src/lib/turnstile-verify.server.ts.
+#
+# R2 (website-media bucket, future uploads only — see src/lib/r2.server.ts):
+# R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY must also be set as
+# "Secret" type in the Cloudflare dashboard, never here. Public custom domain
+# for served objects is hardcoded as https://media.elfoinnovations.com in
+# src/lib/r2.server.ts and src/lib/r2-url.ts (same pattern as the Supabase
+# URL constants above — not sensitive, so not worth a var/secret).
 
 # Custom domain — attach elfoinnovations.com via the Cloudflare dashboard
 # (Workers & Pages > elfo-innovations > Custom Domains) after first deploy,

@@ -17,7 +17,8 @@ import {
   Redo,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { uploadBlogContentImage } from "@/lib/media-upload.functions";
+import { fileToBase64 } from "@/lib/file-to-base64";
 import { getErrorMessage } from "@/lib/utils";
 
 const FORMAT_OPTIONS = [
@@ -100,25 +101,26 @@ export function RichTextEditor({
       if (!file) return;
       setUploading(true);
       try {
-        const path = `blog-content/${Date.now()}-${file.name}`;
-        const { error } = await supabase.storage
-          .from("website-media")
-          .upload(path, file, { upsert: false });
-        if (error) throw error;
-        const { data: signed } = await supabase.storage
-          .from("website-media")
-          .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
-        if (signed?.signedUrl) {
+        const file_base64 = await fileToBase64(file);
+        const { publicUrl } = await uploadBlogContentImage({
+          data: {
+            file_base64,
+            file_name: file.name,
+            file_type: file.type,
+            file_size: file.size,
+          },
+        });
+        if (publicUrl) {
           const suggestedAlt = file.name.replace(/\.[a-z0-9]+$/i, "").replace(/[-_]/g, " ");
           const altText =
             window.prompt("Alt text (describe the image for accessibility & SEO):", suggestedAlt) ??
             "";
           ref.current?.focus();
-          document.execCommand("insertImage", false, signed.signedUrl);
+          document.execCommand("insertImage", false, publicUrl);
           // execCommand("insertImage") has no way to set alt directly — tag the element
           // we just inserted by matching its src (unique per upload, so this is safe).
           if (ref.current) {
-            const imgs = ref.current.querySelectorAll(`img[src="${signed.signedUrl}"]`);
+            const imgs = ref.current.querySelectorAll(`img[src="${publicUrl}"]`);
             const inserted = imgs[imgs.length - 1] as HTMLImageElement | undefined;
             if (inserted) inserted.alt = altText;
           }
