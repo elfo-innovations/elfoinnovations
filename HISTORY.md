@@ -147,6 +147,69 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-10-01 14:13 PKT — AI Agent (Claude) — Real root cause of npm ci failure found + fixed (previous lockfile regen was incomplete)
+
+### Context
+The earlier same-day "CI lockfile fix" entry below (commit `7fe1c97`/`7daece3`) turned out to be
+insufficient — `npm ci` was still failing on a fresh checkout. A prior agent session investigated
+and got partway to the real cause (non-deterministic `sharp`/`miniflare`/`workerd` versions between
+installs) before running out of tokens mid-investigation. This session continued from that point,
+verified every claim empirically (not assumed), and found the actual root cause.
+
+### Root cause (confirmed, not speculative)
+`nitro@3.0.260603-beta` (pinned devDependency, required as a peer by
+`@lovable.dev/vite-tanstack-config@2.9.0`) depends on `env-runner@^0.1.9`, and that old `env-runner`
+has a `peerDependency` on `miniflare@^4.20260515.0`. This project's real Cloudflare stack uses
+`miniflare` 5.x (via `wrangler@4.145.0`), so npm can't satisfy that peer with the existing install —
+every `npm install` bolts on a **second, separate `miniflare@4.x` tree** at the root to satisfy it,
+pulling its own old `sharp@0.35.2`, an old dated `workerd` build, and **`undici@7.28.0` (6 high-severity
+CVEs)**. That orphan branch was never captured in `package-lock.json`, so `npm ci`'s strict check
+correctly rejected the lockfile as incomplete — reproduced deterministically, every time, on a clean
+checkout (not flaky). The *version drift* the previous session saw between installs (different dated
+`sharp`/`workerd`/`miniflare` builds minutes apart) was real but a downstream symptom: Cloudflare keeps
+publishing new dated builds on that old 4.x miniflare line, so the unpinned orphan branch resolves to
+a different exact version each time it's freshly installed — not npm/registry flakiness in general.
+
+### Fix
+- Tried bumping `nitro` to a newer version first (newer `env-runner` 0.2.x/0.3.x dropped the bad peer
+  dependency entirely) — but hit an npm semver quirk: `@lovable.dev/vite-tanstack-config`'s peer range
+  `nitro: ">=3.0.260603-beta"` only matches prerelease versions sharing the exact same
+  `[major,minor,patch]` tuple per node-semver's prerelease-range rules, so no newer dated `nitro`
+  prerelease can satisfy it without `--force`/`--legacy-peer-deps`. Reverted that approach.
+- **Actual fix**: added `"overrides": { "env-runner": "^0.3.3" }` to `package.json` — forces the fixed,
+  peer-dependency-free `env-runner` version transitively under the existing pinned `nitro`, with zero
+  footprint elsewhere. Confirmed only one `miniflare` tree exists after `npm install`, `npm audit` now
+  reports **0 vulnerabilities** (was 6 high before this session even started investigating further).
+- Regenerated `package-lock.json` from scratch (`rm -rf node_modules package-lock.json && npm install`,
+  then a second `npm install` pass — npm needed two passes to fully stabilize the nested-dedupe entries
+  in the lockfile, a known npm quirk, otherwise `npm ci` intermittently flagged unrelated nested `ajv`
+  6-vs-8 entries as missing).
+- The full regenerate moved `@tanstack/react-router`'s types forward within its existing caret range,
+  which broke `typecheck`: the library's `ErrorComponentProps.error` is now typed `unknown`, not
+  `Error`. Fixed `ErrorComponent` in `src/routes/__root.tsx` to accept `error: unknown` (it only ever
+  passes `error` to `console.error`, which accepts `unknown` — no cast or `any` needed).
+- Verified clean **twice in a row**: `rm -rf node_modules && npm ci` succeeds both times (proving the
+  lockfile is now actually self-consistent, not just passing by luck). `npm audit --audit-level=high`
+  → 0 vulnerabilities. `lint` → 0 errors (same 11 pre-existing `react-refresh` warnings). `typecheck` →
+  0 errors. `build` → succeeds. `test` → 7/7 passing.
+
+### Files changed
+`package.json` (added `overrides.env-runner`), `package-lock.json` (full regenerate),
+`src/routes/__root.tsx` (`ErrorComponent` error type: `Error` → `unknown`).
+
+### Commit
+- See commit hash in git log for this entry's commit.
+- Status: Committed and pushed to `main`.
+
+### Notes
+- `nitro` itself was left at its originally pinned `3.0.260603-beta` — only `env-runner` (a transitive
+  dependency, pulled in purely as dev/build tooling, not used at runtime) was overridden.
+- If a future `npm audit`/CI failure mentions `env-runner`, `miniflare@4.x`, or a duplicate `miniflare`
+  tree reappearing, check whether the `overrides` entry in `package.json` is still present before
+  re-investigating from scratch — this is the permanent fix, not a one-time patch.
+
+---
+
 ## 2026-10-01 PKT — AI Agent (Claude) — CI lockfile fix + URL migration trial (3+3)
 
 ### Context
