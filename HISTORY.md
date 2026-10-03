@@ -147,6 +147,53 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-10-03 PKT — AI Agent (Claude) — Migrated 30 blogs' cover_image from Supabase signed URLs to R2
+
+### Context
+Follow-up to the Session 4 open item in the blog-404 handoff doc: 30 published blogs still had
+`cover_image` pointing at Supabase Storage signed URLs (`...supabase.co/storage/v1/object/sign/
+website-media/<key>?token=...`) instead of the R2 custom domain. Signed URLs can expire/be
+revoked — latent breakage risk, not an active bug.
+
+### Completed
+- Project owner ran `npx tsx --env-file=.env scripts/migrate-media-to-r2.ts --dry-run` locally
+  (after pulling latest `main`). Result: **all 240 objects in the `website-media` bucket (71
+  root-level + 169 `blog-content/*`) already exist in R2 with matching sizes** — every one
+  reported `SKIP (already in R2, size matches)`, 0 would-copy, 0 failed. This included all 30
+  of the cover-image keys needed for this task (verified `f4c26b09-a342-445a-ac4b-9e504f6cb87b.png`
+  specifically, called out by name in the prior handoff).
+- This confirmed, per the handoff doc's "open question," that the earlier full-bucket R2
+  migration did cover every root-level object regardless of whether it had a `media_library`
+  row — no need to re-run the script live.
+- With R2 existence confirmed, ran the DB-only rewrite exactly as specified in the handoff
+  (dry-run `select` first, inspected all 30 rows, then the `update`):
+  ```sql
+  update public.blogs
+  set cover_image = 'https://media.elfoinnovations.com/' ||
+                     substring(cover_image from 'website-media/([^?]+)')
+  where cover_image like '%supabase.co%'
+  returning slug, cover_image;
+  ```
+  30 rows updated. Post-check `select count(*) from public.blogs where cover_image like
+  '%supabase.co%'` → `0`.
+- Pure Supabase SQL write via MCP (`execute_sql`) — no git commit, no code change, no deploy,
+  no deletion from the old `website-media` Supabase bucket (kept as the rollback copy per prior
+  sessions' rule).
+
+### Commit
+- N/A — DB-only change, nothing to commit to git.
+
+### Notes
+- Do NOT touch `content_html`/`content_md` again — those 22 posts' inline images were already
+  fully migrated in the 2026-10-01 session.
+- 76 orphaned `blog-content/*` R2 objects — still deferred, still list-first/approve-second,
+  unaffected by this change.
+- The original blog-404 bug (Session 3, commits `648f351`/`a286229`) remains the only code-level
+  fix from that line of work; this entry closes out the lower-priority cover_image follow-up
+  from Session 4 of the same handoff doc.
+
+---
+
 ## 2026-10-03 PKT — AI Agent (Claude) — Blog detail loader now surfaces real Supabase errors instead of a fake 404
 
 ### Context
