@@ -345,6 +345,11 @@ repeat them. Full detail for each is in the dated `HISTORY.md` entry referenced.
 * **Don't stand up a real/local Postgres server for tests in CI.** Use PGlite (in-process, WASM
   Postgres — see `test/finding1/pricing.test.ts`) so tests run identically on any machine and in CI
   with just `npm ci` / `npm test`, no service container, no env var.
+* **In PL/pgSQL functions, never name a variable the same as a column it is compared with.** A
+  `DECLARE old_slug text` collided with the `old_slug` column in `DELETE ... WHERE old_slug = ...`
+  and failed with "column reference is ambiguous" (`rename_blog_category`, 2026-10-03). Prefix
+  variables (`v_old_slug`) and test new functions on live inside a rolled-back transaction or a
+  `DO` block that ends in `RAISE EXCEPTION` before shipping them.
 
 ## 19. Minimize Redundant Command Runs (Token Usage)
 

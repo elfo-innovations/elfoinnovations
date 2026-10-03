@@ -147,6 +147,26 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-10-03 PKT — AI Agent (Claude) — HANDOFF: end-of-session state + open items (blog work)
+
+### State of main
+- HEAD `6901896` (pushed). Session commits, oldest first: `f3b6e2f` cover image alt text + in-place category filter on /blogs; `1d7d276` `blog_categories` table; `0bd12c0` Web Portal "Blog Categories" tab (add/rename/delete); `6901896` 301 redirects for renamed categories. Each has its own entry above. All migrations were also applied to live Supabase (project gwkwpbrlrmqrsdjnnckb); lint (0 errors / 11 baseline warnings), typecheck, build, tests passed locally before every push. CI/Cloudflare deploy results were NOT checked.
+- Nothing from the earlier agent's unpushed sandbox work was reused; everything was redone from the pushed repo. Its live DB change (`blogs.cover_image_alt` column) was kept and verified, not re-run.
+
+### Open items (nothing below is started)
+1. **Abandoned-upload cleanup is NOT implemented.** Verified in code: cleanup of unused `blog-content/*` images exists only inside `save()` in `admin.blogs.tsx` (commit `4aacec7`). Cancel button, dialog X/Esc/outside-click all just `setOpen(false)`; `sessionUploadedKeys` is never read on close. Also no cleanup when a save fails. Fix idea (not applied): reconcile `sessionUploadedKeys` against the saved content on dialog close, keeping images that were in the original saved post.
+2. **Current orphan count in R2 is unknown.** No R2 credentials or object-listing tool were available. Known: 92 distinct inline images are referenced by the 31 blogs now. Orphans = (R2 `blog-content/*` objects) minus 92. Get the list with `scripts/migrate-media-to-r2.ts --dry-run` run locally (needs `.env`), or a dashboard listing, then diff. List-first, approve-second; do not delete without the owner's go-ahead.
+3. **Direct DB edits of category names skip the redirect.** Renames must go through the Web Portal tab (`rename_blog_category`) so posts are updated and a 301 is recorded. A raw SQL/table-editor rename does neither. Owner was offered a DB-level fix (trigger); not yet answered.
+4. **Public /blogs pills** show only categories with a published post (by design). Owner may want all categories shown — one-line change.
+5. **Stray category "vs"** exists (came from an existing post); live category "SaaS" was renamed "SAAS" by the owner via the new tab (slug unchanged, no redirect needed).
+6. Supabase migration drift (AGENTS.md section 14/15) untouched, as instructed: live migrations were applied via `apply_migration` under their own version stamps, which differ from the repo file names.
+
+### Notes for the next agent
+- Read AGENTS.md sections 14-19 first. GitHub PAT is supplied by the owner per session; never store it in the repo, remote URL, or memory.
+- Category slugs: `slugify()` in `src/lib/faq-utils.ts` and SQL `blog_category_slug()` must stay in sync.
+
+---
+
 ## 2026-10-03 PKT — AI Agent (Claude) — 301 redirects for renamed blog categories
 
 ### Completed
