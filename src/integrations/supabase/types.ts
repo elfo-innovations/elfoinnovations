@@ -135,6 +135,35 @@ export type Database = {
         };
         Relationships: [];
       };
+      blog_category_redirects: {
+        Row: {
+          category_id: string;
+          created_at: string;
+          id: string;
+          old_slug: string;
+        };
+        Insert: {
+          category_id: string;
+          created_at?: string;
+          id?: string;
+          old_slug: string;
+        };
+        Update: {
+          category_id?: string;
+          created_at?: string;
+          id?: string;
+          old_slug?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "blog_category_redirects_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "blog_categories";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       blog_redirects: {
         Row: {
           blog_id: string;
@@ -1884,7 +1913,9 @@ export type Database = {
     };
     Functions: {
       current_user_is_admin: { Args: never; Returns: boolean };
+      blog_category_slug: { Args: { p_name: string }; Returns: string };
       delete_blog_category: { Args: { p_id: string }; Returns: number };
+      resolve_blog_category_redirect: { Args: { p_old_slug: string }; Returns: string };
       rename_blog_category: { Args: { p_id: string; p_name: string }; Returns: number };
       has_role: {
         Args: {

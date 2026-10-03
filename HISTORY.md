@@ -147,6 +147,21 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-10-03 PKT — AI Agent (Claude) — 301 redirects for renamed blog categories
+
+### Completed
+- Renaming a category changes its URL (`/blogs/category/<slug>`), so old URLs would 404. Added `blog_category_redirects` (old_slug -> category_id, admin-only RLS, cascades on category delete), `blog_category_slug()` (SQL twin of `slugify()` in `faq-utils.ts`), and public `resolve_blog_category_redirect(old_slug)` (SECURITY DEFINER, returns the CURRENT category name only).
+- `rename_blog_category()` now records the old slug (and removes any redirect whose source equals the new slug, e.g. renaming back). Variables are `v_old_slug`/`v_new_slug` because plain `old_slug` clashed with the column — caught by a live rollback test.
+- `blogs_.category.$category.tsx`: unknown slug -> look up redirect -> `301` to the current category page (only if that page has published posts), else 404 as before.
+- Live migrations applied: `blog_category_redirects` and `blog_category_redirects_fix_rename_vars`; repo file `20261003120000_blog_category_redirects.sql` contains the final corrected version. Tested in a rolled-back transaction on live (rename -> redirect resolves -> rename back clears it).
+- lint (0 errors, 11 baseline warnings), typecheck, build, tests pass.
+
+### Notes
+- Deleting a category deletes its redirects (cascade); its old URL then 404s, which is intended.
+- Category slugs of existing categories changed? "SaaS" was observed as "SAAS" on live (renamed by the owner via the new tab); its slug is unchanged (`saas`), so no redirect needed.
+
+---
+
 ## 2026-10-03 PKT — AI Agent (Claude) — Web Portal "Blog Categories" tab (add / rename / delete)
 
 ### Completed

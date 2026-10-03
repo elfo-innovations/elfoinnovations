@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PublicLayout } from "@/components/site/PublicLayout";
@@ -24,7 +24,23 @@ async function loadArchive(categorySlug: string, page: number) {
     new Set((catRows ?? []).map((r) => r.category).filter(Boolean)),
   ) as string[];
   const name = names.find((n) => slugify(n) === categorySlug);
-  if (!name) throw notFound();
+  if (!name) {
+    // A renamed category keeps its old URL alive as a 301 to the current one, instead of
+    // 404ing and throwing away whatever ranking/backlinks the old URL had.
+    const { data: currentName } = await supabase.rpc("resolve_blog_category_redirect", {
+      p_old_slug: categorySlug,
+    });
+    const target = currentName ? slugify(currentName) : "";
+    if (target && target !== categorySlug && names.some((n) => slugify(n) === target)) {
+      throw redirect({
+        to: "/blogs/category/$category",
+        params: { category: target },
+        search: { page },
+        statusCode: 301,
+      });
+    }
+    throw notFound();
+  }
 
   const from = (page - 1) * PAGE_SIZE;
   const { data, count } = await supabase
