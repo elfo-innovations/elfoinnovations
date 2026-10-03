@@ -35,6 +35,7 @@ export function RichTextEditor({
   onChange,
   variant = "full",
   placeholder,
+  onImageUploaded,
 }: {
   value: string;
   onChange: (html: string) => void;
@@ -42,6 +43,12 @@ export function RichTextEditor({
    * excerpt or a FAQ answer, where headings/images/lists don't make sense. */
   variant?: "full" | "inline";
   placeholder?: string;
+  /** Fired right after a blog-content image finishes uploading to R2, with its bare
+   * storage key (e.g. "blog-content/123-foo.png") — regardless of whether the image
+   * stays in the content or gets removed again before the post is saved. Lets the
+   * caller track every upload made during this editing session so it can clean up
+   * anything that ends up unused, instead of leaving it orphaned in R2 forever. */
+  onImageUploaded?: (path: string) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -102,7 +109,7 @@ export function RichTextEditor({
       setUploading(true);
       try {
         const file_base64 = await fileToBase64(file);
-        const { publicUrl } = await uploadBlogContentImage({
+        const { publicUrl, path } = await uploadBlogContentImage({
           data: {
             file_base64,
             file_name: file.name,
@@ -111,6 +118,10 @@ export function RichTextEditor({
           },
         });
         if (publicUrl) {
+          // Report the upload immediately — before the user decides whether to keep
+          // it — so the caller can still clean it up from R2 even if it's removed
+          // from the content (or the whole post is abandoned) before ever saving.
+          onImageUploaded?.(path);
           const suggestedAlt = file.name.replace(/\.[a-z0-9]+$/i, "").replace(/[-_]/g, " ");
           const altText =
             window.prompt("Alt text (describe the image for accessibility & SEO):", suggestedAlt) ??

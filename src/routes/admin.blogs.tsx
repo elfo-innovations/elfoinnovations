@@ -60,6 +60,7 @@ const EMPTY = {
   excerpt: "",
   content_md: "",
   content_html: "",
+  original_content_html: "" as string | null,
   cover_image: "",
   tags: "",
   category: "",
@@ -80,6 +81,11 @@ function AdminBlogs() {
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState<typeof EMPTY>({ ...EMPTY });
   const [customCategory, setCustomCategory] = useState(false);
+  // Every blog-content/* R2 key uploaded via the Content editor during the CURRENT
+  // open dialog session (new or edit), regardless of whether it's kept in the final
+  // content. Reset whenever the dialog (re)opens. Used at save time to clean up
+  // anything uploaded-then-removed before ever being saved — see save() below.
+  const [sessionUploadedKeys, setSessionUploadedKeys] = useState<string[]>([]);
 
   const { data } = useQuery({
     queryKey: ["admin-blogs"],
@@ -98,6 +104,7 @@ function AdminBlogs() {
   const startNew = () => {
     setForm({ ...EMPTY });
     setCustomCategory(false);
+    setSessionUploadedKeys([]);
     setOpen(true);
   };
   const edit = (b: Tables<"blogs">) => {
@@ -109,6 +116,7 @@ function AdminBlogs() {
       excerpt: b.excerpt ?? "",
       content_md: b.content_md ?? "",
       content_html: b.content_html ?? "",
+      original_content_html: b.content_html ?? "",
       cover_image: b.cover_image ?? "",
       tags: (b.tags ?? []).join(", "),
       category: b.category ?? "",
@@ -123,6 +131,7 @@ function AdminBlogs() {
       original_published_at: b.published_at ?? null,
     });
     setCustomCategory(false);
+    setSessionUploadedKeys([]);
     setOpen(true);
   };
 
@@ -180,6 +189,22 @@ function AdminBlogs() {
         .from("blog_redirects")
         .upsert({ old_slug: form.original_slug, blog_id: form.id }, { onConflict: "old_slug" });
       if (redirectError) console.error("Failed to record slug redirect:", redirectError);
+    }
+
+    // Best-effort cleanup of blog-content images that are no longer used, from two
+    // sources: (1) anything uploaded during this editing session (new or edit) that
+    // didn't end up in the final content — e.g. added, then swapped for a different
+    // image before saving; (2) for edits only, anything that was in the post BEFORE
+    // this edit but got removed. Never blocks/fails the save either way.
+    const referencedNow = extractBlogContentImageKeys(payload.content_html).r2Keys;
+    const fromOriginal = form.id
+      ? extractBlogContentImageKeys(form.original_content_html).r2Keys
+      : [];
+    const keysToClean = Array.from(new Set([...sessionUploadedKeys, ...fromOriginal])).filter(
+      (k) => !referencedNow.includes(k),
+    );
+    if (keysToClean.length) {
+      deleteBlogContentImagesFromR2({ data: { paths: keysToClean } }).catch(() => null);
     }
 
     toast.success(form.id ? "Article updated" : "Article created");
@@ -457,6 +482,7 @@ function AdminBlogs() {
               <RichTextEditor
                 value={form.content_html}
                 onChange={(html) => setForm({ ...form, content_html: html })}
+                onImageUploaded={(path) => setSessionUploadedKeys((keys) => [...keys, path])}
               />
               <p className="text-xs text-muted-foreground">
                 Use the "Paragraph" dropdown to pick H1–H5 for a heading, then type — no markdown

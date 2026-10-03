@@ -138,5 +138,9 @@ export const uploadBlogContentImage = createServerFn({ method: "POST" })
       data.file_type || "application/octet-stream",
     );
 
-    return { publicUrl };
+    // `path` (the bare R2 key, e.g. "blog-content/123-foo.png") is returned alongside
+    // publicUrl so the editor can track exactly what it uploaded this session — needed
+    // to clean up images that get uploaded then removed again before the post is saved,
+    // see RichTextEditor's onImageUploaded and admin.blogs.tsx's sessionUploadedKeys.
+    return { publicUrl, path };
   });

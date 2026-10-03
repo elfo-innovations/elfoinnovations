@@ -147,6 +147,67 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-10-03 PKT — AI Agent (Claude) — Blog editor now auto-cleans unused blog-content/* images on save (fixes the orphan source)
+
+### Context
+Follow-up to the orphaned blog-content/* cleanup session earlier today. That session deleted the
+existing 76-77 orphans but didn't stop new ones from forming — every image uploaded via the
+Content editor's image button (`RichTextEditor`'s `addImage()`) lands in R2 immediately on file
+select, regardless of whether it's kept in the post or ever gets saved. Two concrete gaps:
+1. **Editing an existing post:** remove an inline image from the body, save → the old image stays
+   in R2 forever (nothing diffed old vs new content on save; only full-post delete had cleanup).
+2. **Writing a new post, or editing further:** add image A, remove it, add image B, then save →
+   image A was already uploaded to R2 the moment it was picked, and nothing tracked that it never
+   made it into the final content.
+
+### What changed
+- `src/lib/media-upload.functions.ts` — `uploadBlogContentImage` now returns `{ publicUrl, path }`
+  instead of just `{ publicUrl }`, so callers get the bare R2 key without having to re-parse it
+  out of the URL.
+- `src/components/web-portal/RichTextEditor.tsx` — new optional prop `onImageUploaded?: (path:
+  string) => void`, fired right after every successful blog-content upload, independent of
+  whether the image is later removed. Only the `variant="full"` toolbar can upload images at all
+  (confirmed: `inline` variant, used for Excerpt and FAQ answers, has no image button), so this
+  only matters for the one "Content" editor instance.
+- `src/routes/admin.blogs.tsx`:
+  - New `sessionUploadedKeys` state: every key uploaded during the *currently open* dialog
+    session (new or edit), reset in both `startNew()` and `edit()`.
+  - New `original_content_html` field on the form (set in `edit()` only, snapshot of the post's
+    content *before* this editing session's changes — mirrors the existing `original_slug`
+    pattern).
+  - Content `RichTextEditor` instance now passes `onImageUploaded` to push onto
+    `sessionUploadedKeys`.
+  - `save()`, right after a successful insert/update: computes `referencedNow` (keys still in the
+    final `content_html`), unions `sessionUploadedKeys` with — for edits only — the keys that were
+    in `original_content_html`, subtracts `referencedNow`, and best-effort deletes whatever's left
+    via the existing `deleteBlogContentImagesFromR2` (same non-blocking pattern already used in
+    `del()` — cleanup failing never fails the save).
+
+This covers both gaps with one mechanism: case 1 (pre-existing image removed during an edit) is
+caught by the `original_content_html` diff; case 2 (uploaded-then-swapped within one session, new
+or edit) is caught by `sessionUploadedKeys`.
+
+### Known remaining gap (not fixed, intentionally)
+If someone uploads an image via the Content editor and then **closes the dialog without ever
+clicking Save** (Cancel, or just navigating away), that upload is still orphaned — no save event
+fires, so `sessionUploadedKeys` never gets reconciled against anything. This is a narrower, rarer
+case than the two fixed above (requires actively abandoning an edit after uploading) and was
+deliberately left out of this change to keep it focused. If it's worth closing later, the fix
+would be reconciling `sessionUploadedKeys` on dialog close/cancel too, not just on save.
+
+### Verification
+Ran the full required local chain before this commit — `lint` → `typecheck` → `build` → `test` —
+all four green: 0 new lint errors (still exactly the 11 pre-existing `react-refresh` baseline
+warnings, 2 new prettier formatting issues from this change were auto-fixed via `eslint --fix`
+before the final check), `tsc --noEmit` clean, build succeeded (only pre-existing unrelated
+`framer-motion` "use client" bundler warnings), all 4 test files / 12 tests passed unchanged.
+
+### Commit
+- `<to be filled in after commit>` — "feat(blog): auto-cleanup unused blog-content/* R2 images on
+  post save, not just on post delete"
+
+---
+
 ## 2026-10-03 PKT — AI Agent (Claude) — Orphaned blog-content/* R2 cleanup: in progress, how to revert if an image breaks
 
 ### Context
