@@ -429,10 +429,9 @@ function BlogPost() {
               {(b.faqs as BlogFaq[]).map((f, i) => (
                 <AccordionItem key={i} value={`faq-${i}`}>
                   <AccordionTrigger>{f.question}</AccordionTrigger>
-                  <AccordionContent
-                    className="prose prose-sm max-w-none text-muted-foreground [&_a]:text-primary [&_a]:underline [&_strong]:text-foreground"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(f.answer) }}
-                  />
+                  <AccordionContent className="prose prose-sm max-w-none text-muted-foreground [&_a]:text-primary [&_a]:underline [&_strong]:text-foreground">
+                    <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(f.answer) }} />
+                  </AccordionContent>
                 </AccordionItem>
               ))}
             </Accordion>

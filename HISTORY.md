@@ -147,6 +147,63 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-10-03 PKT — AI Agent (Claude) — Fixed "Article not found" on blog detail pages (FAQ accordion render crash)
+
+### Context
+Project owner reported every single-blog page (`/blogs/<slug>`) showing "Article not found", while
+the listing page and admin editor worked fine. Several earlier sessions (this same day, see the
+chat-side handoff doc `next-agent-blog-404-fix.md` the owner keeps outside this repo) suspected the
+R2 media migration, a dependency/lockfile regression from the `fe38582`/`f94405a` CI fix, or Supabase
+RLS/data corruption. All of those were investigated and ruled out with evidence (RLS/grants fine,
+anon queries returning rows, deployed Worker bundle matching the repo, DB fields intact).
+
+### Root cause
+`a053506` ("review + fix friend's blog SEO push, catch-up migrations") changed the blog FAQ
+accordion in `src/routes/blogs_.$slug.tsx` to pass `dangerouslySetInnerHTML` directly as a prop on
+`<AccordionContent>`. `AccordionContent` (`src/components/ui/accordion.tsx`) always wraps its own
+`children` in an inner `<div>` and spreads `...props` onto the underlying Radix element — so React
+received both `children` and `dangerouslySetInnerHTML` on the same element and threw: *"Can only set
+one of `children` or `props.dangerouslySetInnerHTML`."* This happened on initial SSR, so **any
+published blog with a non-empty `faqs` array crashed its own detail-page render** and surfaced as the
+generic 404. Blogs with no FAQs (e.g. `seo-services`, and any freshly-created test post, since authors
+hadn't filled in FAQs yet) were never affected, which is why the bug looked intermittent/post-specific
+rather than global. R2 URLs, cover images (still on Supabase Storage for older posts), and the
+dependency bump were all unrelated red herrings.
+
+### Completed
+- `src/routes/blogs_.$slug.tsx`: moved `dangerouslySetInnerHTML` off `<AccordionContent>` onto a
+  plain inner `<div>` inside it (same pattern already used for `excerpt`/`content_html` elsewhere in
+  this file).
+- Added `test/blog-faq/accordion-render.test.ts`: a regression test asserting the fixed FAQ markup
+  renders without throwing, plus a locked-in test proving the original (buggy) markup does throw —
+  so this can't silently regress again.
+- `vitest.config.ts`: added a `"@"` → `src` resolve alias (mirrors the app's own Vite alias) so tests
+  can import components under `src/components/ui/*` that use `@/...` imports, without pulling in the
+  full `@lovable.dev/vite-tanstack-config` plugin stack.
+- No DB, R2, `media_library`, or dependency/lockfile changes.
+
+### Checks
+- `npm run typecheck` — 0 errors.
+- `npm run lint` — 0 errors, same 11 pre-existing baseline warnings as before this change (all
+  unrelated `react-refresh/only-export-components` warnings in files this change didn't touch).
+- `npm test` — 9/9 passing (3 pre-existing suites + the new one).
+- `npm run build` — succeeds.
+
+### Commit
+- See commit touching `src/routes/blogs_.$slug.tsx`, `vitest.config.ts`,
+  `test/blog-faq/accordion-render.test.ts` immediately following this entry in `git log`.
+- Status: Committed and pushed.
+
+### Notes — what's left (unchanged from prior sessions, still low priority)
+- Older blogs' `cover_image` still points at Supabase Storage signed URLs rather than R2 — cosmetic/
+  expiry risk, unrelated to this bug, not touched here.
+- 76 orphaned `blog-content/*` R2 objects — cleanup still deferred, list-first/approve-second.
+- The loader in the same file still doesn't destructure `error` from its Supabase calls (a real
+  Supabase error would still silently become a generic `notFound()`). Not the cause of this bug, but
+  worth a separate, approved follow-up.
+
+---
+
 ## 2026-10-01 PKT — AI Agent (Claude) — Full R2 URL migration completed (media_library + blog-content)
 
 ### Context
