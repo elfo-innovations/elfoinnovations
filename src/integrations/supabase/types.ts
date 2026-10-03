@@ -1884,6 +1884,8 @@ export type Database = {
     };
     Functions: {
       current_user_is_admin: { Args: never; Returns: boolean };
+      delete_blog_category: { Args: { p_id: string }; Returns: number };
+      rename_blog_category: { Args: { p_id: string; p_name: string }; Returns: number };
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"];

@@ -147,6 +147,20 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-10-03 PKT — AI Agent (Claude) — Web Portal "Blog Categories" tab (add / rename / delete)
+
+### Completed
+- New Web Portal tab "Blog Categories" (`admin.web-portal.tsx`, `BlogCategoriesEditor`): add, rename (inline), delete with confirm; shows per-category article counts (total / published).
+- Migration `20261003110000_blog_category_rename_delete.sql` (ALSO applied live as `blog_category_rename_delete`): `rename_blog_category(p_id, p_name)` renames and updates `blogs.category` on matching posts atomically; `delete_blog_category(p_id)` sets those posts' category to NULL then deletes the row. Both SECURITY INVOKER, so existing admin-only RLS applies; EXECUTE granted to `authenticated` only. `types.ts` Functions updated by hand.
+- Rollback-tested rename + delete against live inside a transaction; nothing persisted.
+- lint (0 errors, 11 baseline warnings), typecheck, build, tests pass.
+
+### Notes
+- Deleting a category never deletes articles; they become uncategorized. Renaming/deleting bumps `blogs.updated_at` on affected posts (existing trigger).
+- Live migration version timestamps differ from file names (apply_migration assigns its own) — see AGENTS.md section 14.
+
+---
+
 ## 2026-10-03 PKT — AI Agent (Claude) — Persistent blog categories table (fixes categories vanishing when their last post is deleted)
 
 ### Root cause (found by the project owner)

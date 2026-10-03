@@ -58,6 +58,10 @@ import {
   BookOpen,
   HelpCircle,
   Star,
+  Tags,
+  Pencil,
+  Check,
+  X,
   Images,
   Move,
   Eye,
@@ -90,6 +94,7 @@ const TABS = [
   { id: "banners", label: "Banners", icon: Megaphone },
   { id: "about", label: "About", icon: BookOpen },
   { id: "faq", label: "FAQ", icon: HelpCircle },
+  { id: "blogcats", label: "Blog Categories", icon: Tags },
   { id: "reviews", label: "Reviews", icon: Star },
   { id: "media", label: "Media Library", icon: Images },
   { id: "preview", label: "Preview", icon: Eye },
@@ -166,6 +171,7 @@ function WebPortalPage() {
           {tab === "banners" && <BannersEditor />}
           {tab === "about" && <AboutEditor />}
           {tab === "faq" && <FaqEditor />}
+          {tab === "blogcats" && <BlogCategoriesEditor />}
           {tab === "reviews" && <ReviewsEditor />}
           {tab === "media" && <MediaLibrary />}
           {tab === "preview" && <PreviewPane />}
@@ -2357,6 +2363,217 @@ function FaqQuestionsEditor() {
 }
 
 /* ---------- Reviews ---------- */
+function BlogCategoriesEditor() {
+  const qc = useQueryClient();
+  const [newName, setNewName] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const { data: categories = [], isLoading } = useQuery({
+    queryKey: ["admin-blog-categories"],
+    queryFn: async () =>
+      (await supabase.from("blog_categories").select("*").order("name", { ascending: true }))
+        .data ?? [],
+  });
+
+  // Post counts per category name (all posts, drafts included) so admins see what a
+  // rename/delete will touch.
+  const { data: counts = {} } = useQuery({
+    queryKey: ["admin-blog-category-counts"],
+    queryFn: async () => {
+      const { data } = await supabase.from("blogs").select("category, is_published");
+      const out: Record<string, { total: number; published: number }> = {};
+      for (const r of data ?? []) {
+        if (!r.category) continue;
+        const c = (out[r.category] ??= { total: 0, published: 0 });
+        c.total += 1;
+        if (r.is_published) c.published += 1;
+      }
+      return out;
+    },
+  });
+
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["admin-blog-categories"] });
+    qc.invalidateQueries({ queryKey: ["admin-blog-category-counts"] });
+    qc.invalidateQueries({ queryKey: ["admin-blogs"] });
+    qc.invalidateQueries({ queryKey: ["public-blog-categories"] });
+  };
+
+  const exists = (name: string, exceptId?: string) =>
+    categories.some(
+      (c) => c.id !== exceptId && c.name.trim().toLowerCase() === name.trim().toLowerCase(),
+    );
+
+  const add = async () => {
+    const name = newName.trim();
+    if (!name) return toast.error("Enter a category name");
+    if (name.length > 80) return toast.error("Category name is too long (max 80 characters)");
+    if (exists(name)) return toast.error(`"${name}" already exists`);
+    setBusy(true);
+    const { error } = await supabase.from("blog_categories").insert({ name });
+    setBusy(false);
+    if (error) {
+      return toast.error(
+        error.code === "23505" ? `"${name}" already exists` : getErrorMessage(error),
+      );
+    }
+    toast.success("Category added");
+    setNewName("");
+    refresh();
+  };
+
+  const startEdit = (c: Tables<"blog_categories">) => {
+    setEditingId(c.id);
+    setEditName(c.name);
+  };
+
+  const saveEdit = async (c: Tables<"blog_categories">) => {
+    const name = editName.trim();
+    if (!name) return toast.error("Enter a category name");
+    if (name.length > 80) return toast.error("Category name is too long (max 80 characters)");
+    if (name === c.name) return setEditingId(null);
+    if (exists(name, c.id)) return toast.error(`"${name}" already exists`);
+    setBusy(true);
+    const { data: updated, error } = await supabase.rpc("rename_blog_category", {
+      p_id: c.id,
+      p_name: name,
+    });
+    setBusy(false);
+    if (error) {
+      return toast.error(
+        error.code === "23505" ? `"${name}" already exists` : getErrorMessage(error),
+      );
+    }
+    toast.success(
+      updated ? `Renamed — ${updated} article${updated === 1 ? "" : "s"} updated` : "Renamed",
+    );
+    setEditingId(null);
+    refresh();
+  };
+
+  const remove = async (c: Tables<"blog_categories">) => {
+    const used = counts[c.name]?.total ?? 0;
+    const msg = used
+      ? `Delete "${c.name}"? ${used} article${used === 1 ? " is" : "s are"} using it and will become uncategorized. The articles themselves are NOT deleted.`
+      : `Delete "${c.name}"?`;
+    if (!confirm(msg)) return;
+    setBusy(true);
+    const { error } = await supabase.rpc("delete_blog_category", { p_id: c.id });
+    setBusy(false);
+    if (error) return toast.error(getErrorMessage(error));
+    toast.success("Category deleted");
+    refresh();
+  };
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="font-display text-xl font-bold">Blog Categories</h2>
+        <p className="text-sm text-muted-foreground">
+          Categories offered when writing an article. Renaming updates every article using it;
+          deleting only uncategorizes them. The public Blog page shows only categories that have a
+          published article.
+        </p>
+      </div>
+
+      <div className="flex gap-2">
+        <Input
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && add()}
+          placeholder="New category name"
+          maxLength={80}
+          className="max-w-xs"
+        />
+        <Button onClick={add} disabled={busy}>
+          <Plus className="mr-1 h-4 w-4" /> Add
+        </Button>
+      </div>
+
+      <div className="glass-card divide-y rounded-2xl">
+        {isLoading ? (
+          <p className="p-4 text-sm text-muted-foreground">Loading…</p>
+        ) : categories.length === 0 ? (
+          <p className="p-4 text-sm text-muted-foreground">No categories yet.</p>
+        ) : (
+          categories.map((c) => {
+            const n = counts[c.name];
+            return (
+              <div key={c.id} className="flex items-center gap-3 p-3">
+                {editingId === c.id ? (
+                  <Input
+                    autoFocus
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") saveEdit(c);
+                      if (e.key === "Escape") setEditingId(null);
+                    }}
+                    maxLength={80}
+                    className="max-w-xs"
+                  />
+                ) : (
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-medium">{c.name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {n
+                        ? `${n.total} article${n.total === 1 ? "" : "s"} · ${n.published} published`
+                        : "Not used yet"}
+                    </div>
+                  </div>
+                )}
+                {editingId === c.id ? (
+                  <div className="ml-auto flex gap-1">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      disabled={busy}
+                      onClick={() => saveEdit(c)}
+                      aria-label="Save"
+                    >
+                      <Check className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => setEditingId(null)}
+                      aria-label="Cancel"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex gap-1">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => startEdit(c)}
+                      aria-label={`Rename ${c.name}`}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      disabled={busy}
+                      onClick={() => remove(c)}
+                      aria-label={`Delete ${c.name}`}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ReviewsEditor() {
   return (
     <CrudList<Tables<"testimonials">>
