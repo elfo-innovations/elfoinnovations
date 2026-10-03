@@ -147,6 +147,86 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-10-03 PKT — AI Agent (Claude) — Orphaned blog-content/* R2 cleanup: in progress, how to revert if an image breaks
+
+### Context
+Follow-up on the long-deferred "76 orphaned blog-content/* objects" item (first flagged in the
+2026-10-01 full R2 URL migration session, repeated in every handoff since). Project owner is now
+actively working through it: editing published posts in the rich-text editor to remove no-longer-
+wanted inline images, which naturally moves more files from "in use" into "orphaned" before any
+actual deletion happens. **No R2 deletes have been run yet as of this entry** — this documents the
+method and the rollback plan so the eventual delete step is safe and reversible if something's
+counted wrong.
+
+### What "orphan" means here, precisely
+An R2 object under the `blog-content/` prefix is "orphaned" if, and only if, no blog's
+`content_html` currently contains a URL referencing that object's key. This was checked by
+regex-scanning `content_html` for every row in `public.blogs` (all 33 rows, published and
+unpublished — not just published ones) for `blog-content/...` URL fragments, decoding `%20`/`%2C`
+back to literal characters, and diffing that set against the full `blog-content/*` object list
+from `scripts/migrate-media-to-r2.ts --dry-run` (the script's own SKIP/would-copy output is the
+authoritative source-of-truth list of what's actually in the bucket — not `media_library`, which
+only tracks root-level cover/library images and never tracked inline post images in the first
+place).
+
+As of this session: 169 total `blog-content/*` objects in R2, 92 referenced across all blogs
+(after the owner's test edit on `what-is-business-automation` removed one image from the post
+body), **77 orphaned**. This number is expected to keep climbing as the owner removes more unused
+inline images from more posts — that's correct behavior, not a bug: each removal moves one more
+file from "in use" to "orphaned." The count only ever goes back down at the actual delete step.
+
+### Why deleting orphans is safe for the live site
+Every currently-published blog's visible content only ever references images still counted as "in
+use" by this same scan — by construction, an orphan is a file nothing currently links to. Deleting
+an orphan therefore cannot change how any existing blog post renders, looks, or lays out: the HTML
+those pages serve doesn't contain a URL pointing at the deleted file.
+
+### The one real risk, and how to check/revert it
+**Risk:** if someone has a direct link to one of these old image URLs *outside* the site's own
+blog content — e.g. a `media.elfoinnovations.com/blog-content/<key>` link bookmarked, shared on
+social media, pasted into an old email/doc, or indexed by Google Images — that link will start
+returning a 404/NoSuchKey once the object is deleted from R2. This is extremely unlikely for these
+specific 76-77 files (they were removed from post bodies specifically *because* they were replaced
+by a better image, often before the post was even published), but it's the one way "deleting an
+orphan" can visibly break something, and it's worth knowing how to check/undo if it ever happens.
+
+**How to tell if a deleted orphan broke something:**
+1. If a 404 is reported anywhere (broken `<img>` on the live site, a dead link someone reports,
+   etc.), get the exact failing URL and extract its `blog-content/<key>` path.
+2. Check Supabase: `select slug from public.blogs where content_html like '%<key>%'` — if this
+   returns a row, the file was NOT actually an orphan and the orphan-detection scan above had a
+   bug (e.g. a URL-encoding edge case it didn't handle) — stop and re-audit the detection logic
+   before deleting anything else.
+3. If it returns no rows, the broken link was from an external source (not this site's own blog
+   content) — confirms the object was a genuine orphan and the break is the known, accepted risk
+   above, not a mistake.
+
+**How to revert / restore a deleted object, if needed:**
+- The original copy in **Supabase Storage's `website-media` bucket is intentionally never
+  deleted** by `scripts/migrate-media-to-r2.ts` (copy-only, no-delete contract — see that script's
+  own docstring and every prior session's rule) and has NOT been deleted by any session, including
+  this cleanup. As long as that bucket hasn't been separately emptied, every orphan object can be
+  re-copied from Supabase Storage back into R2 at the exact same key, restoring the old URL.
+- Practically: re-run `scripts/migrate-media-to-r2.ts` (live, not `--dry-run`) — it's idempotent
+  and copy-only, so it will simply re-upload anything missing from R2 without affecting anything
+  already there correctly. This is the same tool already used for the original migration and the
+  cover_image follow-up; its contract must not be modified (no deletes, no DB writes from inside
+  the script — per every prior session's rule).
+- If the Supabase Storage original has *also* been deleted by then: there is no recovery path from
+  within this repo/infra — this is exactly why no prior session has ever deleted anything from
+  `website-media`, and this cleanup does not change that rule.
+
+### Do NOT
+- Do not delete anything from Supabase Storage (`website-media` bucket) as part of this or any
+  future cleanup — it remains the intentional rollback copy.
+- Do not run the actual R2 delete until the owner has finished editing posts and explicitly asks
+  for the final list + go-ahead (list-first, approve-second — unchanged from every prior note on
+  this item).
+- Do not re-derive the orphan list from `media_library` — that table only covers root-level
+  images, never `blog-content/*` inline post images, and will silently undercount if used here.
+
+---
+
 ## 2026-10-03 PKT — AI Agent (Claude) — Migrated 30 blogs' cover_image from Supabase signed URLs to R2
 
 ### Context
