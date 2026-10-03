@@ -101,22 +101,39 @@ export const Route = createFileRoute("/blogs_/$slug")({
   },
 
   loader: async ({ params }) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("blogs")
       .select("*")
       .eq("slug", params.slug)
       .eq("is_published", true)
       .maybeSingle();
+    // `error` here means the query itself failed (network, RLS, timeout, etc.) — distinct
+    // from a genuine "no row for this slug", which maybeSingle() reports as data: null,
+    // error: null. Previously this was never checked, so any real query error silently
+    // fell through to the same notFound() as a true 404, making failures indistinguishable
+    // from missing posts. Throw it so errorComponent ("Article unavailable") renders
+    // instead, and it shows up in logs instead of vanishing.
+    if (error) {
+      console.error(`[blogs/$slug] query failed for slug "${params.slug}":`, error);
+      throw error;
+    }
     if (data) return data;
 
     // Not found under this slug — maybe it used to live here and was renamed. If so,
     // 301 to the current slug instead of just 404ing, which would throw away any SEO
     // ranking / backlinks the old URL had built up.
-    const { data: redirectRow } = await supabase
+    const { data: redirectRow, error: redirectError } = await supabase
       .from("blog_redirects")
       .select("blogs(slug, is_published)")
       .eq("old_slug", params.slug)
       .maybeSingle();
+    if (redirectError) {
+      console.error(
+        `[blogs/$slug] redirect lookup failed for slug "${params.slug}":`,
+        redirectError,
+      );
+      throw redirectError;
+    }
     const target = (redirectRow as { blogs: { slug: string; is_published: boolean } | null } | null)
       ?.blogs;
     if (target?.slug && target.is_published) {

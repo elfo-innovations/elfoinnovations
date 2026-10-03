@@ -147,6 +147,43 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-10-03 PKT — AI Agent (Claude) — Blog detail loader now surfaces real Supabase errors instead of a fake 404
+
+### Context
+Follow-up to the FAQ-accordion 404 fix below. While diagnosing that bug, found (but
+deliberately left unfixed at the time, pending approval) that the `blogs_.$slug` loader never
+checked `error` from either Supabase call — a real query failure (network, RLS, timeout) would
+silently look identical to a genuine missing slug, both ending at the same `notFound()`. Owner
+approved this as a separate follow-up.
+
+### Completed
+- `src/routes/blogs_.$slug.tsx`: destructured `error` from both the `blogs` lookup and the
+  `blog_redirects` fallback lookup. On a real error, `console.error` it (tagged
+  `[blogs/$slug]`) and `throw` it, so TanStack Start's `errorComponent` ("Article unavailable")
+  renders instead of `notFoundComponent` ("Article not found") — and it's now visible in
+  Worker logs instead of vanishing. A genuine "no row for this slug" (Supabase returns
+  `data: null, error: null` via `.maybeSingle()`) still falls through to `notFound()` as before.
+- Added `test/blog-faq/loader-error-handling.test.ts`: locks in the data/error/not-found
+  three-way branching contract independent of the TanStack route plumbing.
+
+### Checks
+- `npm run typecheck` — 0 errors. `npm run lint` — 0 errors, same 11 pre-existing baseline
+  warnings (unrelated files). `npm test` — 12/12 passing. `npm run build` — OK.
+
+### Commit
+- See commit immediately following this entry in `git log`.
+- Status: Committed and pushed.
+
+### Notes — what's left
+- Older blogs' `cover_image` still on Supabase Storage signed URLs (not R2) — next up, pending
+  owner's go-ahead.
+- New-article admin UI is a modal `Dialog` (`admin.blogs.tsx`), not a standalone route — flagged
+  as a possible UX improvement (no back-button support, no direct edit URL, cramped on mobile);
+  not started yet.
+- 76 orphaned `blog-content/*` R2 objects — cleanup still deferred, list-first/approve-second.
+
+---
+
 ## 2026-10-03 PKT — AI Agent (Claude) — Fixed "Article not found" on blog detail pages (FAQ accordion render crash)
 
 ### Context
