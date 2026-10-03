@@ -158,7 +158,8 @@ Use this format:
 - lint (0 errors, 11 baseline warnings), typecheck, build, tests (12) all pass locally.
 
 ### Commit
-- Status: committed locally; NOT pushed (no PAT in session)
+- `f3b6e2f` — feat(blog): editable cover image alt text; category pills filter /blogs in place
+- Status: Committed and pushed
 
 ### Notes
 - NOT done yet (user asked for these after the two above): custom/new category not appearing in the admin category list or the article-create dropdown. Findings: admin list is derived only from categories already saved on posts, so an unsaved or unused category never shows; the "Case Studies"/"Cloud & DevOps" pills are hidden on the public page because no published post uses them. Likely needs a persistent categories table.
