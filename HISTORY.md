@@ -203,8 +203,8 @@ before the final check), `tsc --noEmit` clean, build succeeded (only pre-existin
 `framer-motion` "use client" bundler warnings), all 4 test files / 12 tests passed unchanged.
 
 ### Commit
-- `<to be filled in after commit>` — "feat(blog): auto-cleanup unused blog-content/* R2 images on
-  post save, not just on post delete"
+- `4aacec7` — "feat(blog): auto-cleanup unused blog-content/* R2 images on post save, not just on
+  post delete"
 
 ---
 
