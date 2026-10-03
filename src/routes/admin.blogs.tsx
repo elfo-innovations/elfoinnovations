@@ -62,6 +62,7 @@ const EMPTY = {
   content_html: "",
   original_content_html: "" as string | null,
   cover_image: "",
+  cover_image_alt: "",
   tags: "",
   category: "",
   tldr: "",
@@ -118,6 +119,7 @@ function AdminBlogs() {
       content_html: b.content_html ?? "",
       original_content_html: b.content_html ?? "",
       cover_image: b.cover_image ?? "",
+      cover_image_alt: b.cover_image_alt ?? "",
       tags: (b.tags ?? []).join(", "),
       category: b.category ?? "",
       tldr: b.tldr ?? "",
@@ -162,6 +164,7 @@ function AdminBlogs() {
       content_md: form.content_md,
       content_html: form.content_html || null,
       cover_image: form.cover_image || null,
+      cover_image_alt: form.cover_image ? form.cover_image_alt.trim() || null : null,
       tags: form.tags
         .split(",")
         .map((t) => t.trim())
@@ -273,7 +276,11 @@ function AdminBlogs() {
           <div key={b.id} className="glass-card overflow-hidden rounded-2xl">
             {b.cover_image && (
               <div className="aspect-[16/7] overflow-hidden bg-muted">
-                <img src={b.cover_image} alt="" className="h-full w-full object-cover" />
+                <img
+                  src={b.cover_image}
+                  alt={b.cover_image_alt || b.title}
+                  className="h-full w-full object-cover"
+                />
               </div>
             )}
             <div className="p-5">
@@ -437,8 +444,24 @@ function AdminBlogs() {
             <MediaPicker
               label="Cover image"
               value={form.cover_image}
-              onChange={(v) => setForm({ ...form, cover_image: v })}
+              onChange={(v) =>
+                setForm({ ...form, cover_image: v, cover_image_alt: v ? form.cover_image_alt : "" })
+              }
             />
+            {form.cover_image && (
+              <div className="grid gap-1.5">
+                <Label>Cover image alt text</Label>
+                <Input
+                  value={form.cover_image_alt}
+                  onChange={(e) => setForm({ ...form, cover_image_alt: e.target.value })}
+                  placeholder="Describe the image for screen readers and search engines"
+                  maxLength={200}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Leave empty to use the article title as the alt text.
+                </p>
+              </div>
+            )}
             <CoverImageSuggestions
               coverImage={form.cover_image}
               onApply={(s) =>

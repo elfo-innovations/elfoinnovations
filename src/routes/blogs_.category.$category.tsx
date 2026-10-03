@@ -139,7 +139,7 @@ function CategoryArchive() {
                 <div className="aspect-[16/9] overflow-hidden bg-muted">
                   <img
                     src={b.cover_image}
-                    alt={b.title}
+                    alt={b.cover_image_alt || b.title}
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 </div>

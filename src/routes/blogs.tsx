@@ -50,9 +50,7 @@ export const Route = createFileRoute("/blogs")({
   head: (ctx) => {
     const search = ctx.match.search as BlogSearch;
     const isFiltered = !!(search?.q || (search?.page && search.page > 1));
-    const canonical = search?.category
-      ? `${URL}?category=${encodeURIComponent(search.category)}`
-      : URL;
+    const canonical = search?.category ? `${URL}/category/${slugify(search.category)}` : URL;
     const title = search?.category ? `${search.category} Articles | ELFO Innovations Blog` : TITLE;
     return {
       meta: [
@@ -95,6 +93,13 @@ export const Route = createFileRoute("/blogs")({
   },
   component: BlogIndex,
 });
+
+const pillClass = (active: boolean) =>
+  `rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+    active
+      ? "border-primary bg-primary text-primary-foreground"
+      : "bg-card text-muted-foreground hover:bg-accent/40"
+  }`;
 
 function BlogIndex() {
   const loaderData = Route.useLoaderData();
@@ -181,18 +186,21 @@ function BlogIndex() {
           <div className="mt-5 flex flex-wrap gap-2">
             <Link
               to="/blogs"
-              search={{ page: 1 }}
-              className="rounded-full border border-primary bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition"
+              search={(prev: BlogSearch) => ({ q: prev.q, category: undefined, page: undefined })}
+              resetScroll={false}
+              aria-current={!category ? "true" : undefined}
+              className={pillClass(!category)}
             >
               All
             </Link>
             {(categories ?? []).map((c) => (
               <Link
                 key={c}
-                to="/blogs/category/$category"
-                params={{ category: slugify(c) }}
-                search={{ page: 1 }}
-                className="rounded-full border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground transition hover:bg-accent/40"
+                to="/blogs"
+                search={(prev: BlogSearch) => ({ q: prev.q, category: c, page: undefined })}
+                resetScroll={false}
+                aria-current={category === c ? "true" : undefined}
+                className={pillClass(category === c)}
               >
                 {c}
               </Link>
@@ -222,7 +230,7 @@ function BlogIndex() {
                     <div className="aspect-[16/9] overflow-hidden bg-muted">
                       <img
                         src={b.cover_image}
-                        alt={b.title}
+                        alt={b.cover_image_alt || b.title}
                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     </div>

@@ -323,7 +323,7 @@ function BlogPost() {
       (
         await supabase
           .from("blogs")
-          .select("id, slug, title, excerpt, cover_image")
+          .select("id, slug, title, excerpt, cover_image, cover_image_alt")
           .eq("is_published", true)
           .neq("id", b.id)
           .order("published_at", { ascending: false })
@@ -399,7 +399,11 @@ function BlogPost() {
 
         {b.cover_image && (
           <div className="mt-8 overflow-hidden rounded-2xl border">
-            <img src={b.cover_image} alt={b.title} className="w-full object-cover" />
+            <img
+              src={b.cover_image}
+              alt={b.cover_image_alt || b.title}
+              className="w-full object-cover"
+            />
           </div>
         )}
 
@@ -472,7 +476,7 @@ function BlogPost() {
                     <div className="aspect-[16/9] overflow-hidden bg-muted">
                       <img
                         src={r.cover_image}
-                        alt={r.title}
+                        alt={r.cover_image_alt || r.title}
                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     </div>

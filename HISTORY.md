@@ -147,6 +147,24 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-10-03 PKT — AI Agent (Claude) — Blog cover image alt text + in-place category filter
+
+### Completed
+- Continued from a previous agent whose sandbox work was never pushed (limit hit); redone from the pushed repo. The live `blogs` table ALREADY had `cover_image_alt` (added by that agent); verified via information_schema, DDL not re-run.
+- Added forward-only guarded migration `20261003090000_add_blogs_cover_image_alt.sql` and `cover_image_alt` in `types.ts` (Row/Insert/Update).
+- Admin editor (`admin.blogs.tsx`): new "Cover image alt text" field shown under the cover image; saved to DB; empty = falls back to title. Admin list thumbnail uses it too.
+- Public pages (`blogs.tsx`, `blogs_.$slug.tsx` incl. related posts, `blogs_.category.$category.tsx`) use `cover_image_alt || title`.
+- `/blogs` category pills now filter in place via `?category=` (same route, no page change, no scroll reset, active pill highlighted, search term kept). Canonical for a filtered view points at the dedicated `/blogs/category/<slug>` page.
+- lint (0 errors, 11 baseline warnings), typecheck, build, tests (12) all pass locally.
+
+### Commit
+- Status: committed locally; NOT pushed (no PAT in session)
+
+### Notes
+- NOT done yet (user asked for these after the two above): custom/new category not appearing in the admin category list or the article-create dropdown. Findings: admin list is derived only from categories already saved on posts, so an unsaved or unused category never shows; the "Case Studies"/"Cloud & DevOps" pills are hidden on the public page because no published post uses them. Likely needs a persistent categories table.
+
+---
+
 ## 2026-10-03 PKT — AI Agent (Claude) — Blog editor now auto-cleans unused blog-content/* images on save (fixes the orphan source)
 
 ### Context

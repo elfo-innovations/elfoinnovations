@@ -153,6 +153,7 @@ export type Database = {
           content_html: string | null;
           content_md: string;
           cover_image: string | null;
+          cover_image_alt: string | null;
           created_at: string;
           excerpt: string | null;
           faqs: Json;
@@ -174,6 +175,7 @@ export type Database = {
           content_html?: string | null;
           content_md?: string;
           cover_image?: string | null;
+          cover_image_alt?: string | null;
           created_at?: string;
           excerpt?: string | null;
           faqs?: Json;
@@ -195,6 +197,7 @@ export type Database = {
           content_html?: string | null;
           content_md?: string;
           cover_image?: string | null;
+          cover_image_alt?: string | null;
           created_at?: string;
           excerpt?: string | null;
           faqs?: Json;
