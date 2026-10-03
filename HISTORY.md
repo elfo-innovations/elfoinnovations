@@ -147,6 +147,23 @@ Use this format:
 
 ## Recent Entries
 
+## 2026-10-03 PKT — AI Agent (Claude) — Persistent blog categories table (fixes categories vanishing when their last post is deleted)
+
+### Root cause (found by the project owner)
+Admin category list was derived only from categories saved on existing posts (plus a hardcoded starter list), so a custom category disappeared everywhere once the last post using it was deleted.
+
+### Completed
+- New table `public.blog_categories` (id, name, created_at; unique on lower(btrim(name)); RLS admin-only via `current_user_is_admin()`; no public access). Migration file `20261003100000_add_blog_categories.sql`, ALSO applied to live (project gwkwpbrlrmqrsdjnnckb) via apply_migration as `add_blog_categories`. Seeded with the 8 old starter categories + every category in use on posts (includes a stray "vs" from an existing post; admin can clean up later).
+- `admin.blogs.tsx`: category dropdown now reads from `blog_categories` (merged with categories on posts as a safety net); hardcoded `CATEGORIES` list removed (it lives in the table now). On save, a new category is inserted into the table first (case-insensitive match reuses the stored spelling; duplicate-key errors ignored). `types.ts` updated by hand to add the table.
+- Public `/blogs` pills intentionally still show only categories used by PUBLISHED posts (an empty category would be a dead pill).
+- lint (0 errors, 11 baseline warnings), typecheck, build, tests pass.
+
+### Notes
+- No UI yet to rename/delete categories (e.g. remove "vs"). Not requested.
+- The live migration is registered under a different version timestamp than the file name (apply_migration assigns its own); same drift caveat as AGENTS.md section 14.
+
+---
+
 ## 2026-10-03 PKT — AI Agent (Claude) — Blog cover image alt text + in-place category filter
 
 ### Completed

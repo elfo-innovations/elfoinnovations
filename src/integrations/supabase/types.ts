@@ -117,6 +117,24 @@ export type Database = {
         };
         Relationships: [];
       };
+      blog_categories: {
+        Row: {
+          created_at: string;
+          id: string;
+          name: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          name: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          name?: string;
+        };
+        Relationships: [];
+      };
       blog_redirects: {
         Row: {
           blog_id: string;

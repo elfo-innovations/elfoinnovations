@@ -41,17 +41,6 @@ function slugify(s: string) {
     .slice(0, 80);
 }
 
-const CATEGORIES = [
-  "Web Development",
-  "Software Development",
-  "SaaS",
-  "AI & Automation",
-  "Cloud & DevOps",
-  "Cybersecurity",
-  "Business & Technology",
-  "Case Studies",
-];
-
 const EMPTY = {
   id: "" as string,
   slug: "",
@@ -95,12 +84,21 @@ function AdminBlogs() {
       [],
   });
 
-  // Categories admins have actually used, merged with the curated starting list — so a
-  // custom category someone types once shows up as a normal pick from then on.
-  const existingCategories = Array.from(
-    new Set((data ?? []).map((b) => b.category).filter((c): c is string => !!c)),
-  );
-  const allCategories = Array.from(new Set([...CATEGORIES, ...existingCategories])).sort();
+  // Source of truth for the category list: the blog_categories table, so a category
+  // survives even when no post uses it (e.g. after its last post is deleted). Categories
+  // already on posts are merged in as a safety net for any that predate the table.
+  const { data: categoryRows } = useQuery({
+    queryKey: ["admin-blog-categories"],
+    queryFn: async () =>
+      (await supabase.from("blog_categories").select("*").order("name", { ascending: true }))
+        .data ?? [],
+  });
+  const allCategories = Array.from(
+    new Set([
+      ...(categoryRows ?? []).map((c) => c.name),
+      ...(data ?? []).map((b) => b.category).filter((c): c is string => !!c),
+    ]),
+  ).sort((x, y) => x.localeCompare(y));
 
   const startNew = () => {
     setForm({ ...EMPTY });
@@ -145,6 +143,26 @@ function AdminBlogs() {
     if (!form.title.trim()) return toast.error("Title is required");
     if (!form.slug.trim()) return toast.error("Slug is required");
     setBusy(true);
+
+    // Make sure the chosen category exists in blog_categories (case-insensitive) before the
+    // post is saved, reusing the stored spelling if it matches an existing one.
+    let category = form.category.trim();
+    if (category) {
+      const match = allCategories.find((c) => c.toLowerCase() === category.toLowerCase());
+      if (match) {
+        category = match;
+      } else {
+        const { error: catError } = await supabase
+          .from("blog_categories")
+          .insert({ name: category });
+        // 23505 = already exists (e.g. added from another tab) — fine, nothing to do.
+        if (catError && catError.code !== "23505") {
+          setBusy(false);
+          return toast.error(`Could not save category: ${catError.message}`);
+        }
+      }
+    }
+
     // Only stamp a fresh published_at when the article is newly becoming published.
     // Editing an already-published article (or re-saving while still published)
     // must NOT reset its original publish date.
@@ -170,7 +188,7 @@ function AdminBlogs() {
         .map((t) => t.trim())
         .filter(Boolean),
       faqs: form.faqs,
-      category: form.category || null,
+      category: category || null,
       tldr: form.tldr.trim() || null,
       author_name: form.author_name.trim() || "ELFO INNOVATIONS",
       meta_title: form.meta_title.trim() || null,
@@ -213,6 +231,7 @@ function AdminBlogs() {
     toast.success(form.id ? "Article updated" : "Article created");
     setOpen(false);
     qc.invalidateQueries({ queryKey: ["admin-blogs"] });
+    qc.invalidateQueries({ queryKey: ["admin-blog-categories"] });
   };
 
   const del = async (b: Tables<"blogs">) => {
